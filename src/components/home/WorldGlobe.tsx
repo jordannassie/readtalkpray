@@ -158,26 +158,29 @@ export function WorldGlobe({ places = [] }: { places?: GlobePlace[] }) {
     };
   }, [places]);
 
+  const compact = places.length === 0;
+
   return (
     <section className="bg-black">
-      <div className="mx-auto max-w-[1220px] px-5 pt-16">
-        <p className="text-xs font-medium tracking-[0.2em] uppercase text-white/45">
-          Around the world
-        </p>
-        <h2 className="mt-3 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-6xl sm:leading-[0.95]">
-          Find your people.
-          <span className="block">Wherever you are.</span>
-        </h2>
-        <p className="mt-5 max-w-xl text-base leading-relaxed text-white/65">
-          {places.length > 0
-            ? "These are real Read Talk Pray groups meeting now."
-            : "Approved groups will appear here as they begin meeting around the world."}
-        </p>
-      </div>
+      <div className={`mx-auto grid max-w-[1320px] items-center gap-4 px-5 ${compact ? "py-12 lg:grid-cols-[1.15fr_0.85fr] lg:py-14" : "pt-14"}`}>
+        <div>
+          <p className="text-xs font-medium tracking-[0.2em] uppercase text-white/45">
+            Around the world
+          </p>
+          <h2 className="mt-3 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl sm:leading-[0.98]">
+            Find your people.
+            <span className="block">Wherever you are.</span>
+          </h2>
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-white/70">
+            {places.length > 0
+              ? "These are real Read Talk Pray groups meeting now."
+              : "Read Talk Pray is a simple way to follow Jesus with people near you, and with groups that begin in other cities. Approved groups show up on this globe as they start meeting."}
+          </p>
+        </div>
 
       <div
         ref={wrapRef}
-        className="relative mx-auto h-[520px] w-full max-w-[980px] sm:h-[620px]"
+        className={compact ? "relative h-[240px] w-full sm:h-[280px]" : "relative mx-auto h-[380px] w-full max-w-[860px] sm:h-[440px]"}
       >
         <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
         {places.map((city, index) => (
@@ -201,6 +204,7 @@ export function WorldGlobe({ places = [] }: { places?: GlobePlace[] }) {
             </div>
           </div>
         ))}
+      </div>
       </div>
     </section>
   );

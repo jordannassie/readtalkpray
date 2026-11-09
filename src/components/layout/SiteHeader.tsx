@@ -11,7 +11,7 @@ const NAV = [
   { href: "/start", label: "Start a Group" },
 ];
 
-export function SiteHeader({ tone = "solid" }: { tone?: "solid" | "overlay" }) {
+export function SiteHeader({ tone = "solid", activeHref }: { tone?: "solid" | "overlay"; activeHref?: string }) {
   const [open, setOpen] = useState(false);
   const overlay = tone === "overlay";
   const text = overlay ? "text-white" : "text-[#243]";
@@ -21,11 +21,15 @@ export function SiteHeader({ tone = "solid" }: { tone?: "solid" | "overlay" }) {
 
   return (
     <header className={bar}>
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
+      <div className="mx-auto flex h-[72px] max-w-[1320px] items-center justify-between gap-4 px-5">
         <Logo invert={overlay} />
-        <nav className={`hidden items-center gap-7 text-sm md:flex ${text}`}>
+        <nav className={`hidden items-center gap-8 text-[15px] md:flex ${text}`}>
           {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className="hover:opacity-80">
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`hover:opacity-80 ${item.href === activeHref ? "underline decoration-2 underline-offset-8" : ""}`}
+            >
               {item.label}
             </Link>
           ))}

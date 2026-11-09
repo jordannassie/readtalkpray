@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { getDemoGroup } from "@/lib/groups/demo";
 import { getApprovedGroup } from "@/lib/groups/queries";
 import { isUuid } from "@/lib/groups/text";
 
@@ -10,14 +11,13 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const group = isUuid(id) ? await getApprovedGroup(id) : null;
+  const group = getDemoGroup(id) ?? (isUuid(id) ? await getApprovedGroup(id) : null);
   return { title: group ? `${group.name} · Read Talk Pray` : "Group · Read Talk Pray" };
 }
 
 export default async function GroupPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!isUuid(id)) notFound();
-  const group = await getApprovedGroup(id);
+  const group = getDemoGroup(id) ?? (isUuid(id) ? await getApprovedGroup(id) : null);
   if (!group) notFound();
 
   return (

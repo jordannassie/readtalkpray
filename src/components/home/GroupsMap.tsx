@@ -14,11 +14,17 @@ function escapeHtml(value: string) {
   });
 }
 
+function photoSrc(url: string | null) {
+  if (!url) return null;
+  if (/^\/demo\/leaders\/[a-z0-9.-]+$/.test(url)) return url;
+  if (url.startsWith("https://")) return url;
+  return null;
+}
+
 function pinHtml(group: PublicGroup) {
   const initial = escapeHtml(group.leader_name.slice(0, 1).toUpperCase() || "•");
-  const photo = group.leader_photo_url?.startsWith("https://")
-    ? `<img src="${escapeHtml(group.leader_photo_url)}" alt="" />`
-    : `<span>${initial}</span>`;
+  const src = photoSrc(group.leader_photo_url);
+  const photo = src ? `<img src="${escapeHtml(src)}" alt="" />` : `<span>${initial}</span>`;
   return `<div class="rtp-pin">${photo}<i></i></div>`;
 }
 
@@ -49,11 +55,11 @@ export function GroupsMap({
         scrollWheelZoom: false,
         zoomControl: true,
       }).setView([36.1627, -86.7816], 11);
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-        subdomains: "abcd",
+      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
+        attribution: "Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ",
         maxZoom: 19,
       }).addTo(map);
+      window.setTimeout(() => map.invalidateSize(), 0);
       mapRef.current = map;
       setReady(true);
     });
@@ -78,31 +84,41 @@ export function GroupsMap({
           icon: L.divIcon({
             className: "rtp-pin-icon",
             html: pinHtml(group),
-            iconSize: [52, 64],
-            iconAnchor: [26, 60],
-            popupAnchor: [0, -54],
+            iconSize: [58, 72],
+            iconAnchor: [29, 68],
+            popupAnchor: [0, -60],
           }),
           keyboard: true,
           title: group.name,
         });
         const where = meetingWhen(group);
         const place = group.location_type === "home" ? `${group.public_location} · approximate area` : group.public_location;
+        const badge = group.is_demo ? `<span class="rtp-demo">Demo</span>` : "";
+        const action = group.is_demo
+          ? `<a href="/groups/${encodeURIComponent(group.id)}">View demo group</a>`
+          : `<a href="/groups/${encodeURIComponent(group.id)}">Join Group</a>`;
         marker.bindPopup(
-          `<div class="rtp-popup"><strong>${escapeHtml(group.name)}</strong><p>${escapeHtml(where)}</p><p>${escapeHtml(place)}</p><a href="/groups/${group.id}">Join Group</a></div>`,
+          `<div class="rtp-popup">${badge}<strong>${escapeHtml(group.name)}</strong><p>${escapeHtml(group.leader_name)}</p><p>${escapeHtml(where)}</p><p>${escapeHtml(place)}</p>${action}</div>`,
         );
         marker.on("click", () => onSelect(group.id));
         marker.addTo(map);
         return marker;
       });
 
+      const latitudes = groups.map((group) => group.latitude);
+      const longitudes = groups.map((group) => group.longitude);
+      const latSpan = latitudes.length ? Math.max(...latitudes) - Math.min(...latitudes) : 0;
+      const lngSpan = longitudes.length ? Math.max(...longitudes) - Math.min(...longitudes) : 0;
+      const clustered = latSpan < 0.35 && lngSpan < 0.35;
+
       if (focus) {
         map.flyTo([focus.latitude, focus.longitude], 11, { duration: 0.6 });
       } else if (groups.length === 1) {
         map.setView([groups[0].latitude, groups[0].longitude], 12);
-      } else if (groups.length > 1) {
-        map.fitBounds(L.latLngBounds(groups.map((group) => [group.latitude, group.longitude])), { padding: [40, 40], maxZoom: 12 });
+      } else if (groups.length > 1 && clustered) {
+        map.fitBounds(L.latLngBounds(groups.map((group) => [group.latitude, group.longitude])), { padding: [48, 48], maxZoom: 12 });
       } else {
-        map.setView([36.1627, -86.7816], 11);
+        map.setView([36.1, -86.78], 11);
       }
 
       const selected = groups.find((group) => group.id === selectedId);
@@ -118,5 +134,11 @@ export function GroupsMap({
     };
   }, [ready, groups, focus, selectedId, onSelect]);
 
-  return <div ref={nodeRef} className="h-full min-h-[320px] w-full" />;
+  useEffect(() => {
+    const onResize = () => mapRef.current?.invalidateSize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [ready]);
+
+  return <div ref={nodeRef} className="rtp-map h-full w-full" />;
 }

@@ -15,6 +15,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
   const record = body as { groupId?: unknown; firstName?: unknown; mobile?: unknown; email?: unknown };
+  if (typeof record.groupId === "string" && record.groupId.startsWith("demo-")) {
+    return NextResponse.json({ ok: false, demo: true }, { status: 400 });
+  }
   if (typeof record.groupId !== "string" || !isUuid(record.groupId)) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }

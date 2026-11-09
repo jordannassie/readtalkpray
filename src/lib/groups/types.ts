@@ -18,6 +18,7 @@ export type PublicGroup = {
   meeting_time: string | null;
   leader_name: string;
   leader_photo_url: string | null;
+  is_demo?: boolean;
 };
 
 export const PUBLIC_GROUP_COLUMNS =

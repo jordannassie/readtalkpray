@@ -19,7 +19,7 @@ export function JoinGroupForm({ group }: { group: PublicGroup }) {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (lock.current) return;
+    if (group.is_demo || lock.current) return;
     const name = firstName.trim();
     const phone = mobile.trim();
     if (!name || !phone) {
@@ -58,6 +58,9 @@ export function JoinGroupForm({ group }: { group: PublicGroup }) {
 
   return (
     <div className="w-full rounded-[28px] bg-white p-6 text-[#111] shadow-[0_18px_50px_rgba(0,0,0,0.28)] sm:p-8">
+      {group.is_demo ? (
+        <p className="mb-2 inline-flex rounded-full bg-[#e7f0ff] px-2.5 py-1 text-[11px] font-bold tracking-wide text-[var(--sending-blue)] uppercase">Demo</p>
+      ) : null}
       <p className="text-sm font-medium">Read Talk Pray · {group.city}</p>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight">{group.name}</h1>
       <p className="mt-2 text-lg font-semibold">{meetingWhen(group) || "Time to be announced"}</p>
@@ -86,7 +89,14 @@ export function JoinGroupForm({ group }: { group: PublicGroup }) {
       </p>
       {group.description ? <p className="mt-3 text-sm leading-relaxed text-[#444]">{group.description}</p> : null}
       <div className="my-6 h-px bg-black/10" />
-      {done ? (
+      {group.is_demo ? (
+        <div role="status">
+          <h2 className="text-2xl font-semibold tracking-tight">This is a preview group.</h2>
+          <p className="mt-3 text-sm leading-relaxed text-[#444]">
+            Demo groups are sample pins so the Nashville map can be reviewed. They do not take reservations, and they do not text or email anyone.
+          </p>
+        </div>
+      ) : done ? (
         <div role="status">
           <h2 className="text-2xl font-semibold tracking-tight">{done === "duplicate" ? "You’re already on the list." : "You’re in."}</h2>
           <p className="mt-3 text-sm leading-relaxed text-[#444]">

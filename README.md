@@ -4,6 +4,8 @@ A simple way to follow Jesus together. Join a Bible study or start one.
 
 This app is a separate Next.js site. It reuses the existing Supabase project and does not write to Sending Church tables. Run `supabase/rtp.sql` in that project before using groups, join requests, or leads.
 
+`NEXT_PUBLIC_SHOW_DEMO_GROUPS=true` shows eight local Nashville sample groups. They are not database rows, they are labeled Demo, and they do not accept reservations. Set the flag to `false` to show only approved groups.
+
 ## Local setup
 
 ```bash
