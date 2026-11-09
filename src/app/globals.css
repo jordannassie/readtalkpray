@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+:root {
+  --sending-blue: #2f6bff;
+  --sending-blue-hover: #1f5bef;
+  --sending-blue-dark: #1a4fd6;
+  --sending-blue-light: #e7f0ff;
+  --sending-blue-line: #c5d9fb;
+  --sending-bg: #fafafa;
+  --background: #ffffff;
+  --foreground: #111111;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  text-underline-offset: 3px;
+}
+
+.rtp-pin-icon {
+  background: transparent;
+  border: 0;
+}
+
+.rtp-pin {
+  width: 52px;
+  height: 64px;
+  text-align: center;
+}
+
+.rtp-pin img,
+.rtp-pin span {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 3px solid #2f6bff;
+  border-radius: 999px;
+  background: white;
+  color: #2f6bff;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(20, 50, 120, 0.28);
+  object-fit: cover;
+}
+
+.rtp-pin i {
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin: -8px auto 0;
+  background: #2f6bff;
+  transform: rotate(45deg);
+}
+
+.rtp-popup {
+  min-width: 160px;
+  font-family: inherit;
+}
+
+.rtp-popup p {
+  margin: 4px 0 0;
+  color: #444;
+}
+
+.rtp-popup a {
+  display: inline-block;
+  margin-top: 8px;
+  color: #2f6bff;
+  font-weight: 700;
+}
