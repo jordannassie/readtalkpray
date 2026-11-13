@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminReview } from "@/components/admin/AdminReview";
+import { AdminUsers } from "@/components/admin/AdminUsers";
 import { DemoToggle } from "@/components/admin/DemoToggle";
 import { loadAccount } from "@/lib/auth/account";
 import { demoGroupsEnabled } from "@/lib/groups/demo";
@@ -34,6 +35,7 @@ export default async function AppAdminPage() {
         <Link href="/csv" className="inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Leads</Link>
       </div>
       <DemoToggle initial={demoOn} />
+      <AdminUsers />
       <AdminReview
         applications={applications ?? []}
         requests={requests ?? []}

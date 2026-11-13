@@ -40,7 +40,11 @@ export default function TermsPage() {
           </p>
           <h2>Leaders</h2>
           <p>
-            Applying to lead means confirming that you have attended a Read Talk Pray group, that you agree to the statement of faith published on this site, that you accept the leader commitments shown on the application, and that you will join the monthly leader Zoom meeting. An admin may call or email you before approving the group.
+            Applying to lead means reading and agreeing to the statement of faith and leader commitments shown on the application. Prior attendance is not required. An admin still reviews the application before a group is published. An admin may call or email you before approving the group.
+          </p>
+          <h2>Deleting an account</h2>
+          <p>
+            You can delete your Read Talk Pray account from Me. Deletion removes your profile, applications, photos, and groups you lead. If the login is also used for Sending Church, that login and the other tool&apos;s records stay. The site does not treat closing the screen or signing out as deletion.
           </p>
           <h2>Administration</h2>
           <p>

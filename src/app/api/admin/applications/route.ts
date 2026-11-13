@@ -156,9 +156,9 @@ export async function POST(request: Request) {
     group_name?: string | null;
     user_id?: string | null;
   };
-  if (!flags.attended || !flags.faith_agreed || !flags.commitments_agreed || !flags.zoom_agreed || !flags.privacy_agreed) {
+  if (!flags.faith_agreed || !flags.commitments_agreed) {
     return NextResponse.json(
-      { ok: false, error: "The applicant has not confirmed attendance, faith, commitments, the monthly Zoom meeting, and privacy consent." },
+      { ok: false, error: "The applicant has not agreed to the statement of faith and leader commitments." },
       { status: 422 },
     );
   }

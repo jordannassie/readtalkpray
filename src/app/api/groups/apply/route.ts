@@ -60,11 +60,11 @@ export async function POST(request: Request) {
     city,
     country,
     meetingLocation,
-    attended: leaderAgreement,
+    attended: false,
     faithAgreed: leaderAgreement,
     commitmentsAgreed: leaderAgreement,
-    zoomAgreed: leaderAgreement,
-    privacyAgreed: leaderAgreement,
+    zoomAgreed: false,
+    privacyAgreed: false,
   };
   const issue = applicationIssues(agreements);
   if (issue || !meetingDay || !meetingTime) {
@@ -109,6 +109,7 @@ export async function POST(request: Request) {
     commitments_agreed: agreements.commitmentsAgreed,
     zoom_agreed: agreements.zoomAgreed,
     privacy_agreed: agreements.privacyAgreed,
+    agreement_accepted_at: new Date().toISOString(),
     status: "pending",
   };
   const { data: existing } = await supabase
@@ -140,6 +141,11 @@ export async function POST(request: Request) {
     }
     if (/duplicate|unique/i.test(error.message)) {
       return NextResponse.json({ ok: true, status: "pending" });
+    }
+    if (/agreement_accepted_at/i.test(error.message) && "agreement_accepted_at" in payload) {
+      const { agreement_accepted_at: _accepted, ...rest } = payload;
+      payload = rest;
+      continue;
     }
     if (/duration/i.test(error.message) && "duration" in payload) {
       const { duration: _duration, ...rest } = payload;

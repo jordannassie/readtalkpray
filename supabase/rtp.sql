@@ -719,11 +719,8 @@ create policy "signed-in people can apply"
     and group_id is null
     and user_id = auth.uid()
     and lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
-    and attended
     and faith_agreed
     and commitments_agreed
-    and zoom_agreed
-    and privacy_agreed
     and char_length(leader_name) between 1 and 120
     and char_length(coalesce(group_name, '')) between 1 and 120
     and char_length(city) between 1 and 80
@@ -782,5 +779,194 @@ create policy "admins insert demo setting"
   on public.rtp_settings for insert
   to authenticated
   with check (key = 'show_demo_groups' and exists (select 1 from public.rtp_admins a where a.user_id = auth.uid()));
+
+alter table public.rtp_group_applications add column if not exists agreement_accepted_at timestamptz;
+
+drop policy if exists "signed-in people can apply" on public.rtp_group_applications;
+create policy "signed-in people can apply"
+  on public.rtp_group_applications for insert to authenticated
+  with check (
+    status = 'pending'
+    and group_id is null
+    and user_id = auth.uid()
+    and lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+    and faith_agreed
+    and commitments_agreed
+    and char_length(leader_name) between 1 and 120
+    and char_length(coalesce(group_name, '')) between 1 and 120
+    and char_length(city) between 1 and 80
+    and char_length(country) between 1 and 80
+    and char_length(meeting_location) between 1 and 200
+  );
+
+create table if not exists public.rtp_account_events (
+  id uuid primary key default gen_random_uuid(),
+  actor_id uuid,
+  target_id uuid,
+  action text not null,
+  detail text,
+  created_at timestamptz not null default now()
+);
+alter table public.rtp_account_events enable row level security;
+revoke all on public.rtp_account_events from anon, authenticated;
+grant select on public.rtp_account_events to authenticated;
+drop policy if exists "admins read account events" on public.rtp_account_events;
+create policy "admins read account events"
+  on public.rtp_account_events for select to authenticated
+  using (exists (select 1 from public.rtp_admins a where a.user_id = auth.uid()));
+
+create or replace function public.rtp_remove_account(target uuid, actor uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, auth, storage
+as $$
+declare
+  target_email text;
+  admin_count integer;
+  shared_login boolean := false;
+  auth_removed boolean := false;
+  kept text := null;
+begin
+  if target is null or actor is null then
+    return jsonb_build_object('ok', false, 'error', 'Sign in first.');
+  end if;
+  select email into target_email from auth.users where id = target;
+  if target_email is null then
+    return jsonb_build_object('ok', false, 'error', 'That account was not found.');
+  end if;
+  if lower(target_email) = 'jordannassie@gmail.com' then
+    return jsonb_build_object('ok', false, 'error', 'The main administrator account cannot be deleted.');
+  end if;
+  select count(*) into admin_count from public.rtp_admins;
+  if exists (select 1 from public.rtp_admins where user_id = target) and admin_count <= 1 then
+    return jsonb_build_object('ok', false, 'error', 'This is the only admin account and cannot be deleted.');
+  end if;
+
+  delete from public.rtp_group_leaders
+  where user_id = target
+     or group_id in (select id from public.rtp_groups where leader_user_id = target);
+  delete from public.rtp_groups where leader_user_id = target;
+  delete from public.rtp_group_applications
+  where user_id = target or lower(coalesce(email, '')) = lower(target_email);
+  delete from public.rtp_leads where lower(coalesce(email, '')) = lower(target_email);
+  delete from public.rtp_profiles where user_id = target;
+  delete from public.rtp_admins where user_id = target;
+
+  if to_regclass('storage.objects') is not null then
+    delete from storage.objects
+    where bucket_id = 'rtp-photos'
+      and (storage.foldername(name))[2] = target::text
+      and (storage.foldername(name))[1] in ('profiles', 'applications');
+  end if;
+
+  if to_regclass('public.sending_lead_admins') is not null
+     and exists (select 1 from public.sending_lead_admins where user_id = target) then
+    shared_login := true;
+    kept := 'This login is also a Sending Church admin, so the login was kept and only Read Talk Pray data was removed.';
+  elsif exists (select 1 from public.rtp_application_reviews where reviewer_id = target) then
+    kept := 'Review records must keep this login, so the login was kept and Read Talk Pray profile data was removed.';
+  else
+    delete from auth.users where id = target;
+    auth_removed := true;
+  end if;
+
+  insert into public.rtp_account_events (actor_id, target_id, action, detail)
+  values (
+    actor,
+    target,
+    'delete',
+    case
+      when auth_removed then 'Read Talk Pray data and login removed.'
+      else coalesce(kept, 'Read Talk Pray data removed. Login kept.')
+    end
+  );
+
+  return jsonb_build_object('ok', true, 'authRemoved', auth_removed, 'sharedLogin', shared_login, 'notice', kept);
+exception
+  when others then
+    return jsonb_build_object('ok', false, 'error', 'Account deletion did not finish. Read Talk Pray data was not left in a deleted state.');
+end;
+$$;
+
+create or replace function public.rtp_delete_my_account()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  signed_in timestamptz;
+begin
+  if auth.uid() is null then
+    return jsonb_build_object('ok', false, 'error', 'Sign in first.');
+  end if;
+  select last_sign_in_at into signed_in from auth.users where id = auth.uid();
+  if signed_in is null or signed_in < now() - interval '15 minutes' then
+    return jsonb_build_object('ok', false, 'error', 'Sign in again, then delete the account. This step is available for 15 minutes after sign-in.');
+  end if;
+  return public.rtp_remove_account(auth.uid(), auth.uid());
+end;
+$$;
+
+create or replace function public.rtp_admin_delete_user(target uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null or not exists (select 1 from public.rtp_admins where user_id = auth.uid()) then
+    return jsonb_build_object('ok', false, 'error', 'Admin access is required.');
+  end if;
+  if target = auth.uid() then
+    return jsonb_build_object('ok', false, 'error', 'Use Delete My Account for your own account.');
+  end if;
+  return public.rtp_remove_account(target, auth.uid());
+end;
+$$;
+
+create or replace function public.rtp_admin_list_users()
+returns table (
+  user_id uuid,
+  email text,
+  full_name text,
+  photo_url text,
+  is_admin boolean,
+  group_names text
+)
+language sql
+security definer
+set search_path = public, auth
+as $$
+  select
+    u.id,
+    u.email,
+    p.full_name,
+    p.photo_url,
+    exists (select 1 from public.rtp_admins a where a.user_id = u.id),
+    coalesce((
+      select string_agg(g.name, ', ' order by g.name)
+      from public.rtp_groups g
+      where g.leader_user_id = u.id
+    ), '')
+  from auth.users u
+  left join public.rtp_profiles p on p.user_id = u.id
+  where exists (select 1 from public.rtp_admins me where me.user_id = auth.uid())
+    and (
+      p.user_id is not null
+      or exists (select 1 from public.rtp_admins a where a.user_id = u.id)
+      or exists (select 1 from public.rtp_group_applications app where app.user_id = u.id)
+      or exists (select 1 from public.rtp_groups g where g.leader_user_id = u.id)
+    );
+$$;
+
+revoke all on function public.rtp_remove_account(uuid, uuid) from public, anon, authenticated;
+revoke all on function public.rtp_delete_my_account() from public, anon;
+revoke all on function public.rtp_admin_delete_user(uuid) from public, anon;
+revoke all on function public.rtp_admin_list_users() from public, anon;
+grant execute on function public.rtp_delete_my_account() to authenticated;
+grant execute on function public.rtp_admin_delete_user(uuid) to authenticated;
+grant execute on function public.rtp_admin_list_users() to authenticated;
 
 notify pgrst, 'reload schema';

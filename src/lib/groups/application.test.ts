@@ -20,8 +20,8 @@ test("accepts a complete application", () => {
   assert.equal(applicationIssues(ready), null);
 });
 
-test("requires the agreements", () => {
-  assert.match(applicationIssues({ ...ready, attended: false }) ?? "", /attended/);
+test("requires the faith and commitment agreement", () => {
+  assert.equal(applicationIssues({ ...ready, attended: false, zoomAgreed: false, privacyAgreed: false }), null);
   assert.match(applicationIssues({ ...ready, faithAgreed: false }) ?? "", /faith/);
   assert.match(applicationIssues({ ...ready, groupName: "" }) ?? "", /group name/);
 });

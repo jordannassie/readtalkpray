@@ -1,4 +1,5 @@
 import { AccountDashboard } from "@/components/account/AccountDashboard";
+import { DeleteAccount } from "@/components/account/DeleteAccount";
 import { SignOutButton } from "@/components/account/SignOutButton";
 import { loadAccount } from "@/lib/auth/account";
 import { googleAvatar } from "@/lib/auth/profile";
@@ -23,6 +24,7 @@ export default async function AppMePage() {
         details={account.details}
         locationChanges={account.locationChanges}
       />
+      <DeleteAccount />
       <div className="mt-4">
         <SignOutButton className="inline-flex h-12 w-full items-center justify-center rounded-full border border-black/10 bg-white text-sm font-semibold" />
       </div>

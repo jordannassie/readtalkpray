@@ -1,12 +1,12 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { FormEvent, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { LeaderPhotoField } from "@/components/groups/LeaderPhotoField";
-import { createClient } from "@/lib/supabase/client";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { ChevronDown } from "lucide-react";
+import { ProfilePhoto } from "@/components/account/ProfilePhoto";
+import { BELIEFS } from "@/components/home/Beliefs";
 import { isWebsitePhone } from "@/lib/leads/website";
+import { APPLICATION_PRIVACY, LEADER_COMMITMENTS, LEADER_COMMITMENT_SCRIPTURE } from "@/lib/groups/commitments";
 import { MEETING_DAYS, MEETING_DURATIONS } from "@/lib/groups/schedule";
 import { LAUNCH_TIME_ZONE, isIanaTimeZone } from "@/lib/groups/sunday";
 import { LOCATION_TYPES } from "@/lib/groups/types";
@@ -34,16 +34,24 @@ const TIME_ZONES = [
 export function StartGroupForm({
   email,
   name = "",
+  userId,
+  photoUrl = null,
+  googlePhotoUrl = null,
+  phone = null,
   application,
 }: {
   email: string;
   name?: string;
+  userId: string;
+  photoUrl?: string | null;
+  googlePhotoUrl?: string | null;
+  phone?: string | null;
   application?: { status: string; review_message: string | null } | null;
 }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [leaderPhotoUrl, setLeaderPhotoUrl] = useState(photoUrl);
   const [timeZone, setTimeZone] = useState(LAUNCH_TIME_ZONE);
   const [meetingDay, setMeetingDay] = useState("Sunday");
   const [meetingTime, setMeetingTime] = useState("09:00");
@@ -74,23 +82,6 @@ export function StartGroupForm({
     }
   }
 
-  async function uploadPhoto(file: File) {
-    if (!isSupabaseConfigured()) return null;
-    if (file.size > 2_000_000) throw new Error("Use a photo under 2 MB.");
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    if (!["jpg", "jpeg", "png", "webp"].includes(ext)) throw new Error("Use a JPG, PNG, or WebP photo.");
-    const supabase = createClient();
-    const { data: auth } = await supabase.auth.getUser();
-    if (!auth.user) throw new Error("Sign in before adding a photo.");
-    const path = `applications/${auth.user.id}/${crypto.randomUUID()}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from("rtp-photos").upload(path, file, {
-      contentType: file.type,
-      upsert: false,
-    });
-    if (uploadError) return null;
-    return supabase.storage.from("rtp-photos").getPublicUrl(path).data.publicUrl;
-  }
-
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (lock.current) return;
@@ -104,10 +95,6 @@ export function StartGroupForm({
     setSubmitting(true);
     setError("");
     try {
-      let leaderPhotoUrl: string | null = null;
-      if (photoFile && photoFile.size > 0) {
-        leaderPhotoUrl = await uploadPhoto(photoFile);
-      }
       const response = await fetch("/api/groups/apply", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -168,7 +155,17 @@ export function StartGroupForm({
       {application?.status === "rejected" ? (
         <p className="rounded-2xl bg-[#fff7ed] px-4 py-3 text-sm text-[#9a3412]">{application.review_message || "The last application was not approved. You can submit a new one."}</p>
       ) : null}
-      <LeaderPhotoField onChange={setPhotoFile} />
+      <ProfilePhoto
+        userId={userId}
+        name={name || null}
+        email={email}
+        photoUrl={leaderPhotoUrl}
+        googlePhotoUrl={googlePhotoUrl}
+        fullName={name || null}
+        phone={phone}
+        size={144}
+        onSaved={setLeaderPhotoUrl}
+      />
       <Field label="Your name" name="name" required autoComplete="name" defaultValue={name} />
       <label className="block text-sm font-medium">
         Email
@@ -241,8 +238,31 @@ export function StartGroupForm({
         <textarea name="description" rows={4} className="mt-2 w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] px-4 py-3 text-sm outline-none focus:border-[var(--sending-blue)] focus:bg-white" placeholder="Who the group is for, and what you read together." />
       </label>
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium">Leader Agreement</legend>
-        <div className="flex items-start gap-3 text-sm leading-relaxed">
+        <legend className="text-base font-semibold">Leader Agreement</legend>
+        <Accordion title="Statement of Faith">
+          <p>We believe the Bible is God&apos;s Word, Jesus Christ is Lord, and every believer is called to follow Jesus, make disciples, and share the gospel with the world.</p>
+          <ol className="mt-3 space-y-3">
+            {BELIEFS.map((item, index) => (
+              <li key={item.title}>
+                <p className="font-semibold">{index + 1}. {item.title}</p>
+                <p>{item.body}</p>
+                <p className="text-[#666]">Scripture: {item.scripture}</p>
+              </li>
+            ))}
+          </ol>
+        </Accordion>
+        <Accordion title="Leader Commitments">
+          {LEADER_COMMITMENTS.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
+          <p className="text-[#666]">{LEADER_COMMITMENT_SCRIPTURE}</p>
+        </Accordion>
+        <Accordion title="Privacy">
+          {APPLICATION_PRIVACY.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
+        </Accordion>
+        <label className="flex items-start gap-3 text-sm leading-relaxed">
           <input
             name="leaderAgreement"
             type="checkbox"
@@ -251,23 +271,26 @@ export function StartGroupForm({
             onChange={(event) => setLeaderAgreed(event.target.checked)}
             className="mt-1"
           />
-          <p>
-            I confirm that I&apos;ve attended a Read Talk Pray group and agree to our{" "}
-            <Link href="/statement-of-faith" className="font-semibold text-[#1976F3] underline" target="_blank">Statement of Faith</Link>
-            ,{" "}
-            <Link href="/leader-commitments" className="font-semibold text-[#1976F3] underline" target="_blank">Leader Commitments</Link>
-            , monthly leader meetings, and being contacted about my application.
-          </p>
-        </div>
-        <p className="text-sm leading-relaxed text-[#666]">
-          Your name, phone number, and photo on this application are stored for review and are visible to admins. If the group is approved, people who ask to join may share their name and phone number with you and with site admins. A private home address is not published on the map. <Link href="/privacy" className="font-semibold text-[#1976F3] underline" target="_blank">Privacy Policy</Link>
-        </p>
+          <span>I have read and agree to the Statement of Faith and Leader Commitments.</span>
+        </label>
       </fieldset>
       {error ? <p role="alert" className="text-sm text-[#c2410c]">{error}</p> : null}
       <button type="submit" disabled={!leaderAgreed || submitting} className="inline-flex h-[52px] w-full items-center justify-center rounded-full bg-[var(--sending-blue)] font-semibold text-white disabled:opacity-70">
         {submitting ? "Sending…" : "Submit group"}
       </button>
     </form>
+  );
+}
+
+function Accordion({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <details className="rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] px-4 py-3 text-sm leading-relaxed">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold">
+        {title}
+        <ChevronDown size={16} aria-hidden />
+      </summary>
+      <div className="mt-3 space-y-2">{children}</div>
+    </details>
   );
 }
 

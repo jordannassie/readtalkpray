@@ -1,5 +1,6 @@
 import { StartGroupForm } from "@/components/groups/StartGroupForm";
 import { loadAccount } from "@/lib/auth/account";
+import { googleAvatar } from "@/lib/auth/profile";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,10 @@ export default async function AppStartPage() {
         <StartGroupForm
           email={account.user.email}
           name={account.profile.full_name ?? ""}
+          userId={account.profile.user_id}
+          photoUrl={account.profile.photo_url}
+          googlePhotoUrl={googleAvatar(account.user)}
+          phone={account.profile.phone}
           application={account.applications[0] ?? null}
         />
       </div>

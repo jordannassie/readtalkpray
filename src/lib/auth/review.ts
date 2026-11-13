@@ -1,7 +1,6 @@
 export const REVIEW_CHECKS = [
   "contacted",
   "phoneConversation",
-  "attended",
   "faithCommitments",
   "locationReviewed",
   "locationApproved",

@@ -32,7 +32,7 @@ export default function PrivacyPage() {
           </p>
           <h2>Group applications</h2>
           <p>
-            Starting a group asks for your name, phone number, photo, group name, city, state, country, meeting place, day, time, time zone, an optional description, and several confirmations: that you have attended a Read Talk Pray group, that you agree to the statement of faith and leader commitments, that you will join the monthly leader Zoom meeting, and that we may contact you.
+            Starting a group asks for your name, phone number, photo, group name, city, state, country, meeting place, day, time, time zone, and an optional description. The application records that you agreed to the statement of faith and leader commitments, and the time that agreement was saved. Prior attendance at a group is not required. A separate privacy checkbox is not stored as accepted.
           </p>
           <p>
             Applications stay pending until an admin reviews them. A private home address is stored separately from the location shown on the public map. The public map shows an approved public location, not an applicant&apos;s private home address, unless an admin has approved that text as the public location.
@@ -53,9 +53,16 @@ export default function PrivacyPage() {
           <p>
             The site is hosted on Netlify. Account data, applications, group records, and photos are stored with Supabase. Google handles Google sign-in. Map locations may be geocoded to place a city-level pin. These providers process the data needed to run those features.
           </p>
+          <h2>Deleting an account</h2>
+          <p>
+            Signed-in people can delete an account from Me after signing in again within 15 minutes and typing DELETE. Deletion removes the Read Talk Pray profile, group applications, uploaded Read Talk Pray photos, and groups that person leads, including the interested-person details on those groups. An admin can delete another Read Talk Pray user from the admin dashboard. The deletion is written to an admin-only account event. The main administrator account cannot be deleted, and the last remaining admin cannot be deleted.
+          </p>
+          <p>
+            This login system is shared with an older Sending Church tool. If the same login is a Sending Church admin, Read Talk Pray deletes only its own data and keeps the login so the other tool is not disrupted. That is a completed Read Talk Pray deletion, not a deactivation, and it is not a deletion of Sending Church records. Where a review record must keep the reviewer, the login is also kept after the profile data is removed.
+          </p>
           <h2>Retention</h2>
           <p>
-            Account, application, and group records are kept while they are needed to run the site. This site does not currently run an automatic deletion schedule. A suspended or rejected application remains in the database.
+            Until someone deletes an account, profile, application, and group records stay while they are needed to run the site. There is no separate automatic deletion schedule. This page does not claim that every backup or legal hold disappears the same minute. No specific legal retention period is published here because one has not been established for this site.
           </p>
           <h2>What this page does not claim</h2>
           <p>

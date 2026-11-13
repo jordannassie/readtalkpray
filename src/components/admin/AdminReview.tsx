@@ -38,7 +38,6 @@ type LocationChange = { id: string; group_id: string; public_location: string; p
 const CHECK_LABELS: Record<(typeof REVIEW_CHECKS)[number], string> = {
   contacted: "Contacted the applicant personally",
   phoneConversation: "Completed a phone conversation",
-  attended: "Verified they attended Read Talk Pray once",
   faithCommitments: "Confirmed the statement of faith and leader commitments",
   locationReviewed: "Reviewed the meeting location",
   locationApproved: "Approved the meeting location",
@@ -138,11 +137,8 @@ export function AdminReview({
                 <p className="mt-1 text-sm text-[#444]">{[item.meeting_day, item.meeting_time, item.duration, item.timezone].filter(Boolean).join(" · ")}</p>
                 {item.description ? <p className="mt-2 text-sm">{item.description}</p> : null}
                 <ul className="mt-3 space-y-1 text-sm">
-                  <li>Attended a group: {item.attended ? "Yes" : "No"}</li>
                   <li>Statement of faith: {item.faith_agreed ? "Agreed" : "Not agreed"}</li>
                   <li>Leader commitments: {item.commitments_agreed ? "Agreed" : "Not agreed"}</li>
-                  <li>Monthly leader Zoom: {item.zoom_agreed ? "Agreed" : "Not agreed"}</li>
-                  <li>Contact and privacy consent: {item.privacy_agreed ? "Yes" : "No"}</li>
                 </ul>
                 <fieldset className="mt-4 space-y-2">
                   <legend className="text-sm font-semibold">Approval checklist</legend>

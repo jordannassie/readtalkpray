@@ -17,6 +17,7 @@ export function ProfilePhoto({
   fullName,
   phone,
   size = 140,
+  onSaved,
 }: {
   userId: string;
   name: string | null;
@@ -26,6 +27,7 @@ export function ProfilePhoto({
   fullName: string | null;
   phone: string | null;
   size?: number;
+  onSaved?: (url: string) => void;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -77,6 +79,7 @@ export function ProfilePhoto({
       return;
     }
     setSrc(publicUrl);
+    onSaved?.(publicUrl);
     router.refresh();
   }
 
