@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app/AppShell";
 import { loadAccount } from "@/lib/auth/account";
+import { googleAvatar } from "@/lib/auth/profile";
+import { safeAppReturnPath } from "@/lib/auth/return-path";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -16,9 +19,17 @@ export const viewport: Viewport = {
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const account = await loadAccount();
   if (!account.configured) return <main className="mx-auto max-w-lg px-5 py-16">Supabase is not configured.</main>;
-  if (!account.user) redirect("/login?next=/app");
+  if (!account.user) {
+    const path = safeAppReturnPath((await headers()).get("x-rtp-path")) ?? "/app";
+    redirect(`/login?next=${path}`);
+  }
   return (
-    <AppShell name={account.profile.full_name} photoUrl={account.profile.photo_url} isAdmin={account.admin}>
+    <AppShell
+      name={account.profile.full_name}
+      email={account.user.email ?? ""}
+      photoUrl={account.profile.photo_url || googleAvatar(account.user)}
+      isAdmin={account.admin}
+    >
       {children}
     </AppShell>
   );

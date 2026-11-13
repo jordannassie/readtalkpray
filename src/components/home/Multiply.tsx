@@ -22,7 +22,7 @@ export function Multiply() {
             Read the Bible. Talk about it. Pray together. Then help someone else do the same.
           </p>
           <Link
-            href="/start"
+            href="/app/start"
             className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[#1976F3]"
           >
             Start a Group

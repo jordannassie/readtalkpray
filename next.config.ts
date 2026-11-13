@@ -7,8 +7,9 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      { source: "/start-a-church", destination: "/start", permanent: false },
-      { source: "/my-church", destination: "/app/group", permanent: false },
+      { source: "/start", destination: "/app/start", permanent: false },
+      { source: "/start-a-church", destination: "/app/start", permanent: false },
+      { source: "/my-church", destination: "/app", permanent: false },
     ];
   },
   async headers() {

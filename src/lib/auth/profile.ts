@@ -8,6 +8,11 @@ export type AccountProfile = {
   photo_url: string | null;
 };
 
+export function googleAvatar(user: User) {
+  const value = user.user_metadata?.avatar_url ?? user.user_metadata?.picture;
+  return typeof value === "string" && value.startsWith("https://") ? value : null;
+}
+
 function displayName(user: User) {
   const full = user.user_metadata?.full_name;
   const google = user.user_metadata?.name;

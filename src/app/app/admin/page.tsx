@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { AdminReview } from "@/components/admin/AdminReview";
+import { DemoToggle } from "@/components/admin/DemoToggle";
 import { loadAccount } from "@/lib/auth/account";
+import { demoGroupsEnabled } from "@/lib/groups/demo";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +18,7 @@ export default async function AppAdminPage() {
       </section>
     );
   }
+  const demoOn = await demoGroupsEnabled();
   const supabase = await createClient();
   const [{ data: applications }, { data: requests }, { data: groups }, { data: reviews }, { data: locationChanges }] = await Promise.all([
     supabase.from("rtp_group_applications").select("*").order("created_at", { ascending: false }).limit(50),
@@ -30,6 +33,7 @@ export default async function AppAdminPage() {
         <h1 className="text-3xl font-semibold tracking-tight">Review</h1>
         <Link href="/csv" className="inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Leads</Link>
       </div>
+      <DemoToggle initial={demoOn} />
       <AdminReview
         applications={applications ?? []}
         requests={requests ?? []}

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 
-const BELIEFS = [
+export const BELIEFS = [
   {
     title: "The Bible",
     body: "We believe the Bible is inspired by God and is our authority for faith, doctrine, and Christian living.",

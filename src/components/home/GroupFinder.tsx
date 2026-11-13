@@ -224,7 +224,7 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
             <h2 className="text-2xl font-semibold tracking-tight">Don’t see a group near you?</h2>
             <p className="mt-2 max-w-xl text-base text-[#52627a]">Start one. All you need is a Bible and a few people. Meet any day, any time, anywhere, for about one hour.</p>
           </div>
-          <Link href="/start" className="mt-4 inline-flex h-12 min-h-11 items-center justify-center gap-2 rounded-full bg-[#1976F3] px-5 text-sm font-semibold text-white sm:mt-0">
+          <Link href="/app/start" className="mt-4 inline-flex h-12 min-h-11 items-center justify-center gap-2 rounded-full bg-[#1976F3] px-5 text-sm font-semibold text-white sm:mt-0">
             Start a Group
             <ArrowRight size={16} aria-hidden />
           </Link>

@@ -222,7 +222,7 @@ function Confirmation({
       <div className="mt-8">
         <Users className="mx-auto text-[#1976F3]" size={28} aria-hidden />
         <p className="mt-2 text-sm font-semibold text-[#142033]">Don’t see a group near you?</p>
-        <Link href="/start" className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-[#1976F3]">
+        <Link href="/app/start" className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-[#1976F3]">
           Start a Group
           <ArrowRight size={14} aria-hidden />
         </Link>

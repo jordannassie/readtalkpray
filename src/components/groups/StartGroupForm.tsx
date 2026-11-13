@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { LeaderPhotoField } from "@/components/groups/LeaderPhotoField";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -38,14 +40,15 @@ export function StartGroupForm({
   name?: string;
   application?: { status: string; review_message: string | null } | null;
 }) {
+  const router = useRouter();
   const [error, setError] = useState("");
-  const [saved, setSaved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [timeZone, setTimeZone] = useState(LAUNCH_TIME_ZONE);
   const [meetingDay, setMeetingDay] = useState("Sunday");
   const [meetingTime, setMeetingTime] = useState("09:00");
   const [duration, setDuration] = useState("1 hour");
+  const [leaderAgreed, setLeaderAgreed] = useState(false);
   const zoneTouched = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const lock = useRef(false);
@@ -124,11 +127,7 @@ export function StartGroupForm({
           timezone: timeZone,
           description: form.get("description"),
           leaderPhotoUrl,
-          attended: form.get("attended") === "on",
-          faithAgreed: form.get("faithAgreed") === "on",
-          commitmentsAgreed: form.get("commitmentsAgreed") === "on",
-          zoomAgreed: form.get("zoomAgreed") === "on",
-          privacyAgreed: form.get("privacyAgreed") === "on",
+          leaderAgreement: leaderAgreed,
         }),
       });
       const body = (await response.json()) as { ok?: boolean; error?: string };
@@ -138,7 +137,9 @@ export function StartGroupForm({
         setSubmitting(false);
         return;
       }
-      setSaved(true);
+      router.push("/app");
+      router.refresh();
+      return;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Something went wrong. Please try again.");
       lock.current = false;
@@ -156,14 +157,6 @@ export function StartGroupForm({
         </p>
         <a href="/app" className="mt-4 inline-flex min-h-12 items-center text-sm font-semibold text-[#1976F3]">Open the app</a>
       </div>
-    );
-  }
-
-  if (saved) {
-    return (
-      <p role="status" className="rounded-[28px] bg-white p-8 text-lg font-medium shadow-sm">
-        Thank you. Your group is pending approval. It will appear on the map after it is reviewed.
-      </p>
     );
   }
 
@@ -247,13 +240,31 @@ export function StartGroupForm({
         Group description
         <textarea name="description" rows={4} className="mt-2 w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] px-4 py-3 text-sm outline-none focus:border-[var(--sending-blue)] focus:bg-white" placeholder="Who the group is for, and what you read together." />
       </label>
-      <Check name="attended" label="I have attended a Read Talk Pray group at least once." />
-      <Check name="faithAgreed" label="I agree to the Read Talk Pray statement of faith." />
-      <Check name="commitmentsAgreed" label="I agree to the leader commitments: live in a way that reflects Jesus, teach from Scripture, serve people, and stay accountable." />
-      <Check name="zoomAgreed" label="I agree to join the monthly leader Zoom meeting." />
-      <Check name="privacyAgreed" label="I agree that Read Talk Pray may contact me about this application, and that people who ask to join my group may share their name and phone number with me." />
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-medium">Leader Agreement</legend>
+        <div className="flex items-start gap-3 text-sm leading-relaxed">
+          <input
+            name="leaderAgreement"
+            type="checkbox"
+            required
+            checked={leaderAgreed}
+            onChange={(event) => setLeaderAgreed(event.target.checked)}
+            className="mt-1"
+          />
+          <p>
+            I confirm that I&apos;ve attended a Read Talk Pray group and agree to our{" "}
+            <Link href="/statement-of-faith" className="font-semibold text-[#1976F3] underline" target="_blank">Statement of Faith</Link>
+            ,{" "}
+            <Link href="/leader-commitments" className="font-semibold text-[#1976F3] underline" target="_blank">Leader Commitments</Link>
+            , monthly leader meetings, and being contacted about my application.
+          </p>
+        </div>
+        <p className="text-sm leading-relaxed text-[#666]">
+          Your name, phone number, and photo on this application are stored for review and are visible to admins. If the group is approved, people who ask to join may share their name and phone number with you and with site admins. A private home address is not published on the map. <Link href="/privacy" className="font-semibold text-[#1976F3] underline" target="_blank">Privacy Policy</Link>
+        </p>
+      </fieldset>
       {error ? <p role="alert" className="text-sm text-[#c2410c]">{error}</p> : null}
-      <button type="submit" disabled={submitting} className="inline-flex h-[52px] w-full items-center justify-center rounded-full bg-[var(--sending-blue)] font-semibold text-white disabled:opacity-70">
+      <button type="submit" disabled={!leaderAgreed || submitting} className="inline-flex h-[52px] w-full items-center justify-center rounded-full bg-[var(--sending-blue)] font-semibold text-white disabled:opacity-70">
         {submitting ? "Sending…" : "Submit group"}
       </button>
     </form>
@@ -287,11 +298,3 @@ function Field({
   );
 }
 
-function Check({ name, label }: { name: string; label: string }) {
-  return (
-    <label className="flex items-start gap-3 text-sm leading-relaxed">
-      <input name={name} type="checkbox" required className="mt-1" />
-      <span>{label}</span>
-    </label>
-  );
-}

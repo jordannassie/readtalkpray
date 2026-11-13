@@ -12,7 +12,7 @@ const LEFT = [
   { href: "/#how", label: "How It Works" },
 ];
 
-const START = { href: "/start", label: "Start a Group" };
+const START = { href: "/app/start", label: "Start a Group" };
 
 export function SiteHeader({ activeHref }: { tone?: "solid" | "overlay" | "light"; activeHref?: string }) {
   const [open, setOpen] = useState(false);

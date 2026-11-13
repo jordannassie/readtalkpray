@@ -23,7 +23,7 @@ const PROMISES = ["No Donations", "No Paid Staff", "No Judgement", "Only the Bib
 
 export default async function HomePage() {
   const realGroups = await listApprovedGroups();
-  const groups = [...demoGroups(), ...realGroups];
+  const groups = [...(await demoGroups()), ...realGroups];
   const places = globePlaces(realGroups);
 
   return (

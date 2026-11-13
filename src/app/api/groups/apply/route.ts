@@ -52,6 +52,7 @@ export async function POST(request: Request) {
   if (!phone.ok || !isWebsitePhone(phone.phone)) {
     return NextResponse.json({ ok: false, error: "Enter a valid mobile number." }, { status: 400 });
   }
+  const leaderAgreement = agreed(record.leaderAgreement);
   const agreements = {
     leaderName,
     groupName,
@@ -59,11 +60,11 @@ export async function POST(request: Request) {
     city,
     country,
     meetingLocation,
-    attended: agreed(record.attended),
-    faithAgreed: agreed(record.faithAgreed),
-    commitmentsAgreed: agreed(record.commitmentsAgreed),
-    zoomAgreed: agreed(record.zoomAgreed),
-    privacyAgreed: agreed(record.privacyAgreed),
+    attended: leaderAgreement,
+    faithAgreed: leaderAgreement,
+    commitmentsAgreed: leaderAgreement,
+    zoomAgreed: leaderAgreement,
+    privacyAgreed: leaderAgreement,
   };
   const issue = applicationIssues(agreements);
   if (issue || !meetingDay || !meetingTime) {

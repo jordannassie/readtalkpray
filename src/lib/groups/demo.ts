@@ -1,8 +1,10 @@
+import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import type { PublicGroup } from "./types";
 
 /**
  * Local preview groups. They are not Supabase rows.
- * Turn them off with NEXT_PUBLIC_SHOW_DEMO_GROUPS=false.
+ * The live switch is rtp_settings.show_demo_groups. The env flag is only a fallback.
  */
 const DEMO_GROUPS: PublicGroup[] = [
   {
@@ -151,15 +153,25 @@ const DEMO_GROUPS: PublicGroup[] = [
   },
 ];
 
-export function showDemoGroups() {
-  return process.env.NEXT_PUBLIC_SHOW_DEMO_GROUPS === "true";
+export async function demoGroupsEnabled() {
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await createClient();
+      const { data, error } = await supabase.from("rtp_settings").select("enabled").eq("key", "show_demo_groups").maybeSingle();
+      if (!error && data && typeof data.enabled === "boolean") return data.enabled;
+    } catch {
+      // Fall through to the env flag when the setting table is not available yet.
+    }
+  }
+  if (process.env.NEXT_PUBLIC_SHOW_DEMO_GROUPS === "false") return false;
+  return true;
 }
 
-export function demoGroups(): PublicGroup[] {
-  return showDemoGroups() ? DEMO_GROUPS : [];
+export async function demoGroups(): Promise<PublicGroup[]> {
+  return (await demoGroupsEnabled()) ? DEMO_GROUPS : [];
 }
 
-export function getDemoGroup(id: string): PublicGroup | null {
-  if (!showDemoGroups()) return null;
+export async function getDemoGroup(id: string): Promise<PublicGroup | null> {
+  if (!(await demoGroupsEnabled())) return null;
   return DEMO_GROUPS.find((group) => group.id === id) ?? null;
 }

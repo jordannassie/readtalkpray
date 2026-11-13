@@ -6,6 +6,12 @@ export function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
+export function ownProfilePhotoUrl(userId: string, value: string | null | undefined) {
+  const url = safePhotoUrl(value);
+  if (!url || !isUuid(userId)) return null;
+  return url.includes(`/rtp-photos/profiles/${userId}/`) ? url : null;
+}
+
 export function safePhotoUrl(value: string | null | undefined) {
   if (!value) return null;
   try {

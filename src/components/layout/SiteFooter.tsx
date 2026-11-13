@@ -5,10 +5,10 @@ import { SocialIcons } from "@/components/layout/SocialIcons";
 
 const NAV = [
   { href: "/#groups", label: "Groups" },
-  { href: "/start", label: "Start a Group" },
+  { href: "/app/start", label: "Start a Group" },
   { href: "/#how", label: "How It Works" },
   { href: "/#beliefs", label: "Our Beliefs" },
-  { href: "/start", label: "Contact" },
+  { href: "/app/start", label: "Contact" },
 ];
 
 export function SiteFooter() {

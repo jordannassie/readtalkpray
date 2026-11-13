@@ -3,8 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { ProfilePhoto } from "@/components/account/ProfilePhoto";
 
 type Profile = { user_id: string; full_name: string | null; phone: string | null; photo_url: string | null };
 type Application = { id: string; status: string; review_message: string | null; group_name: string | null; city: string; created_at: string };
@@ -26,6 +25,7 @@ export function AccountDashboard({
   profile,
   email,
   isAdmin,
+  googlePhotoUrl = null,
   applications,
   groups,
   requests,
@@ -36,6 +36,7 @@ export function AccountDashboard({
   profile: Profile;
   email: string;
   isAdmin: boolean;
+  googlePhotoUrl?: string | null;
   applications: Application[];
   groups: Group[];
   requests: RequestRow[];
@@ -55,23 +56,10 @@ export function AccountDashboard({
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    let photoUrl = profile.photo_url;
-    const file = form.get("photo");
-    if (file instanceof File && file.size > 0 && isSupabaseConfigured()) {
-      if (file.size > 2_000_000) {
-        setMessage("Use a photo under 2 MB.");
-        return;
-      }
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `profiles/${profile.user_id}/${crypto.randomUUID()}.${ext}`;
-      const supabase = createClient();
-      const { error } = await supabase.storage.from("rtp-photos").upload(path, file, { contentType: file.type, upsert: false });
-      if (!error) photoUrl = supabase.storage.from("rtp-photos").getPublicUrl(path).data.publicUrl;
-    }
     const response = await fetch("/api/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fullName: form.get("fullName"), phone: form.get("phone"), photoUrl }),
+      body: JSON.stringify({ fullName: form.get("fullName"), phone: form.get("phone"), photoUrl: profile.photo_url }),
     });
     const body = (await response.json()) as { error?: string };
     setMessage(response.ok ? "Account saved." : body.error || "Account changes did not save.");
@@ -140,19 +128,9 @@ export function AccountDashboard({
       {message ? <p className="rounded-2xl bg-white px-4 py-3 text-sm">{message}</p> : null}
 
       {focus === "home" || focus === "all" ? <section className="rounded-[28px] bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-4">
-          {profile.photo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={profile.photo_url} alt="" className="h-16 w-16 rounded-full object-cover" />
-          ) : (
-            <span className="grid h-16 w-16 place-items-center rounded-full bg-[#e7f0ff] text-lg font-semibold text-[#1976F3]">
-              {(profile.full_name || email).slice(0, 1).toUpperCase()}
-            </span>
-          )}
-          <div>
-            <p className="text-xs font-semibold tracking-[0.16em] text-[#1976F3]">APPLICATION STATUS</p>
-            <p className="mt-1 text-2xl font-semibold">{status === "none" ? "No Application" : STATUS_LABEL[status] ?? status}</p>
-          </div>
+        <div>
+          <p className="text-xs font-semibold tracking-[0.16em] text-[#1976F3]">APPLICATION STATUS</p>
+          <p className="mt-1 text-2xl font-semibold">{status === "none" ? "No Application" : STATUS_LABEL[status] ?? status}</p>
         </div>
         {status === "none" ? (
           <p className="mt-4 text-sm leading-relaxed text-[#444]">
@@ -184,7 +162,17 @@ export function AccountDashboard({
         return (
           <section key={group.id} className="rounded-[28px] bg-white p-6 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-2xl font-semibold tracking-tight">{group.name}</h2>
+              <div className="flex items-center gap-3">
+                {profile.photo_url || googlePhotoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={profile.photo_url || googlePhotoUrl || ""} alt="" className="h-14 w-14 rounded-full object-cover" />
+                ) : (
+                  <span className="grid h-14 w-14 place-items-center rounded-full bg-[#e7f0ff] font-semibold text-[#1976F3]">
+                    {(profile.full_name || email).slice(0, 1).toUpperCase()}
+                  </span>
+                )}
+                <h2 className="text-2xl font-semibold tracking-tight">{group.name}</h2>
+              </div>
               <span className="rounded-full bg-[#e7f0ff] px-3 py-1 text-xs font-semibold text-[#1976F3]">{STATUS_LABEL[group.status] ?? group.status}</span>
             </div>
             <p className="mt-2 text-sm text-[#555]">{group.public_location} · {[group.meeting_day, group.meeting_time].filter(Boolean).join(" · ")}</p>
@@ -238,12 +226,21 @@ export function AccountDashboard({
       }) : null}
 
       {focus === "me" || focus === "all" ? <section className="rounded-[28px] bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Account settings</h2>
+        <ProfilePhoto
+          userId={profile.user_id}
+          name={profile.full_name}
+          email={email}
+          photoUrl={profile.photo_url}
+          googlePhotoUrl={googlePhotoUrl}
+          fullName={profile.full_name}
+          phone={profile.phone}
+          size={144}
+        />
+        <h2 className="mt-5 text-center text-xl font-semibold">Account settings</h2>
         <form className="mt-4 space-y-3" onSubmit={(event) => void saveProfile(event)}>
           <label className="block text-sm font-medium">Full name<input name="fullName" defaultValue={profile.full_name ?? ""} className="mt-1 h-11 w-full rounded-2xl border border-[#e6e6e6] px-3" /></label>
           <label className="block text-sm font-medium">Email<input value={email} readOnly className="mt-1 h-11 w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] px-3" /></label>
           <label className="block text-sm font-medium">Phone<input name="phone" defaultValue={profile.phone ?? ""} autoComplete="tel" className="mt-1 h-11 w-full rounded-2xl border border-[#e6e6e6] px-3" /></label>
-          <label className="block text-sm font-medium">Profile photo<input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="mt-2 block text-sm" /></label>
           <button type="submit" className="inline-flex h-12 items-center justify-center rounded-full bg-[#1976F3] px-5 text-sm font-semibold text-white">Save account</button>
         </form>
       </section> : null}
