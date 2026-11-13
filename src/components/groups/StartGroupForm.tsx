@@ -171,7 +171,13 @@ export function StartGroupForm({
         Email
         <input name="email" type="email" readOnly value={email} className={fieldClass} />
       </label>
-      <Field label="Group name" name="groupName" required />
+      <Field
+        label="Group Name"
+        name="groupName"
+        required
+        placeholder="e.g. Nashville Bible Group"
+        hint="Use your city or neighborhood so people can easily find your group."
+      />
       <Field label="Mobile number" name="mobile" type="tel" required autoComplete="tel" />
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label="City" name="city" required onBlur={() => void suggestZone()} />
@@ -303,6 +309,7 @@ function Field({
   autoComplete,
   onBlur,
   defaultValue,
+  hint,
 }: {
   label: string;
   name: string;
@@ -312,11 +319,13 @@ function Field({
   autoComplete?: string;
   onBlur?: () => void;
   defaultValue?: string;
+  hint?: string;
 }) {
   return (
     <label className="block text-sm font-medium">
       {label}
       <input name={name} type={type} required={required} placeholder={placeholder} autoComplete={autoComplete} onBlur={onBlur} defaultValue={defaultValue} className={fieldClass} />
+      {hint ? <span className="mt-1 block text-sm font-normal text-[#666]">{hint}</span> : null}
     </label>
   );
 }

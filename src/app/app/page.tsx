@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AccountDashboard } from "@/components/account/AccountDashboard";
 import { ProfilePhoto } from "@/components/account/ProfilePhoto";
+import { BibleGroupGuide } from "@/components/app/BibleGroupGuide";
 import { loadAccount } from "@/lib/auth/account";
 import { googleAvatar } from "@/lib/auth/profile";
 
@@ -41,6 +42,7 @@ export default async function AppHomePage() {
         details={account.details}
         locationChanges={account.locationChanges}
       />
+      <BibleGroupGuide />
     </div>
   );
 }
