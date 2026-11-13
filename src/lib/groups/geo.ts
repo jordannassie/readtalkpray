@@ -40,6 +40,9 @@ export function distanceKm(
 }
 
 export type FoundPlace = {
+  placeId?: string;
+  name: string;
+  address: string;
   latitude: number;
   longitude: number;
   label: string;
@@ -49,10 +52,13 @@ export type FoundPlace = {
 };
 
 type NominatimPlace = {
+  name?: string;
   lat?: string;
   lon?: string;
   display_name?: string;
   address?: {
+    house_number?: string;
+    road?: string;
     city?: string;
     town?: string;
     village?: string;
@@ -68,13 +74,97 @@ function foundPlace(place: NominatimPlace, query: string): FoundPlace | null {
   const longitude = Number(place.lon);
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
   const address = place.address;
+  const name = place.name || place.display_name?.split(",")[0]?.trim() || query;
+  const street = [address?.house_number, address?.road].filter(Boolean).join(" ");
+  const city = address?.city || address?.town || address?.village || address?.hamlet || address?.suburb || "";
+  const state = address?.state || "";
+  const country = address?.country || "";
+  const formatted = [street, city, state].filter(Boolean).join(", ");
   return {
+    name,
+    address: formatted,
     latitude,
     longitude,
-    label: place.display_name?.split(",").slice(0, 3).join(",").trim() || query,
-    city: address?.city || address?.town || address?.village || address?.hamlet || address?.suburb || "",
-    state: address?.state || "",
-    country: address?.country || "",
+    label: [name, formatted].filter(Boolean).join(", ") || query,
+    city,
+    state,
+    country,
+  };
+}
+
+type GoogleSuggestion = {
+  placePrediction?: {
+    placeId?: string;
+    text?: { text?: string };
+    structuredFormat?: { mainText?: { text?: string }; secondaryText?: { text?: string } };
+  };
+};
+
+type GoogleDetails = {
+  displayName?: { text?: string };
+  formattedAddress?: string;
+  location?: { latitude?: number; longitude?: number };
+  addressComponents?: { longText?: string; shortText?: string; types?: string[] }[];
+};
+
+function googleComponent(parts: GoogleDetails["addressComponents"], type: string) {
+  return parts?.find((part) => part.types?.includes(type))?.longText || "";
+}
+
+export async function googlePlaceSuggestions(query: string, key: string) {
+  const response = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
+    method: "POST",
+    headers: { "content-type": "application/json", "X-Goog-Api-Key": key },
+    body: JSON.stringify({ input: query }),
+  });
+  if (!response.ok) return null;
+  const body = (await response.json()) as { suggestions?: GoogleSuggestion[] };
+  return (body.suggestions ?? []).flatMap((item) => {
+    const prediction = item.placePrediction;
+    if (!prediction?.placeId) return [];
+    const name = prediction.structuredFormat?.mainText?.text || prediction.text?.text || query;
+    const address = prediction.structuredFormat?.secondaryText?.text || "";
+    const place: FoundPlace = {
+      placeId: prediction.placeId,
+      name,
+      address,
+      latitude: Number.NaN,
+      longitude: Number.NaN,
+      label: [name, address].filter(Boolean).join(", "),
+      city: "",
+      state: "",
+      country: "",
+    };
+    return [place];
+  });
+}
+
+export async function googlePlaceDetails(placeId: string, key: string): Promise<FoundPlace | null> {
+  const response = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`, {
+    headers: {
+      "X-Goog-Api-Key": key,
+      "X-Goog-FieldMask": "displayName,formattedAddress,location,addressComponents",
+    },
+  });
+  if (!response.ok) return null;
+  const body = (await response.json()) as GoogleDetails;
+  const latitude = Number(body.location?.latitude);
+  const longitude = Number(body.location?.longitude);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  const name = body.displayName?.text || "";
+  const city = googleComponent(body.addressComponents, "locality") || googleComponent(body.addressComponents, "postal_town");
+  const state = googleComponent(body.addressComponents, "administrative_area_level_1");
+  const country = googleComponent(body.addressComponents, "country");
+  return {
+    placeId,
+    name,
+    address: body.formattedAddress || "",
+    latitude,
+    longitude,
+    label: [name, body.formattedAddress].filter(Boolean).join(", "),
+    city,
+    state,
+    country,
   };
 }
 
