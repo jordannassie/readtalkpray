@@ -29,6 +29,7 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const map = pathname.startsWith("/app/groups");
+  const wide = pathname.startsWith("/app/start");
   const initial = (name || email || "You").slice(0, 1).toUpperCase();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -49,7 +50,7 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-[#f4f7fb] text-[#1c1c1c]">
       <header className="sticky top-0 z-30 border-b border-black/5 bg-white">
-        <div className="relative mx-auto flex h-16 max-w-lg items-center justify-end px-4 lg:max-w-5xl">
+        <div className={`relative mx-auto flex h-16 items-center justify-end px-4 sm:px-6 ${wide ? "max-w-[1280px]" : "max-w-lg lg:max-w-5xl"}`}>
           <Link href="/app" aria-label="Read Talk Pray" className="absolute left-1/2 -translate-x-1/2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={BLACK_LOGO} alt="Read Talk Pray" width={1254} height={1254} className="h-11 w-auto object-contain sm:h-12" />
@@ -101,9 +102,9 @@ export function AppShell({
           </div>
         </div>
       </header>
-      <main className={map ? "w-full pb-24" : "mx-auto w-full max-w-lg px-4 pb-28 pt-5 lg:max-w-3xl"}>{children}</main>
+      <main className={map ? "w-full pb-24" : wide ? "mx-auto w-full max-w-[1280px] px-4 pb-28 pt-5 sm:px-6" : "mx-auto w-full max-w-lg px-4 pb-28 pt-5 lg:max-w-3xl"}>{children}</main>
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white pb-[env(safe-area-inset-bottom)]" aria-label="App">
-        <div className="mx-auto grid h-16 max-w-lg grid-cols-4 lg:max-w-5xl">
+        <div className={`mx-auto grid h-16 grid-cols-4 ${wide ? "max-w-[1280px]" : "max-w-lg lg:max-w-5xl"}`}>
           {TABS.map((tab) => {
             const active = tab.href === "/app" ? pathname === "/app" : pathname.startsWith(tab.href);
             const Icon = tab.icon;

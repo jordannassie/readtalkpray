@@ -284,8 +284,8 @@ export function StartGroupForm({
   };
 
   return (
-    <div className="lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)] lg:items-start lg:gap-6">
-    <form ref={formRef} onSubmit={onSubmit} className="space-y-4 rounded-[28px] bg-white p-6 shadow-sm sm:p-8" noValidate>
+    <div className="lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start lg:gap-8">
+    <form ref={formRef} onSubmit={onSubmit} className="min-w-0 space-y-4 rounded-[28px] bg-white p-6 shadow-sm sm:p-8" noValidate>
       {application?.status === "changes_requested" ? (
         <p className="rounded-2xl bg-[#fff7ed] px-4 py-3 text-sm text-[#9a3412]">{application.review_message || "A reviewer asked for changes."}</p>
       ) : null}
@@ -455,7 +455,7 @@ export function StartGroupForm({
         {submitting ? "Sending…" : "Submit group"}
       </button>
     </form>
-    <div className="mt-4 lg:sticky lg:top-20 lg:mt-0">
+    <div className="mt-4 min-w-0 lg:sticky lg:top-20 lg:mt-0">
       <details className="rounded-[28px] bg-white p-4 shadow-sm lg:hidden">
         <summary className="cursor-pointer text-base font-semibold">Preview Your Group</summary>
         <GroupListingPreview group={previewGroup} />
@@ -470,10 +470,10 @@ export function StartGroupForm({
 
 function GroupListingPreview({ group }: { group: PublicGroup }) {
   return (
-    <div>
+    <div className="w-full">
       <h2 className="text-2xl font-semibold tracking-tight">Preview Your Bible Group</h2>
       <p className="mt-1 text-sm text-[#667085]">This is how people will see your group once it&apos;s approved.</p>
-      <div className="mt-4 rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
+      <div className="mt-4 w-full rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
         <JoinGroupForm group={group} variant="panel" preview />
       </div>
     </div>
