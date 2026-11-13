@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useRef, useState } from "react";
 import { ArrowRight, Calendar, Check, MapPin, Phone, User, Users } from "lucide-react";
+import { LocationPreview } from "@/components/groups/LocationPreview";
 import { isWebsitePhone } from "@/lib/leads/website";
 import { meetingWhen, type PublicGroup } from "@/lib/groups/types";
 
@@ -13,10 +14,12 @@ export function JoinGroupForm({
   group,
   variant = "page",
   onFindAnother,
+  preview = false,
 }: {
   group: PublicGroup;
   variant?: "page" | "panel";
   onFindAnother?: () => void;
+  preview?: boolean;
 }) {
   const [firstName, setFirstName] = useState("");
   const [mobile, setMobile] = useState("");
@@ -30,7 +33,7 @@ export function JoinGroupForm({
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (lock.current || done) return;
+    if (preview || lock.current || done) return;
     const name = firstName.trim();
     const phone = mobile.trim();
     if (!name || !phone) {
@@ -100,8 +103,8 @@ export function JoinGroupForm({
         </div>
         <div className="relative shrink-0">
           <LeaderFace group={group} size={variant === "page" ? 56 : 72} />
-          {group.is_demo ? (
-            <span className="absolute -top-1 -right-1 rounded-full bg-[#e7f0ff] px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-[#1976F3] uppercase">Demo</span>
+          {preview || group.is_demo ? (
+            <span className="absolute -top-1 -right-1 rounded-full bg-[#e7f0ff] px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-[#1976F3] uppercase">{preview ? "Preview" : "Demo"}</span>
           ) : null}
         </div>
       </div>
@@ -120,6 +123,11 @@ export function JoinGroupForm({
       ) : null}
       {!home && group.address ? <p className="mt-2 text-sm text-[#333]">{group.address}</p> : null}
       {group.description ? <p className="mt-3 text-sm leading-relaxed text-[#52627a]">{group.description}</p> : null}
+      {preview && Number.isFinite(group.latitude) && Number.isFinite(group.longitude) && (group.latitude !== 0 || group.longitude !== 0) ? (
+        <div className="mt-4 overflow-hidden rounded-2xl border border-[#eee]">
+          <LocationPreview latitude={group.latitude} longitude={group.longitude} photoUrl={group.leader_photo_url} name={group.leader_name} />
+        </div>
+      ) : null}
 
       <div className="mt-5 border-t border-[#e6ebf2] pt-5">
           <form className="space-y-3" onSubmit={onSubmit} noValidate>
@@ -137,6 +145,7 @@ export function JoinGroupForm({
                   placeholder="First Name"
                   value={firstName}
                   onChange={(event) => setFirstName(event.target.value)}
+                  disabled={preview}
                   className={fieldClass}
                 />
               </span>
@@ -155,14 +164,15 @@ export function JoinGroupForm({
                   placeholder="Mobile Number"
                   value={mobile}
                   onChange={(event) => setMobile(event.target.value)}
+                  disabled={preview}
                   className={fieldClass}
                 />
               </span>
             </label>
             {error ? <p role="alert" className="text-sm text-[#c2410c]">{error}</p> : null}
             <button
-              type="submit"
-              disabled={submitting}
+              type={preview ? "button" : "submit"}
+              disabled={preview || submitting}
               aria-busy={submitting}
               className="inline-flex h-14 min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[#16A34A] text-base font-bold text-white disabled:opacity-70"
             >

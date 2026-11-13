@@ -4,7 +4,10 @@ import { FormEvent, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { ProfilePhoto } from "@/components/account/ProfilePhoto";
-import { LocationPreview } from "@/components/groups/LocationPreview";
+import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
+import { publicLocationLabel } from "@/lib/groups/geo";
+import { displayMeetingTime } from "@/lib/groups/schedule";
+import type { PublicGroup } from "@/lib/groups/types";
 import { BELIEFS } from "@/components/home/Beliefs";
 import { isWebsitePhone } from "@/lib/leads/website";
 import { APPLICATION_PRIVACY, LEADER_COMMITMENTS, LEADER_COMMITMENT_SCRIPTURE } from "@/lib/groups/commitments";
@@ -216,7 +219,28 @@ export function StartGroupForm({
     );
   }
 
+  const previewGroup: PublicGroup = {
+    id: "preview",
+    name: groupName.trim() || "Your Bible Group",
+    description: description.trim() || null,
+    city,
+    state: stateName || null,
+    country,
+    location_type: locationType === "home" || locationType === "other" ? locationType : "public_venue",
+    public_location: locationType === "home"
+      ? publicLocationLabel({ locationType, meetingLocation: "", city: city.trim() || "Your city", state: stateName.trim() })
+      : meetingLocation.trim() || [city.trim(), stateName.trim()].filter(Boolean).join(", ") || "Location to be announced",
+    address: null,
+    latitude: preview?.latitude ?? 0,
+    longitude: preview?.longitude ?? 0,
+    meeting_day: meetingDay,
+    meeting_time: displayMeetingTime(meetingTime),
+    leader_name: leaderName.trim() || "Group leader",
+    leader_photo_url: leaderPhotoUrl || googlePhotoUrl,
+  };
+
   return (
+    <div className="lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)] lg:items-start lg:gap-6">
     <form ref={formRef} onSubmit={onSubmit} className="space-y-4 rounded-[28px] bg-white p-6 shadow-sm sm:p-8" noValidate>
       {application?.status === "changes_requested" ? (
         <p className="rounded-2xl bg-[#fff7ed] px-4 py-3 text-sm text-[#9a3412]">{application.review_message || "A reviewer asked for changes."}</p>
@@ -295,9 +319,6 @@ export function StartGroupForm({
         ) : null}
       </div>
       <p className="-mt-2 text-sm text-[#666]">For a home group, the preview and public map show the city area. The street address stays private until an admin approves the group.</p>
-      {preview ? (
-        <LocationPreview latitude={preview.latitude} longitude={preview.longitude} photoUrl={leaderPhotoUrl || googlePhotoUrl} name={leaderName || email} />
-      ) : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm font-medium">
           Meeting day
@@ -388,6 +409,28 @@ export function StartGroupForm({
         {submitting ? "Sending…" : "Submit group"}
       </button>
     </form>
+    <div className="mt-4 lg:sticky lg:top-20 lg:mt-0">
+      <details className="rounded-[28px] bg-white p-4 shadow-sm lg:hidden">
+        <summary className="cursor-pointer text-base font-semibold">Preview Your Group</summary>
+        <GroupListingPreview group={previewGroup} />
+      </details>
+      <div className="hidden lg:block">
+        <GroupListingPreview group={previewGroup} />
+      </div>
+    </div>
+    </div>
+  );
+}
+
+function GroupListingPreview({ group }: { group: PublicGroup }) {
+  return (
+    <div>
+      <h2 className="text-2xl font-semibold tracking-tight">Preview Your Bible Group</h2>
+      <p className="mt-1 text-sm text-[#667085]">This is how people will see your group once it&apos;s approved.</p>
+      <div className="mt-4 rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
+        <JoinGroupForm group={group} variant="panel" preview />
+      </div>
+    </div>
   );
 }
 
