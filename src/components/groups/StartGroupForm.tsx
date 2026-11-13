@@ -4,12 +4,15 @@ import { FormEvent, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { ProfilePhoto } from "@/components/account/ProfilePhoto";
+import { LocationPreview } from "@/components/groups/LocationPreview";
 import { BELIEFS } from "@/components/home/Beliefs";
 import { isWebsitePhone } from "@/lib/leads/website";
 import { APPLICATION_PRIVACY, LEADER_COMMITMENTS, LEADER_COMMITMENT_SCRIPTURE } from "@/lib/groups/commitments";
 import { MEETING_DAYS, MEETING_DURATIONS } from "@/lib/groups/schedule";
 import { LAUNCH_TIME_ZONE, isIanaTimeZone } from "@/lib/groups/sunday";
 import { LOCATION_TYPES } from "@/lib/groups/types";
+
+type FoundPlace = { latitude: number; longitude: number; label: string; city: string; state: string; country: string };
 
 const fieldClass =
   "mt-2 h-[52px] w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] px-4 text-sm outline-none focus:border-[var(--sending-blue)] focus:bg-white";
@@ -50,8 +53,21 @@ export function StartGroupForm({
 }) {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [leaderPhotoUrl, setLeaderPhotoUrl] = useState(photoUrl);
+  const [leaderName, setLeaderName] = useState(name);
+  const [groupName, setGroupName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [city, setCity] = useState("");
+  const [stateName, setStateName] = useState("");
+  const [country, setCountry] = useState("");
+  const [locationType, setLocationType] = useState("public_venue");
+  const [meetingLocation, setMeetingLocation] = useState("");
+  const [suggestions, setSuggestions] = useState<FoundPlace[]>([]);
+  const [preview, setPreview] = useState<FoundPlace | null>(null);
+  const [description, setDescription] = useState("");
+  const nameEdited = useRef(false);
   const [timeZone, setTimeZone] = useState(LAUNCH_TIME_ZONE);
   const [meetingDay, setMeetingDay] = useState("Sunday");
   const [meetingTime, setMeetingTime] = useState("09:00");
@@ -65,6 +81,19 @@ export function StartGroupForm({
     const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (isIanaTimeZone(detected)) setTimeZone(detected);
   }, []);
+
+  useEffect(() => {
+    if (!nameEdited.current && name) setLeaderName(name);
+  }, [name]);
+
+  function clearField(key: string) {
+    setFieldErrors((current) => {
+      if (!current[key]) return current;
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  }
 
   async function suggestZone() {
     if (zoneTouched.current || !formRef.current) return;
@@ -82,13 +111,50 @@ export function StartGroupForm({
     }
   }
 
+  async function searchLocation(query: string) {
+    if (query.trim().length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    const response = await fetch(`/api/places?suggest=1&q=${encodeURIComponent(query.trim())}`);
+    const body = (await response.json()) as { places?: FoundPlace[] };
+    setSuggestions(body.places ?? []);
+  }
+
+  async function choosePlace(place: FoundPlace) {
+    setMeetingLocation(place.label);
+    if (place.city) setCity(place.city);
+    if (place.state) setStateName(place.state);
+    if (place.country) setCountry(place.country);
+    clearField("meetingLocation");
+    clearField("city");
+    clearField("country");
+    setSuggestions([]);
+    if (locationType === "home") {
+      const cityQuery = [place.city, place.state, place.country].filter(Boolean).join(", ");
+      const response = await fetch(`/api/places?q=${encodeURIComponent(cityQuery)}`);
+      const body = (await response.json()) as { place?: { latitude: number; longitude: number; label: string } };
+      setPreview(body.place ? { ...place, latitude: body.place.latitude, longitude: body.place.longitude, label: body.place.label } : null);
+      return;
+    }
+    setPreview(place);
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (lock.current) return;
-    const form = new FormData(event.currentTarget);
-    const mobile = String(form.get("mobile") ?? "");
-    if (!isWebsitePhone(mobile)) {
-      setError("Enter a valid mobile number, including the country code outside the US.");
+    const nextErrors: Record<string, string> = {};
+    if (!leaderName.trim()) nextErrors.leaderName = "Enter your name.";
+    if (!groupName.trim()) nextErrors.groupName = "Enter a group name.";
+    if (!email.trim()) nextErrors.email = "Email is missing from this sign-in.";
+    if (!city.trim()) nextErrors.city = "Enter a city.";
+    if (!country.trim()) nextErrors.country = "Enter a country.";
+    if (!meetingLocation.trim()) nextErrors.meetingLocation = "Enter a meeting location.";
+    if (!isWebsitePhone(mobile)) nextErrors.mobile = "Enter a valid mobile number.";
+    if (!leaderAgreed) nextErrors.leaderAgreement = "Agreement to the statement of faith and leader commitments is required.";
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      setError("");
       return;
     }
     lock.current = true;
@@ -99,36 +165,39 @@ export function StartGroupForm({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          leaderName: form.get("name"),
-          groupName: form.get("groupName"),
+          leaderName: leaderName.trim(),
+          groupName: groupName.trim(),
           email,
-          mobile,
-          city: form.get("city"),
-          state: form.get("state"),
-          country: form.get("country"),
-          locationType: form.get("locationType"),
-          meetingLocation: form.get("meetingLocation"),
+          mobile: mobile.trim(),
+          city: city.trim(),
+          state: stateName.trim(),
+          country: country.trim(),
+          locationType,
+          meetingLocation: meetingLocation.trim(),
+          latitude: locationType === "home" ? preview?.latitude : preview?.latitude,
+          longitude: locationType === "home" ? preview?.longitude : preview?.longitude,
           meetingDay,
           meetingTime,
           duration,
           timezone: timeZone,
-          description: form.get("description"),
+          description: description.trim(),
           leaderPhotoUrl,
           leaderAgreement: leaderAgreed,
         }),
       });
-      const body = (await response.json()) as { ok?: boolean; error?: string };
+      const body = (await response.json()) as { ok?: boolean; error?: string; fields?: Record<string, string> };
       if (!response.ok || !body.ok) {
-        setError(body.error || "Something went wrong. Please try again.");
+        setFieldErrors(body.fields ?? {});
+        setError(body.fields ? "" : body.error || "The application was not saved.");
         lock.current = false;
         setSubmitting(false);
         return;
       }
-      router.push("/app");
+      router.push("/app?submitted=1");
       router.refresh();
       return;
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Something went wrong. Please try again.");
+      setError(caught instanceof Error ? caught.message : "The application was not saved.");
       lock.current = false;
       setSubmitting(false);
     }
@@ -166,10 +235,11 @@ export function StartGroupForm({
         size={144}
         onSaved={setLeaderPhotoUrl}
       />
-      <Field label="Your name" name="name" required autoComplete="name" defaultValue={name} />
+      <Field label="Your name" name="name" required autoComplete="name" value={leaderName} error={fieldErrors.leaderName} onChange={(value) => { nameEdited.current = true; setLeaderName(value); clearField("leaderName"); }} />
       <label className="block text-sm font-medium">
         Email
         <input name="email" type="email" readOnly value={email} className={fieldClass} />
+        {fieldErrors.email ? <span className="mt-1 block text-sm font-normal text-[#c2410c]">{fieldErrors.email}</span> : null}
       </label>
       <Field
         label="Group Name"
@@ -177,16 +247,19 @@ export function StartGroupForm({
         required
         placeholder="e.g. Nashville Bible Group"
         hint="Use your city or neighborhood so people can easily find your group."
+        value={groupName}
+        error={fieldErrors.groupName}
+        onChange={(value) => { setGroupName(value); clearField("groupName"); }}
       />
-      <Field label="Mobile number" name="mobile" type="tel" required autoComplete="tel" />
+      <Field label="Mobile number" name="mobile" type="tel" required autoComplete="tel" value={mobile} error={fieldErrors.mobile} onChange={(value) => { setMobile(value); clearField("mobile"); }} />
       <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="City" name="city" required onBlur={() => void suggestZone()} />
-        <Field label="State" name="state" />
-        <Field label="Country" name="country" required placeholder="United States" />
+        <Field label="City" name="city" required value={city} error={fieldErrors.city} onChange={(value) => { setCity(value); clearField("city"); }} onBlur={() => void suggestZone()} />
+        <Field label="State" name="state" value={stateName} onChange={setStateName} />
+        <Field label="Country" name="country" required placeholder="United States" value={country} error={fieldErrors.country} onChange={(value) => { setCountry(value); clearField("country"); }} />
       </div>
       <label className="block text-sm font-medium">
         Location type
-        <select name="locationType" required className={fieldClass} defaultValue="public_venue">
+        <select name="locationType" required className={fieldClass} value={locationType} onChange={(event) => setLocationType(event.target.value)}>
           {LOCATION_TYPES.map((type) => (
             <option key={type} value={type}>
               {type === "public_venue" ? "Public place" : type === "home" ? "Home" : "Other"}
@@ -194,8 +267,37 @@ export function StartGroupForm({
           ))}
         </select>
       </label>
-      <Field label="Meeting location" name="meetingLocation" required placeholder="Coffee shop, workplace, or home" />
-      <p className="-mt-2 text-sm text-[#666]">For a home group, the public map shows the city area. The street address stays private until you confirm someone is coming.</p>
+      <div className="relative">
+        <Field
+          label="Meeting location"
+          name="meetingLocation"
+          required
+          placeholder="Search a public place or address"
+          value={meetingLocation}
+          error={fieldErrors.meetingLocation}
+          onChange={(value) => {
+            setMeetingLocation(value);
+            setPreview(null);
+            clearField("meetingLocation");
+            void searchLocation(value);
+          }}
+        />
+        {suggestions.length > 0 ? (
+          <ul className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-2xl border border-[#e6e6e6] bg-white shadow-lg">
+            {suggestions.map((place) => (
+              <li key={`${place.latitude}-${place.longitude}-${place.label}`}>
+                <button type="button" className="block w-full px-4 py-3 text-left text-sm hover:bg-[#f4f7fb]" onClick={() => void choosePlace(place)}>
+                  {place.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+      <p className="-mt-2 text-sm text-[#666]">For a home group, the preview and public map show the city area. The street address stays private until an admin approves the group.</p>
+      {preview ? (
+        <LocationPreview latitude={preview.latitude} longitude={preview.longitude} photoUrl={leaderPhotoUrl || googlePhotoUrl} name={leaderName || email} />
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm font-medium">
           Meeting day
@@ -241,7 +343,7 @@ export function StartGroupForm({
       </label>
       <label className="block text-sm font-medium">
         Group description
-        <textarea name="description" rows={4} className="mt-2 w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] px-4 py-3 text-sm outline-none focus:border-[var(--sending-blue)] focus:bg-white" placeholder="Who the group is for, and what you read together." />
+        <textarea name="description" rows={4} value={description} onChange={(event) => setDescription(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] px-4 py-3 text-sm outline-none focus:border-[var(--sending-blue)] focus:bg-white" placeholder="Who the group is for, and what you read together." />
       </label>
       <fieldset className="space-y-3">
         <legend className="text-base font-semibold">Leader Agreement</legend>
@@ -274,11 +376,12 @@ export function StartGroupForm({
             type="checkbox"
             required
             checked={leaderAgreed}
-            onChange={(event) => setLeaderAgreed(event.target.checked)}
+            onChange={(event) => { setLeaderAgreed(event.target.checked); clearField("leaderAgreement"); }}
             className="mt-1"
           />
           <span>I have read and agree to the Statement of Faith and Leader Commitments.</span>
         </label>
+        {fieldErrors.leaderAgreement ? <p className="text-sm text-[#c2410c]">{fieldErrors.leaderAgreement}</p> : null}
       </fieldset>
       {error ? <p role="alert" className="text-sm text-[#c2410c]">{error}</p> : null}
       <button type="submit" disabled={!leaderAgreed || submitting} className="inline-flex h-[52px] w-full items-center justify-center rounded-full bg-[var(--sending-blue)] font-semibold text-white disabled:opacity-70">
@@ -308,8 +411,10 @@ function Field({
   placeholder,
   autoComplete,
   onBlur,
-  defaultValue,
+  value,
+  onChange,
   hint,
+  error,
 }: {
   label: string;
   name: string;
@@ -318,13 +423,16 @@ function Field({
   placeholder?: string;
   autoComplete?: string;
   onBlur?: () => void;
-  defaultValue?: string;
+  value: string;
+  onChange: (value: string) => void;
   hint?: string;
+  error?: string;
 }) {
   return (
     <label className="block text-sm font-medium">
       {label}
-      <input name={name} type={type} required={required} placeholder={placeholder} autoComplete={autoComplete} onBlur={onBlur} defaultValue={defaultValue} className={fieldClass} />
+      <input name={name} type={type} required={required} placeholder={placeholder} autoComplete={autoComplete} onBlur={onBlur} value={value} onChange={(event) => onChange(event.target.value)} className={`${fieldClass} ${error ? "border-[#c2410c]" : ""}`} />
+      {error ? <span className="mt-1 block text-sm font-normal text-[#c2410c]">{error}</span> : null}
       {hint ? <span className="mt-1 block text-sm font-normal text-[#666]">{hint}</span> : null}
     </label>
   );

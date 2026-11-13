@@ -39,6 +39,62 @@ export function distanceKm(
   return earth * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+export type FoundPlace = {
+  latitude: number;
+  longitude: number;
+  label: string;
+  city: string;
+  state: string;
+  country: string;
+};
+
+type NominatimPlace = {
+  lat?: string;
+  lon?: string;
+  display_name?: string;
+  address?: {
+    city?: string;
+    town?: string;
+    village?: string;
+    hamlet?: string;
+    suburb?: string;
+    state?: string;
+    country?: string;
+  };
+};
+
+function foundPlace(place: NominatimPlace, query: string): FoundPlace | null {
+  const latitude = Number(place.lat);
+  const longitude = Number(place.lon);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  const address = place.address;
+  return {
+    latitude,
+    longitude,
+    label: place.display_name?.split(",").slice(0, 3).join(",").trim() || query,
+    city: address?.city || address?.town || address?.village || address?.hamlet || address?.suburb || "",
+    state: address?.state || "",
+    country: address?.country || "",
+  };
+}
+
+export async function searchPlaces(query: string) {
+  const url = new URL("https://nominatim.openstreetmap.org/search");
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("addressdetails", "1");
+  url.searchParams.set("limit", "5");
+  url.searchParams.set("q", query);
+  const response = await fetch(url, {
+    headers: {
+      accept: "application/json",
+      "user-agent": "ReadTalkPray/1.0 (group finder)",
+    },
+  });
+  if (!response.ok) return [];
+  const body = (await response.json()) as NominatimPlace[];
+  return body.map((place) => foundPlace(place, query)).filter((place): place is FoundPlace => Boolean(place));
+}
+
 export async function geocodePlace(query: string) {
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("format", "jsonv2");

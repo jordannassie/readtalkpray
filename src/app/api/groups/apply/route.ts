@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { storedLeadName } from "@/lib/leads/csv";
-import { parseEmail, cleanLeadPhone } from "@/lib/leads/phone";
+import { cleanLeadPhone } from "@/lib/leads/phone";
 import { startLeadRows } from "@/lib/leads/start";
 import { LEADS_TABLE } from "@/lib/leads/table";
 import { RTP_UPSERT_OPTIONS } from "@/lib/leads/types";
@@ -9,12 +9,19 @@ import { geocodePlace } from "@/lib/groups/geo";
 import { cleanText, safePhotoUrl } from "@/lib/groups/text";
 import { MEETING_DAYS, MEETING_DURATIONS, displayMeetingTime } from "@/lib/groups/schedule";
 import { isIanaTimeZone, LAUNCH_TIME_ZONE } from "@/lib/groups/sunday";
-import { applicationIssues } from "@/lib/groups/application";
+import { applicationFieldIssues } from "@/lib/groups/application";
 import { LOCATION_TYPES, type LocationType } from "@/lib/groups/types";
 import { createClient } from "@/lib/supabase/server";
 
 function agreed(value: unknown) {
   return value === true;
+}
+
+function safeDbMessage(message: string) {
+  if (/row-level security|policy/i.test(message)) {
+    return "The application was not saved because a database rule rejected it. It was not marked as submitted.";
+  }
+  return message.replace(/https?:\/\/\S+/g, "").slice(0, 180) || "The application was not saved.";
 }
 
 export async function POST(request: Request) {
@@ -37,52 +44,53 @@ export async function POST(request: Request) {
   const duration = MEETING_DURATIONS.includes(requestedDuration as (typeof MEETING_DURATIONS)[number]) ? requestedDuration : "1 hour";
   const requestedZone = cleanText(String(record.timezone ?? ""), 80);
   const timezone = isIanaTimeZone(requestedZone) ? requestedZone : LAUNCH_TIME_ZONE;
-  if (!MEETING_DAYS.includes(meetingDay as (typeof MEETING_DAYS)[number]) || !meetingTime) {
-    return NextResponse.json({ ok: false, error: "Choose a meeting day and time." }, { status: 400 });
-  }
   const description = cleanText(String(record.description ?? ""), 600);
   const locationType = String(record.locationType ?? "") as LocationType;
-  const email = parseEmail(String(record.email ?? "")).email;
   const phone = cleanLeadPhone(String(record.mobile ?? ""));
   const leaderPhotoUrl = safePhotoUrl(typeof record.leaderPhotoUrl === "string" ? record.leaderPhotoUrl : null);
-
-  if (!LOCATION_TYPES.includes(locationType)) {
-    return NextResponse.json({ ok: false, error: "Choose a location type." }, { status: 400 });
-  }
-  if (!phone.ok || !isWebsitePhone(phone.phone)) {
-    return NextResponse.json({ ok: false, error: "Enter a valid mobile number." }, { status: 400 });
-  }
-  const leaderAgreement = agreed(record.leaderAgreement);
-  const agreements = {
-    leaderName,
-    groupName,
-    email: email ?? "",
-    city,
-    country,
-    meetingLocation,
-    attended: false,
-    faithAgreed: leaderAgreement,
-    commitmentsAgreed: leaderAgreement,
-    zoomAgreed: false,
-    privacyAgreed: false,
-  };
-  const issue = applicationIssues(agreements);
-  if (issue || !meetingDay || !meetingTime) {
-    return NextResponse.json({ ok: false, error: issue || "Choose a meeting day and time." }, { status: 400 });
-  }
-
-  const place = [meetingLocation, city, state, country].filter(Boolean).join(", ");
-  const cityPlace = [city, state, country].filter(Boolean).join(", ");
-  const exact = locationType === "home" ? await geocodePlace(place) : await geocodePlace(place);
-  const cityPoint = locationType === "home" ? await geocodePlace(cityPlace) : exact;
-  const pin = locationType === "home" ? cityPoint ?? exact : exact ?? cityPoint;
-
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   const user = auth.user;
   if (!user?.email) {
     return NextResponse.json({ ok: false, error: "Sign in before starting a group." }, { status: 401 });
   }
+  const fields: Record<string, string> = {
+    ...applicationFieldIssues({
+      leaderName,
+      groupName,
+      email: user.email,
+      city,
+      country,
+      meetingLocation,
+      attended: false,
+      faithAgreed: agreed(record.leaderAgreement),
+      commitmentsAgreed: agreed(record.leaderAgreement),
+      zoomAgreed: false,
+      privacyAgreed: false,
+    }),
+  };
+  if (!LOCATION_TYPES.includes(locationType)) fields.locationType = "Choose a location type.";
+  if (!phone.ok || !isWebsitePhone(phone.phone)) fields.mobile = "Enter a valid mobile number.";
+  if (!MEETING_DAYS.includes(meetingDay as (typeof MEETING_DAYS)[number]) || !meetingTime) {
+    fields.meetingTime = "Choose a meeting day and time.";
+  }
+  if (Object.keys(fields).length > 0) {
+    return NextResponse.json({ ok: false, error: Object.values(fields)[0], fields }, { status: 400 });
+  }
+  if (!phone.ok) {
+    return NextResponse.json({ ok: false, error: "Enter a valid mobile number.", fields: { mobile: "Enter a valid mobile number." } }, { status: 400 });
+  }
+
+  const place = [meetingLocation, city, state, country].filter(Boolean).join(", ");
+  const cityPlace = [city, state, country].filter(Boolean).join(", ");
+  const exact = locationType === "home" ? await geocodePlace(place) : await geocodePlace(place);
+  const cityPoint = locationType === "home" ? await geocodePlace(cityPlace) : exact;
+  const clientLatitude = Number(record.latitude);
+  const clientLongitude = Number(record.longitude);
+  const hasClientPoint = Number.isFinite(clientLatitude) && Number.isFinite(clientLongitude);
+  const pin = locationType === "home" ? cityPoint ?? exact : hasClientPoint ? { latitude: clientLatitude, longitude: clientLongitude } : exact ?? cityPoint;
+  const exactPoint = locationType === "home" ? exact : pin;
+
   const application = {
     leader_name: leaderName,
     group_name: groupName,
@@ -101,14 +109,14 @@ export async function POST(request: Request) {
     leader_photo_url: leaderPhotoUrl,
     latitude: pin?.latitude ?? null,
     longitude: pin?.longitude ?? null,
-    exact_latitude: locationType === "home" ? exact?.latitude ?? null : pin?.latitude ?? null,
-    exact_longitude: locationType === "home" ? exact?.longitude ?? null : pin?.longitude ?? null,
+    exact_latitude: exactPoint?.latitude ?? null,
+    exact_longitude: exactPoint?.longitude ?? null,
     user_id: user.id,
-    attended: agreements.attended,
-    faith_agreed: agreements.faithAgreed,
-    commitments_agreed: agreements.commitmentsAgreed,
-    zoom_agreed: agreements.zoomAgreed,
-    privacy_agreed: agreements.privacyAgreed,
+    attended: false,
+    faith_agreed: true,
+    commitments_agreed: true,
+    zoom_agreed: false,
+    privacy_agreed: false,
     agreement_accepted_at: new Date().toISOString(),
     status: "pending",
   };
@@ -125,43 +133,32 @@ export async function POST(request: Request) {
   }
   if (existing) {
     const { error: updateError } = await supabase.from("rtp_group_applications").update(application).eq("id", existing.id);
-    if (updateError) return NextResponse.json({ ok: false }, { status: 500 });
+    if (updateError) return NextResponse.json({ ok: false, error: safeDbMessage(updateError.message) }, { status: 500 });
     return NextResponse.json({ ok: true, status: "pending" });
   }
   let payload: Record<string, unknown> = application;
   let error: { message: string } | null = null;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
     const result = await supabase.from("rtp_group_applications").insert(payload);
     error = result.error;
     if (!error) break;
-    if (/timezone/i.test(error.message) && "timezone" in payload) {
-      const { timezone: _timezone, ...rest } = payload;
-      payload = rest;
-      continue;
-    }
-    if (/duplicate|unique/i.test(error.message)) {
-      return NextResponse.json({ ok: true, status: "pending" });
-    }
-    if (/agreement_accepted_at/i.test(error.message) && "agreement_accepted_at" in payload) {
-      const { agreement_accepted_at: _accepted, ...rest } = payload;
-      payload = rest;
-      continue;
-    }
-    if (/duration/i.test(error.message) && "duration" in payload) {
-      const { duration: _duration, ...rest } = payload;
+    const missing = error.message.match(/Could not find the '([a-z_]+)' column/i);
+    if (missing && missing[1] in payload) {
+      const rest = { ...payload };
+      delete rest[missing[1]];
       payload = rest;
       continue;
     }
     break;
   }
-  if (error) return NextResponse.json({ ok: false }, { status: 500 });
+  if (error) return NextResponse.json({ ok: false, error: safeDbMessage(error.message) }, { status: 500 });
 
   const lead = startLeadRows([{ name: leaderName, mobile: phone.phone, location: cityPlace }])[0];
   if (lead) {
     await supabase.from(LEADS_TABLE).upsert(
       [{
         ...lead,
-        email,
+        email: user.email,
         full_name: storedLeadName(leaderName, ""),
         city,
       }],
