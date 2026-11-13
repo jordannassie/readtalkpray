@@ -82,13 +82,13 @@ export function StartGroupForm({
   const searchTimer = useRef<number | null>(null);
   const searchSeq = useRef(0);
   const [preview, setPreview] = useState<FoundPlace | null>(null);
+  const [selectedPlace, setSelectedPlace] = useState<FoundPlace | null>(null);
   const [description, setDescription] = useState("");
   const nameEdited = useRef(false);
   const [timeZone, setTimeZone] = useState(LAUNCH_TIME_ZONE);
   const [meetingDay, setMeetingDay] = useState("Sunday");
   const [meetingTime, setMeetingTime] = useState("09:00");
   const [duration, setDuration] = useState("1 hour");
-  const [leaderAgreed, setLeaderAgreed] = useState(false);
   const zoneTouched = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const lock = useRef(false);
@@ -145,7 +145,7 @@ export function StartGroupForm({
     if (seq !== searchSeq.current) return;
     if (!response.ok || !body.places?.length) {
       setSuggestions([]);
-      setSearchNote(body.error || "No real places matched that search.");
+      setSearchNote("No locations found. Try a business name or address.");
       return;
     }
     setSearchNote("");
@@ -169,6 +169,7 @@ export function StartGroupForm({
       setError("That place did not include a verified location, so it was not added.");
       return;
     }
+    setSelectedPlace(selected);
     setMeetingLocation([selected.name, selected.address].filter(Boolean).join(", ") || selected.label);
     if (selected.city) setCity(selected.city);
     if (selected.state) setStateName(selected.state);
@@ -196,9 +197,10 @@ export function StartGroupForm({
     if (!email.trim()) nextErrors.email = "Email is missing from this sign-in.";
     if (!city.trim()) nextErrors.city = "Enter a city.";
     if (!country.trim()) nextErrors.country = "Enter a country.";
-    if (!meetingLocation.trim()) nextErrors.meetingLocation = "Enter a meeting location.";
+    if (!selectedPlace || !Number.isFinite(selectedPlace.latitude) || !Number.isFinite(selectedPlace.longitude)) {
+      nextErrors.meetingLocation = "Choose a location from the suggestions.";
+    }
     if (!isWebsitePhone(mobile)) nextErrors.mobile = "Enter a valid mobile number.";
-    if (!leaderAgreed) nextErrors.leaderAgreement = "Agreement to the statement of faith and leader commitments is required.";
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       setError("");
@@ -221,15 +223,15 @@ export function StartGroupForm({
           country: country.trim(),
           locationType,
           meetingLocation: meetingLocation.trim(),
-          latitude: locationType === "home" ? preview?.latitude : preview?.latitude,
-          longitude: locationType === "home" ? preview?.longitude : preview?.longitude,
+          latitude: selectedPlace?.latitude,
+          longitude: selectedPlace?.longitude,
           meetingDay,
           meetingTime,
           duration,
           timezone: timeZone,
           description: description.trim(),
           leaderPhotoUrl,
-          leaderAgreement: leaderAgreed,
+          leaderAgreement: true,
         }),
       });
       const body = (await response.json()) as { ok?: boolean; error?: string; fields?: Record<string, string> };
@@ -345,6 +347,7 @@ export function StartGroupForm({
           error={fieldErrors.meetingLocation}
           onChange={(value) => {
             setMeetingLocation(value);
+            setSelectedPlace(null);
             setPreview(null);
             clearField("meetingLocation");
             queueLocationSearch(value);
@@ -437,22 +440,11 @@ export function StartGroupForm({
             <p key={paragraph}>{paragraph}</p>
           ))}
         </Accordion>
-        <label className="flex items-start gap-3 text-sm leading-relaxed">
-          <input
-            name="leaderAgreement"
-            type="checkbox"
-            required
-            checked={leaderAgreed}
-            onChange={(event) => { setLeaderAgreed(event.target.checked); clearField("leaderAgreement"); }}
-            className="mt-1"
-          />
-          <span>I have read and agree to the Statement of Faith and Leader Commitments.</span>
-        </label>
-        {fieldErrors.leaderAgreement ? <p className="text-sm text-[#c2410c]">{fieldErrors.leaderAgreement}</p> : null}
       </fieldset>
+      <p className="text-sm leading-relaxed">By selecting Submit Group, I agree to the Statement of Faith and Leader Commitments.</p>
       {error ? <p role="alert" className="text-sm text-[#c2410c]">{error}</p> : null}
-      <button type="submit" disabled={!leaderAgreed || submitting} className="inline-flex h-[52px] w-full items-center justify-center rounded-full bg-[var(--sending-blue)] font-semibold text-white disabled:opacity-70">
-        {submitting ? "Sending…" : "Submit group"}
+      <button type="submit" disabled={submitting} className="inline-flex h-[52px] w-full items-center justify-center rounded-full bg-[var(--sending-blue)] font-semibold text-white disabled:opacity-70">
+        {submitting ? "Sending…" : "Submit Group"}
       </button>
     </form>
     <div className="mt-4 min-w-0 lg:sticky lg:top-20 lg:mt-0">

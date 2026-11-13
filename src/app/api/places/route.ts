@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { geocodePlace, googlePlaceDetails, googlePlaceSuggestions, searchPlaces } from "@/lib/groups/geo";
+import { geocodePlace, googlePlaceDetails, googlePlaceSuggestions, suggestRealPlaces } from "@/lib/groups/geo";
 import { isIanaTimeZone } from "@/lib/groups/sunday";
 import { cleanText } from "@/lib/groups/text";
 
@@ -17,17 +17,9 @@ export async function GET(request: Request) {
   if (query.length < 2) return NextResponse.json({ ok: false }, { status: 400 });
   if (url.searchParams.get("suggest") === "1") {
     const google = key ? await googlePlaceSuggestions(query, key) : null;
-    const places = google && google.length > 0 ? google : await searchPlaces(query);
+    const places = google && google.length > 0 ? google : await suggestRealPlaces(query);
     if (places.length === 0) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: key
-            ? "No real places matched that search."
-            : "No real places matched. Business search can use Google Places API (New) with a server-only GOOGLE_PLACES_API_KEY.",
-        },
-        { status: 404 },
-      );
+      return NextResponse.json({ ok: false, error: "No locations found. Try a business name or address." }, { status: 404 });
     }
     return NextResponse.json({ ok: true, places });
   }

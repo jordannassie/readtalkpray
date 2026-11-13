@@ -168,6 +168,75 @@ export async function googlePlaceDetails(placeId: string, key: string): Promise<
   };
 }
 
+type PhotonFeature = {
+  geometry?: { coordinates?: number[] };
+  properties?: {
+    name?: string;
+    street?: string;
+    housenumber?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+  };
+};
+
+async function photonPlaces(query: string): Promise<FoundPlace[]> {
+  const url = new URL("https://photon.komoot.io/api/");
+  url.searchParams.set("q", query);
+  url.searchParams.set("limit", "5");
+  url.searchParams.set("lang", "en");
+  const response = await fetch(url, { headers: { accept: "application/json", "user-agent": "ReadTalkPray/1.0 (group finder)" } });
+  if (!response.ok) return [];
+  const body = (await response.json()) as { features?: PhotonFeature[] };
+  return (body.features ?? []).flatMap((feature) => {
+    const longitude = Number(feature.geometry?.coordinates?.[0]);
+    const latitude = Number(feature.geometry?.coordinates?.[1]);
+    const props = feature.properties;
+    const name = props?.name?.trim() || "";
+    if (!name || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return [];
+    const street = [props?.housenumber, props?.street].filter(Boolean).join(" ");
+    const city = props?.city || "";
+    const state = props?.state || "";
+    const country = props?.country || "";
+    const address = [street, city, state].filter(Boolean).join(", ");
+    const place: FoundPlace = {
+      name,
+      address,
+      latitude,
+      longitude,
+      label: [name, address].filter(Boolean).join(", "),
+      city,
+      state,
+      country,
+    };
+    return [place];
+  });
+}
+
+function placeScore(query: string, place: FoundPlace) {
+  const tokens = query.toLowerCase().split(/[^a-z0-9]+/).filter((token) => token.length >= 3);
+  const haystack = `${place.name} ${place.address} ${place.city} ${place.state}`.toLowerCase();
+  return tokens.reduce((score, token) => score + (haystack.includes(token) ? 1 : 0), 0);
+}
+
+export async function suggestRealPlaces(query: string) {
+  const [listed, photon] = await Promise.all([
+    searchPlaces(query).catch(() => [] as FoundPlace[]),
+    photonPlaces(query).catch(() => [] as FoundPlace[]),
+  ]);
+  const seen = new Set<string>();
+  return [...listed, ...photon]
+    .filter((place) => Number.isFinite(place.latitude) && Number.isFinite(place.longitude) && placeScore(query, place) > 0)
+    .sort((a, b) => placeScore(query, b) - placeScore(query, a))
+    .filter((place) => {
+      const key = `${place.name.toLowerCase()}|${place.city.toLowerCase()}|${place.latitude.toFixed(4)}|${place.longitude.toFixed(4)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 5);
+}
+
 export async function searchPlaces(query: string) {
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("format", "jsonv2");

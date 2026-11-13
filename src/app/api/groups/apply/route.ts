@@ -10,12 +10,9 @@ import { cleanText, safePhotoUrl } from "@/lib/groups/text";
 import { MEETING_DAYS, MEETING_DURATIONS, displayMeetingTime } from "@/lib/groups/schedule";
 import { isIanaTimeZone, LAUNCH_TIME_ZONE } from "@/lib/groups/sunday";
 import { applicationFieldIssues } from "@/lib/groups/application";
+import { AGREEMENT_POLICY_VERSION } from "@/lib/groups/commitments";
 import { LOCATION_TYPES, type LocationType } from "@/lib/groups/types";
 import { createClient } from "@/lib/supabase/server";
-
-function agreed(value: unknown) {
-  return value === true;
-}
 
 function safeDbMessage(message: string) {
   if (/row-level security|policy/i.test(message)) {
@@ -63,8 +60,8 @@ export async function POST(request: Request) {
       country,
       meetingLocation,
       attended: false,
-      faithAgreed: agreed(record.leaderAgreement),
-      commitmentsAgreed: agreed(record.leaderAgreement),
+      faithAgreed: true,
+      commitmentsAgreed: true,
       zoomAgreed: false,
       privacyAgreed: false,
     }),
@@ -74,6 +71,10 @@ export async function POST(request: Request) {
   if (!MEETING_DAYS.includes(meetingDay as (typeof MEETING_DAYS)[number]) || !meetingTime) {
     fields.meetingTime = "Choose a meeting day and time.";
   }
+  const clientLatitude = Number(record.latitude);
+  const clientLongitude = Number(record.longitude);
+  const hasClientPoint = Number.isFinite(clientLatitude) && Number.isFinite(clientLongitude);
+  if (!hasClientPoint) fields.meetingLocation = "Choose a location from the suggestions.";
   if (Object.keys(fields).length > 0) {
     return NextResponse.json({ ok: false, error: Object.values(fields)[0], fields }, { status: 400 });
   }
@@ -81,15 +82,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Enter a valid mobile number.", fields: { mobile: "Enter a valid mobile number." } }, { status: 400 });
   }
 
-  const place = [meetingLocation, city, state, country].filter(Boolean).join(", ");
   const cityPlace = [city, state, country].filter(Boolean).join(", ");
-  const exact = locationType === "home" ? await geocodePlace(place) : await geocodePlace(place);
-  const cityPoint = locationType === "home" ? await geocodePlace(cityPlace) : exact;
-  const clientLatitude = Number(record.latitude);
-  const clientLongitude = Number(record.longitude);
-  const hasClientPoint = Number.isFinite(clientLatitude) && Number.isFinite(clientLongitude);
-  const pin = locationType === "home" ? cityPoint ?? exact : hasClientPoint ? { latitude: clientLatitude, longitude: clientLongitude } : exact ?? cityPoint;
-  const exactPoint = locationType === "home" ? exact : pin;
+  const exactPoint = { latitude: clientLatitude, longitude: clientLongitude };
+  const cityPoint = locationType === "home" ? await geocodePlace(cityPlace) : null;
+  const pin = locationType === "home" ? cityPoint : exactPoint;
 
   const application = {
     leader_name: leaderName,
@@ -118,6 +114,7 @@ export async function POST(request: Request) {
     zoom_agreed: false,
     privacy_agreed: false,
     agreement_accepted_at: new Date().toISOString(),
+    agreement_policy_version: AGREEMENT_POLICY_VERSION,
     status: "pending",
   };
   const { data: existing } = await supabase

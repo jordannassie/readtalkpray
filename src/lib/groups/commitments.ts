@@ -1,3 +1,5 @@
+export const AGREEMENT_POLICY_VERSION = "faith-commitments-1";
+
 export const LEADER_COMMITMENTS = [
   "Group leaders are called to live lives that reflect Jesus Christ.",
   "Leaders teach from Scripture, serve people, and stay accountable. Leadership is about serving people, not controlling them.",
