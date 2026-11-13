@@ -94,7 +94,7 @@ function Scripture({ children }: { children: ReactNode }) {
 
 export function Beliefs() {
   return (
-    <section id="beliefs" className="scroll-mt-20 bg-black py-16 text-white sm:py-20">
+    <section id="beliefs" className="scroll-mt-28 bg-black py-16 text-white sm:py-20">
       <div className="mx-auto max-w-3xl px-5">
         <p className="text-xs font-medium tracking-[0.2em] text-white/45 uppercase">
           Read Talk Pray

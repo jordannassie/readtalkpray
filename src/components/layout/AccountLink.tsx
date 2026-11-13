@@ -8,7 +8,7 @@ export function AccountLink({ className = "" }: { className?: string }) {
   if (!ready) return null;
 
   return (
-    <Link href={user ? "/dashboard" : "/login"} className={className}>
+    <Link href={user ? "/app" : "/login"} className={className}>
       {user ? "Dashboard" : "Login"}
     </Link>
   );

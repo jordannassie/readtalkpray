@@ -91,7 +91,7 @@ export function HeroVideo() {
         muted
         playsInline
         preload="auto"
-        aria-label="Sending Church video"
+        aria-label="Read Talk Pray video"
       />
       {needsPlay ? (
         <button

@@ -25,7 +25,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       <SiteHeader />
       <main className="mx-auto flex max-w-xl flex-col items-center px-5 py-12">
         <p className="text-center text-5xl font-semibold tracking-tight sm:text-6xl">Join a group.</p>
-        <p className="mt-3 text-center text-lg text-white/70">Read. Talk. Pray.</p>
+        <p className="mt-3 text-center text-lg text-white/70">Any day. Any time. Anywhere.</p>
         <div className="mt-8 w-full">
           <JoinGroupForm group={group} />
         </div>

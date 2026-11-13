@@ -1,10 +1,10 @@
-import Image from "next/image";
-import Link from "next/link";
-import { BookOpen, Check, MapPin, MessageCircle } from "lucide-react";
+import { BookOpen, Check, MessageCircle } from "lucide-react";
 import { Beliefs } from "@/components/home/Beliefs";
 import { GroupFinder } from "@/components/home/GroupFinder";
+import { HeroVideo } from "@/components/home/HeroVideo";
 import { Multiply } from "@/components/home/Multiply";
 import { WorldGlobe } from "@/components/home/WorldGlobe";
+import { HERO_IMAGE } from "@/lib/demo/data";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { demoGroups } from "@/lib/groups/demo";
@@ -19,7 +19,7 @@ const STEPS = [
   { title: "Pray", body: "Pray and take a next step.", icon: PrayIcon },
 ] as const;
 
-const PROMISES = ["No Donations", "No Paid Staff", "No Building", "Only the Bible"];
+const PROMISES = ["No Donations", "No Paid Staff", "No Judgement", "Only the Bible"];
 
 export default async function HomePage() {
   const realGroups = await listApprovedGroups();
@@ -27,86 +27,60 @@ export default async function HomePage() {
   const places = globePlaces(realGroups);
 
   return (
-    <div className="overflow-x-hidden bg-[#eef3fb] text-[#111]">
-      <section className="relative isolate overflow-hidden text-white">
-        <Image
-          src="/hero-nashville.jpg"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-[68%_center]"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,16,36,0.72)_0%,rgba(7,16,36,0.42)_46%,rgba(7,16,36,0.12)_100%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(180deg,transparent,rgba(7,16,36,0.28))]" />
-        <SiteHeader tone="overlay" activeHref="/#groups" />
-        <div className="relative z-10 mx-auto max-w-[1320px] px-5 pb-28 pt-16 sm:pb-40 sm:pt-20 lg:pb-44 lg:pt-24">
-          <h1 className="max-w-[15ch] text-[2.55rem] leading-[0.95] font-semibold tracking-[-0.045em] sm:max-w-none sm:text-7xl lg:text-[5.35rem]">
-            Read. Talk.{" "}
-            <span className="underline decoration-[var(--sending-blue)] decoration-[6px] underline-offset-[10px]">Pray.</span>
-          </h1>
-          <p className="mt-5 max-w-xl text-lg text-white/95 sm:text-2xl lg:text-[1.7rem]">A simple way to follow Jesus together.</p>
-          <ul className="mt-8 grid max-w-3xl grid-cols-3 gap-2 sm:mt-10 sm:gap-0">
-            {STEPS.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <li
-                  key={step.title}
-                  className={`px-1 text-center sm:px-5 ${index < STEPS.length - 1 ? "sm:border-r sm:border-white/30" : ""}`}
-                >
-                  <span className="mx-auto grid h-11 w-11 place-items-center rounded-2xl bg-white/15 sm:h-12 sm:w-12">
-                    <Icon />
-                  </span>
-                  <span className="mt-2 block text-sm font-semibold sm:mt-3 sm:text-lg">{step.title}</span>
-                  <span className="mt-1 block text-[11px] leading-snug text-white/85 sm:text-sm">{step.body}</span>
-                </li>
-              );
-            })}
-          </ul>
+    <div className="overflow-x-clip bg-[#eef3fb] text-[#111]">
+      <SiteHeader activeHref="/#groups" />
+      <section
+        className="relative isolate overflow-hidden bg-cover bg-center bg-no-repeat text-white"
+        style={{ backgroundImage: `url(${HERO_IMAGE})` }}
+      >
+        <div className="absolute inset-0 bg-[#041433]/25" />
+        <div className="relative z-10 mx-auto grid max-w-[1280px] items-center gap-8 px-5 py-12 sm:py-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-12 lg:py-20">
+          <div>
+            <h1 className="max-w-[12ch] text-[2.7rem] leading-[0.95] font-semibold tracking-[-0.045em] text-white sm:text-6xl lg:text-7xl">
+              Read. Talk. Pray.
+            </h1>
+            <p className="mt-5 max-w-md text-lg text-white/85 sm:text-2xl">A simple way to follow Jesus together.</p>
+            <ul className="mt-8 grid max-w-xl grid-cols-3 gap-2 sm:mt-10">
+              {STEPS.map((step, index) => {
+                const Icon = step.icon;
+                return (
+                  <li
+                    key={step.title}
+                    className={`px-1 text-center text-white sm:px-4 ${index < STEPS.length - 1 ? "border-r border-white/25" : ""}`}
+                  >
+                    <span className="mx-auto grid h-11 w-11 place-items-center rounded-2xl bg-white/15 text-white">
+                      <Icon />
+                    </span>
+                    <span className="mt-2 block text-sm font-semibold tracking-wide uppercase sm:mt-3 sm:text-base">{step.title}</span>
+                    <span className="mt-1 block text-[11px] leading-snug text-white/80 sm:text-sm">{step.body}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+          <HeroVideo />
         </div>
-        <p className="pointer-events-none absolute top-[42%] right-12 z-10 hidden items-center gap-2 text-3xl font-semibold tracking-tight text-white drop-shadow-[0_8px_18px_rgba(0,0,0,0.35)] xl:flex">
-          <MapPin size={28} aria-hidden />
-          <span className="italic">Nashville</span>
+      </section>
+
+      <section className="bg-[linear-gradient(100deg,#1565d8_0%,#3d9bff_46%,#1a6fe0_100%)] px-5 py-5 text-center text-white sm:py-6">
+        <p className="mx-auto max-w-4xl text-lg font-semibold tracking-tight sm:text-2xl">
+          A Bible Reading Church that's to big for a Building.
         </p>
+        <ul className="mx-auto mt-3 flex max-w-3xl flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm font-medium sm:text-base">
+          {PROMISES.map((item) => (
+            <li key={item} className="inline-flex items-center gap-1.5">
+              <Check size={16} aria-hidden />
+              {item}
+            </li>
+          ))}
+        </ul>
       </section>
 
       <GroupFinder groups={groups} />
 
-      <div className="mx-auto mt-4 max-w-[1320px] px-4 sm:px-5">
-        <div className="flex flex-col gap-3 rounded-full bg-white px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <p className="inline-flex items-center gap-2 font-semibold">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--sending-blue-light)] text-[var(--sending-blue)]">
-              <BookOpen size={16} />
-            </span>
-            A Bible Study Church for Everyone.
-          </p>
-          <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
-            {PROMISES.map((item) => (
-              <li key={item} className="inline-flex items-center gap-1.5">
-                <Check size={16} className="text-[var(--sending-blue)]" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      <div className="mt-10">
-        <WorldGlobe places={places} />
-      </div>
       <Multiply />
+      <WorldGlobe places={places} />
       <Beliefs />
-      <section className="bg-[var(--sending-blue)] text-white">
-        <div className="mx-auto flex max-w-[1320px] flex-col gap-4 px-5 py-8 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-white/80">This week</p>
-            <p className="text-4xl font-semibold tracking-tight">Come as you are.</p>
-          </div>
-          <Link href="#join" className="inline-flex h-12 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-[#111]">
-            Join a Group
-          </Link>
-        </div>
-      </section>
       <SiteFooter />
     </div>
   );

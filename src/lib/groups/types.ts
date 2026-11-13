@@ -44,5 +44,5 @@ export function placeLabel(group: Pick<PublicGroup, "city" | "state" | "country"
 }
 
 export function meetingWhen(group: Pick<PublicGroup, "meeting_day" | "meeting_time">) {
-  return [group.meeting_day, group.meeting_time].filter(Boolean).join(", ");
+  return [group.meeting_day, group.meeting_time].filter(Boolean).join(" · ");
 }

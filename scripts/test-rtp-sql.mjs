@@ -59,6 +59,9 @@ for (const name of [
   "rtp_group_applications",
   "rtp_join_requests",
   "rtp_leads",
+  "rtp_profiles",
+  "rtp_application_reviews",
+  "rtp_location_changes",
 ]) {
   assert(names.includes(name), `missing ${name}`);
 }
@@ -127,6 +130,14 @@ await asRole("authenticated", `update public.rtp_groups set leader_user_id = '${
 await asRole("authenticated", `update public.rtp_group_leaders set user_id = '${leaderId}' where group_id = '${groupId}'`);
 const claimed = await db.query(`select leader_user_id::text as leader from public.rtp_groups where id = '${groupId}'`);
 assert(claimed.rows[0].leader === leaderId, "leader could not claim the group");
+
+await asRole("authenticated", `update public.rtp_groups set public_location = '123 Hidden Lane' where id = '${groupId}'`);
+const kept = await db.query(`select public_location from public.rtp_groups where id = '${groupId}'`);
+assert(kept.rows[0].public_location === "Nashville, TN area", "leader changed the public location");
+await asRole("authenticated", `update public.rtp_groups set status = 'paused' where id = '${groupId}'`);
+const hidden = await asRole("anon", `select id from public.rtp_groups where id = '${groupId}'`);
+assert(hidden.rows.length === 0, "paused group is public");
+await asRole("authenticated", `update public.rtp_groups set status = 'approved' where id = '${groupId}'`);
 
 await db.exec(`select set_config('request.jwt.claim.sub', '${strangerId}', false)`);
 await db.exec(`select set_config('request.jwt.claims', '{"email":"stranger@example.com"}', false)`);

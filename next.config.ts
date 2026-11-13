@@ -8,7 +8,14 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/start-a-church", destination: "/start", permanent: false },
-      { source: "/my-church", destination: "/leader", permanent: false },
+      { source: "/my-church", destination: "/app/group", permanent: false },
+    ];
+  },
+  async headers() {
+    return [
+      { source: "/app", headers: [{ key: "Cache-Control", value: "private, no-store" }] },
+      { source: "/app/:path*", headers: [{ key: "Cache-Control", value: "private, no-store" }] },
+      { source: "/sw.js", headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }] },
     ];
   },
   images: {

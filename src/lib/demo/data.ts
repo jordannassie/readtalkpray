@@ -1,5 +1,7 @@
 export const HERO_IMAGE =
-  "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/images/8a25b7cc-e852-4e7b-a895-adfff22a453c.jpg";
+  "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/background/smallblue%20grain.png";
+
+export const GRAIN_BACKGROUND = HERO_IMAGE;
 
 export const HERO_VIDEO =
   "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/video/720bible.mov";

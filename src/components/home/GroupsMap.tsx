@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import type { Map as LeafletMap, Marker } from "leaflet";
-import { meetingWhen, type PublicGroup } from "@/lib/groups/types";
+import type { PublicGroup } from "@/lib/groups/types";
 
 type Focus = { latitude: number; longitude: number; label: string } | null;
 
@@ -25,7 +25,7 @@ function pinHtml(group: PublicGroup) {
   const initial = escapeHtml(group.leader_name.slice(0, 1).toUpperCase() || "•");
   const src = photoSrc(group.leader_photo_url);
   const photo = src ? `<img src="${escapeHtml(src)}" alt="" />` : `<span>${initial}</span>`;
-  return `<div class="rtp-pin">${photo}<i></i></div>`;
+  return `<div class="rtp-pin">${photo}</div>`;
 }
 
 export function GroupsMap({
@@ -84,22 +84,12 @@ export function GroupsMap({
           icon: L.divIcon({
             className: "rtp-pin-icon",
             html: pinHtml(group),
-            iconSize: [58, 72],
-            iconAnchor: [29, 68],
-            popupAnchor: [0, -60],
+            iconSize: [52, 52],
+            iconAnchor: [26, 26],
           }),
           keyboard: true,
           title: group.name,
         });
-        const where = meetingWhen(group);
-        const place = group.location_type === "home" ? `${group.public_location} · approximate area` : group.public_location;
-        const badge = group.is_demo ? `<span class="rtp-demo">Demo</span>` : "";
-        const action = group.is_demo
-          ? `<a href="/groups/${encodeURIComponent(group.id)}">View demo group</a>`
-          : `<a href="/groups/${encodeURIComponent(group.id)}">Join Group</a>`;
-        marker.bindPopup(
-          `<div class="rtp-popup">${badge}<strong>${escapeHtml(group.name)}</strong><p>${escapeHtml(group.leader_name)}</p><p>${escapeHtml(where)}</p><p>${escapeHtml(place)}</p>${action}</div>`,
-        );
         marker.on("click", () => onSelect(group.id));
         marker.addTo(map);
         return marker;
@@ -123,9 +113,11 @@ export function GroupsMap({
 
       const selected = groups.find((group) => group.id === selectedId);
       const selectedMarker = markersRef.current[groups.findIndex((group) => group.id === selectedId)];
+      markersRef.current.forEach((marker, index) => {
+        marker.getElement()?.classList.toggle("rtp-pin-selected", groups[index]?.id === selectedId);
+      });
       if (selected && selectedMarker) {
-        map.flyTo([selected.latitude, selected.longitude], Math.max(map.getZoom(), 12), { duration: 0.4 });
-        selectedMarker.openPopup();
+        map.flyTo([selected.latitude, selected.longitude], Math.max(map.getZoom(), 12), { duration: 0.35 });
       }
       window.setTimeout(() => map.invalidateSize(), 50);
     });

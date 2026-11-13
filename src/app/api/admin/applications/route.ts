@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSessionAdmin } from "@/lib/auth/admin";
+import { checklistComplete } from "@/lib/auth/review";
 import { approximateCoordinates, publicLocationLabel } from "@/lib/groups/geo";
+import { isIanaTimeZone } from "@/lib/groups/sunday";
 import { geocodePlace } from "@/lib/groups/geo";
-import { isUuid } from "@/lib/groups/text";
+import { cleanText, isUuid } from "@/lib/groups/text";
 import { createClient } from "@/lib/supabase/server";
 
 type ApplicationRow = {
@@ -31,17 +33,96 @@ export async function POST(request: Request) {
   if (!session.user) return NextResponse.json({ ok: false }, { status: 401 });
   if (!session.admin) return NextResponse.json({ ok: false }, { status: 403 });
 
-  let body: { id?: string; decision?: string };
+  let body: {
+    id?: string;
+    decision?: string;
+    action?: string;
+    message?: string;
+    note?: string;
+    checklist?: unknown;
+    publicLocation?: string;
+  };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
-  if (!body.id || !isUuid(body.id) || (body.decision !== "approve" && body.decision !== "reject")) {
+  if (!body.id || !isUuid(body.id)) return NextResponse.json({ ok: false }, { status: 400 });
+  const supabase = await createClient();
+
+  async function logReview(action: string, message?: string | null) {
+    await supabase.from("rtp_application_reviews").insert({
+      application_id: body.id,
+      reviewer_id: session.user?.id,
+      action,
+      note: cleanText(String(body.note ?? ""), 2000) || null,
+      message: message ? cleanText(message, 2000) : null,
+      checklist: body.checklist ?? null,
+    });
+  }
+
+  if (body.action === "note") {
+    const note = cleanText(String(body.note ?? ""), 2000);
+    if (!note) return NextResponse.json({ ok: false, error: "Write a note first." }, { status: 400 });
+    const { error } = await supabase.from("rtp_application_reviews").insert({
+      application_id: body.id,
+      reviewer_id: session.user.id,
+      action: "note",
+      note,
+    });
+    if (error) return NextResponse.json({ ok: false }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (body.action === "request_changes") {
+    const message = cleanText(String(body.message ?? ""), 2000);
+    if (!message) return NextResponse.json({ ok: false, error: "Tell the applicant what to change." }, { status: 400 });
+    const { error } = await supabase.from("rtp_group_applications").update({ status: "changes_requested", review_message: message }).eq("id", body.id);
+    if (error) return NextResponse.json({ ok: false }, { status: 500 });
+    await logReview("request_changes", message);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (body.action === "suspend" || body.action === "reactivate") {
+    const { data: current } = await supabase.from("rtp_group_applications").select("group_id").eq("id", body.id).maybeSingle();
+    const nextStatus = body.action === "suspend" ? "suspended" : "approved";
+    const { error } = await supabase.from("rtp_group_applications").update({ status: nextStatus }).eq("id", body.id);
+    if (error) return NextResponse.json({ ok: false }, { status: 500 });
+    if (current?.group_id) {
+      await supabase.from("rtp_groups").update({ status: body.action === "suspend" ? "suspended" : "approved" }).eq("id", current.group_id);
+    }
+    await logReview(body.action, cleanText(String(body.message ?? ""), 2000));
+    return NextResponse.json({ ok: true });
+  }
+
+  if (body.action === "location") {
+    const { data: change } = await supabase.from("rtp_location_changes").select("id, group_id, public_location").eq("id", body.id).maybeSingle();
+    if (!change) return NextResponse.json({ ok: false }, { status: 404 });
+    if (body.decision === "approve") {
+      const publicLocation = cleanText(String(body.publicLocation || change.public_location), 160);
+      if (!publicLocation) return NextResponse.json({ ok: false, error: "Enter the public location." }, { status: 400 });
+      const { error } = await supabase.from("rtp_groups").update({ public_location: publicLocation }).eq("id", change.group_id);
+      if (error) return NextResponse.json({ ok: false }, { status: 500 });
+      await supabase.from("rtp_location_changes").update({
+        status: "approved",
+        public_location: publicLocation,
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: session.user.id,
+      }).eq("id", change.id);
+      return NextResponse.json({ ok: true });
+    }
+    await supabase.from("rtp_location_changes").update({
+      status: "rejected",
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: session.user.id,
+    }).eq("id", change.id);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (body.decision !== "approve" && body.decision !== "reject") {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
-  const supabase = await createClient();
   const { data, error } = await supabase
     .from("rtp_group_applications")
     .select("*")
@@ -52,12 +133,34 @@ export async function POST(request: Request) {
   if (application.status !== "pending") return NextResponse.json({ ok: true });
 
   if (body.decision === "reject") {
+    const message = cleanText(String(body.message ?? ""), 2000);
+    if (!message) return NextResponse.json({ ok: false, error: "Add a reason before rejecting." }, { status: 400 });
     const { error: updateError } = await supabase
       .from("rtp_group_applications")
-      .update({ status: "rejected" })
+      .update({ status: "rejected", review_message: message })
       .eq("id", application.id);
     if (updateError) return NextResponse.json({ ok: false }, { status: 500 });
+    await logReview("reject", message);
     return NextResponse.json({ ok: true });
+  }
+
+  if (!checklistComplete(body.checklist)) {
+    return NextResponse.json({ ok: false, error: "Complete the approval checklist first." }, { status: 422 });
+  }
+  const flags = data as {
+    attended?: boolean;
+    faith_agreed?: boolean;
+    commitments_agreed?: boolean;
+    zoom_agreed?: boolean;
+    privacy_agreed?: boolean;
+    group_name?: string | null;
+    user_id?: string | null;
+  };
+  if (!flags.attended || !flags.faith_agreed || !flags.commitments_agreed || !flags.zoom_agreed || !flags.privacy_agreed) {
+    return NextResponse.json(
+      { ok: false, error: "The applicant has not confirmed attendance, faith, commitments, the monthly Zoom meeting, and privacy consent." },
+      { status: 422 },
+    );
   }
 
   let latitude = application.latitude;
@@ -87,27 +190,47 @@ export async function POST(request: Request) {
     state: application.state ?? "",
   });
 
-  const { data: group, error: groupError } = await supabase
-    .from("rtp_groups")
-    .insert({
-      name: `${application.city} Bible Study`,
-      description: application.description,
-      city: application.city,
-      state: application.state,
-      country: application.country,
-      location_type: application.location_type,
-      public_location: publicLocation,
-      address: home ? null : application.meeting_location,
-      latitude: pin.latitude,
-      longitude: pin.longitude,
-      meeting_day: application.meeting_day,
-      meeting_time: application.meeting_time,
-      leader_name: application.leader_name,
-      leader_photo_url: application.leader_photo_url,
-      status: "approved",
-    })
-    .select("id")
-    .single();
+  const storedZone = (data as { timezone?: unknown }).timezone;
+  const storedDuration = (data as { duration?: unknown }).duration;
+  let groupPayload: Record<string, unknown> = {
+    name: flags.group_name?.trim() || `${application.city} Bible Study`,
+    leader_user_id: flags.user_id ?? null,
+    description: application.description,
+    city: application.city,
+    state: application.state,
+    country: application.country,
+    location_type: application.location_type,
+    public_location: publicLocation,
+    address: home ? null : application.meeting_location,
+    latitude: pin.latitude,
+    longitude: pin.longitude,
+    meeting_day: application.meeting_day,
+    meeting_time: application.meeting_time,
+    duration: typeof storedDuration === "string" ? storedDuration : null,
+    timezone: typeof storedZone === "string" && isIanaTimeZone(storedZone) ? storedZone : null,
+    leader_name: application.leader_name,
+    leader_photo_url: application.leader_photo_url,
+    status: "approved",
+  };
+  let group: { id: string } | null = null;
+  let groupError: { message: string } | null = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const result = await supabase.from("rtp_groups").insert(groupPayload).select("id").single();
+    group = result.data;
+    groupError = result.error;
+    if (!groupError) break;
+    if (/timezone/i.test(groupError.message) && "timezone" in groupPayload) {
+      const { timezone: _timezone, ...rest } = groupPayload;
+      groupPayload = rest;
+      continue;
+    }
+    if (/duration/i.test(groupError.message) && "duration" in groupPayload) {
+      const { duration: _duration, ...rest } = groupPayload;
+      groupPayload = rest;
+      continue;
+    }
+    break;
+  }
   if (groupError || !group) return NextResponse.json({ ok: false }, { status: 500 });
 
   const { error: privateError } = await supabase.from("rtp_group_private").insert({
@@ -126,6 +249,7 @@ export async function POST(request: Request) {
     email: application.email,
     phone: application.phone,
     photo_url: application.leader_photo_url,
+    user_id: flags.user_id ?? null,
     is_primary: true,
   });
   if (leaderError) return NextResponse.json({ ok: false }, { status: 500 });
@@ -135,6 +259,7 @@ export async function POST(request: Request) {
     .update({ status: "approved", group_id: group.id })
     .eq("id", application.id);
   if (applicationError) return NextResponse.json({ ok: false }, { status: 500 });
+  await logReview("approve", null);
 
   return NextResponse.json({ ok: true, groupId: group.id });
 }

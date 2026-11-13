@@ -1,70 +1,100 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { Logo } from "@/components/brand/Logo";
+import { useEffect, useState } from "react";
+import { BLACK_LOGO } from "@/components/brand/logos";
+import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 
-const NAV = [
+const LEFT = [
   { href: "/#groups", label: "Groups Map" },
   { href: "/#how", label: "How It Works" },
-  { href: "/start", label: "Start a Group" },
 ];
 
-export function SiteHeader({ tone = "solid", activeHref }: { tone?: "solid" | "overlay"; activeHref?: string }) {
+const START = { href: "/start", label: "Start a Group" };
+
+export function SiteHeader({ activeHref }: { tone?: "solid" | "overlay" | "light"; activeHref?: string }) {
   const [open, setOpen] = useState(false);
-  const overlay = tone === "overlay";
-  const text = overlay ? "text-white" : "text-[#243]";
-  const bar = overlay
-    ? "absolute inset-x-0 top-0 z-20 bg-transparent"
-    : "sticky top-0 z-40 border-b border-black/5 bg-white/95 backdrop-blur";
+  const [accountHref, setAccountHref] = useState("/login");
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    const supabase = createClient();
+    void supabase.auth.getUser().then(({ data }) => {
+      setAccountHref(data.user ? "/app" : "/login");
+    });
+  }, []);
 
   return (
-    <header className={bar}>
-      <div className="mx-auto flex h-[72px] max-w-[1320px] items-center justify-between gap-4 px-5">
-        <Logo invert={overlay} />
-        <nav className={`hidden items-center gap-8 text-[15px] md:flex ${text}`}>
-          {NAV.map((item) => (
+    <header className="sticky top-0 z-50 border-b border-black/10 bg-white">
+      <div className="mx-auto grid h-[84px] max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center px-3 sm:px-5 lg:h-[116px]">
+        <div className="flex items-center justify-self-start">
+          <button
+            type="button"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-black lg:hidden"
+            onClick={() => setOpen((value) => !value)}
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+          >
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
+          <nav className="hidden items-center gap-8 text-[15px] text-black lg:flex">
+            {LEFT.map((item) => (
+              <Link key={item.href} href={item.href} className={linkClass(item.href === activeHref)}>
+                {item.label}
+              </Link>
+            ))}
+            <Link href={accountHref} className={linkClass(accountHref === activeHref)}>
+              {accountHref === "/app" ? "Account" : "Sign in"}
+            </Link>
+          </nav>
+        </div>
+
+        <Link href="/" aria-label="Read Talk Pray home" className="justify-self-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={BLACK_LOGO}
+            alt="Read Talk Pray"
+            width={1254}
+            height={1254}
+            className="h-auto w-[68px] object-contain lg:w-[92px]"
+          />
+        </Link>
+
+        <div className="flex items-center justify-end justify-self-end gap-5">
+          <Link href={START.href} className={`hidden lg:inline ${linkClass(START.href === activeHref)}`}>
+            {START.label}
+          </Link>
+          <Link
+            href="/#join"
+            className="inline-flex h-9 items-center justify-center rounded-full bg-[#1976F3] px-3 text-sm font-semibold text-white lg:h-10 lg:px-4 lg:text-[15px]"
+          >
+            <span className="lg:hidden">Join</span>
+            <span className="hidden lg:inline">Join a Group</span>
+          </Link>
+        </div>
+      </div>
+      {open ? (
+        <div className="border-t border-black/10 bg-white px-5 py-3 lg:hidden">
+          {[...LEFT, START, { href: accountHref, label: accountHref === "/app" ? "Account" : "Sign in" }].map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`hover:opacity-80 ${item.href === activeHref ? "underline decoration-2 underline-offset-8" : ""}`}
+              className="block py-2.5 text-base text-black hover:text-[#1976F3]"
+              onClick={() => setOpen(false)}
             >
               {item.label}
             </Link>
           ))}
-        </nav>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/#join"
-            className={`hidden rounded-full px-4 py-2 text-sm font-semibold md:inline-flex ${
-              overlay ? "bg-white text-[#111]" : "bg-[var(--sending-blue)] text-white"
-            }`}
-          >
-            Join a Group
-          </Link>
-          <button
-            type="button"
-            className={`rounded-full p-2 md:hidden ${text}`}
-            onClick={() => setOpen((value) => !value)}
-            aria-label={open ? "Close menu" : "Open menu"}
-          >
-            {open ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-      </div>
-      {open ? (
-        <div className={`space-y-1 px-5 py-3 md:hidden ${overlay ? "bg-[#10203a]/95 text-white" : "border-t border-black/5 bg-white"}`}>
-          {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className="block py-2 text-sm" onClick={() => setOpen(false)}>
-              {item.label}
-            </Link>
-          ))}
-          <Link href="/#join" className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-[var(--sending-blue)] px-4 py-3 text-sm font-semibold text-white" onClick={() => setOpen(false)}>
-            Join a Group
-          </Link>
         </div>
       ) : null}
     </header>
   );
+}
+
+function linkClass(active: boolean) {
+  return `text-[15px] text-black transition-colors hover:text-[#1976F3] ${
+    active ? "text-[#1976F3] underline decoration-2 underline-offset-8" : ""
+  }`;
 }

@@ -1,0 +1,15 @@
+{
+  "name": "Read Talk Pray",
+  "short_name": "Read Talk Pray",
+  "description": "Read the Bible. Talk about it. Pray together.",
+  "id": "/app",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1976F3",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

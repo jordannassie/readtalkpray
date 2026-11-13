@@ -8,3 +8,18 @@
 
 [build.environment]
   NODE_VERSION = "20"
+
+[[headers]]
+  for = "/app"
+  [headers.values]
+    Cache-Control = "private, no-store"
+
+[[headers]]
+  for = "/app/*"
+  [headers.values]
+    Cache-Control = "private, no-store"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

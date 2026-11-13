@@ -18,6 +18,13 @@ async function bootstrapAdmin(userId: string, email: string | undefined) {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   await service.from("rtp_admins").upsert({ user_id: userId });
+  const existing = await service.auth.admin.getUserById(userId);
+  const current = existing.data.user?.app_metadata ?? {};
+  if (current.role !== "admin") {
+    await service.auth.admin.updateUserById(userId, {
+      app_metadata: { ...current, role: "admin" },
+    });
+  }
 }
 
 export async function getSessionAdmin() {

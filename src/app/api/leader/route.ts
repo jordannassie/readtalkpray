@@ -29,18 +29,33 @@ export async function POST(request: Request) {
   }
 
   if (body.action === "claim") {
-    const { data: claimed, error } = await supabase
-      .from("rtp_groups")
-      .update({ leader_user_id: user.id })
-      .is("leader_user_id", null)
-      .eq("status", "approved")
-      .select("id");
+    const { claimLeaderGroups } = await import("@/lib/auth/claim");
+    const { getSessionAdmin } = await import("@/lib/auth/admin");
+    const session = await getSessionAdmin();
+    await claimLeaderGroups(supabase, user, session.admin);
+    return NextResponse.json({ ok: true });
+  }
+
+  if ((body.action === "pause" || body.action === "resume") && body.id && isUuid(body.id)) {
+    const status = body.action === "pause" ? "paused" : "approved";
+    const { error } = await supabase.from("rtp_groups").update({ status }).eq("id", body.id).eq("leader_user_id", user.id);
     if (error) return NextResponse.json({ ok: false }, { status: 500 });
-    const ids = (claimed ?? []).map((row) => row.id as string);
-    if (ids.length > 0) {
-      await supabase.from("rtp_group_leaders").update({ user_id: user.id }).in("group_id", ids).is("user_id", null);
-    }
-    return NextResponse.json({ ok: true, ids });
+    return NextResponse.json({ ok: true, status });
+  }
+
+  if (body.action === "location" && body.id && isUuid(body.id)) {
+    const publicLocation = cleanText(String(body.publicLocation ?? ""), 160);
+    const privateAddress = cleanText(String((body as { privateAddress?: string }).privateAddress ?? ""), 200);
+    if (!publicLocation) return NextResponse.json({ ok: false, error: "Enter the public location." }, { status: 400 });
+    const { error } = await supabase.from("rtp_location_changes").insert({
+      group_id: body.id,
+      requested_by: user.id,
+      public_location: publicLocation,
+      private_address: privateAddress || null,
+      status: "pending",
+    });
+    if (error) return NextResponse.json({ ok: false }, { status: 500 });
+    return NextResponse.json({ ok: true, locationPending: true });
   }
 
   if (body.action === "update" && body.id && isUuid(body.id)) {
@@ -49,7 +64,6 @@ export async function POST(request: Request) {
     if (typeof body.description === "string") patch.description = cleanText(body.description, 600);
     if (typeof body.meetingDay === "string") patch.meeting_day = cleanText(body.meetingDay, 40);
     if (typeof body.meetingTime === "string") patch.meeting_time = cleanText(body.meetingTime, 40);
-    if (typeof body.publicLocation === "string") patch.public_location = cleanText(body.publicLocation, 160);
     if (body.leaderPhotoUrl !== undefined) patch.leader_photo_url = safePhotoUrl(body.leaderPhotoUrl);
     if (!patch.name) return NextResponse.json({ ok: false }, { status: 400 });
     const { error } = await supabase.from("rtp_groups").update(patch).eq("id", body.id).eq("leader_user_id", user.id);
