@@ -32,7 +32,7 @@ export default async function AppHomePage() {
       <div className="mt-6 grid grid-cols-2 gap-3">
         <Link href="/app/groups" className="flex h-12 items-center justify-center rounded-full bg-[#1976F3] px-4 text-center text-sm font-semibold text-white">Find a Group</Link>
         {hasGroup ? (
-          <Link href="/app/group" className="flex h-12 items-center justify-center rounded-full bg-white px-4 text-center text-sm font-semibold text-[#1976F3] shadow-sm">My Group</Link>
+          <Link href="/app/group" className="flex h-12 items-center justify-center rounded-full bg-white px-4 text-center text-sm font-semibold text-[#1976F3] shadow-sm">My Groups</Link>
         ) : (
           <Link href="/app/start" className="flex h-12 items-center justify-center rounded-full bg-white px-4 text-center text-sm font-semibold text-[#1976F3] shadow-sm">Start a Group</Link>
         )}
@@ -47,6 +47,7 @@ export default async function AppHomePage() {
         requests={account.requests}
         details={account.details}
         locationChanges={account.locationChanges}
+        invites={account.invites}
       />
       <BibleGroupGuide />
     </div>

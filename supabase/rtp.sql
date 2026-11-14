@@ -549,36 +549,22 @@ create index if not exists rtp_profiles_user_idx on public.rtp_profiles (user_id
 create index if not exists rtp_application_reviews_application_idx on public.rtp_application_reviews (application_id, created_at desc);
 create index if not exists rtp_location_changes_group_idx on public.rtp_location_changes (group_id, status);
 
-do $$
-begin
-  if not exists (
-    select 1 from public.rtp_group_applications
-    where email is not null and status in ('pending', 'changes_requested')
-    group by lower(email)
-    having count(*) > 1
-  ) then
-    execute 'create unique index if not exists rtp_applications_one_open_email on public.rtp_group_applications (lower(email)) where email is not null and status in (''pending'', ''changes_requested'')';
-  end if;
-  if not exists (
-    select 1 from public.rtp_group_applications
-    where user_id is not null and status in ('pending', 'changes_requested')
-    group by user_id
-    having count(*) > 1
-  ) then
-    execute 'create unique index if not exists rtp_applications_one_open_user on public.rtp_group_applications (user_id) where user_id is not null and status in (''pending'', ''changes_requested'')';
-  end if;
-end $$;
+drop index if exists public.rtp_applications_one_open_email;
+drop index if exists public.rtp_applications_one_open_user;
 
 create or replace function rtp_private.guard_rtp_group_update()
 returns trigger
 language plpgsql
-security definer
+security invoker
 set search_path = public
 as $$
 declare
   is_admin boolean;
 begin
   if auth.uid() is null then
+    return new;
+  end if;
+  if current_user in ('postgres', 'supabase_admin') then
     return new;
   end if;
   select exists (select 1 from public.rtp_admins a where a.user_id = auth.uid()) into is_admin;
@@ -593,6 +579,8 @@ begin
   new.city := old.city;
   new.state := old.state;
   new.country := old.country;
+  new.co_leader_name := old.co_leader_name;
+  new.co_leader_photo_url := old.co_leader_photo_url;
   if old.leader_user_id is null and new.leader_user_id = auth.uid() then
     new.leader_user_id := new.leader_user_id;
   else

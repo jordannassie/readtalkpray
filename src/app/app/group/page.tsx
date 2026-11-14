@@ -4,9 +4,14 @@ import { googleAvatar } from "@/lib/auth/profile";
 
 export const dynamic = "force-dynamic";
 
-export default async function AppGroupPage() {
+export default async function AppGroupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ id?: string }>;
+}) {
   const account = await loadAccount();
   if (!account.configured || !account.user) return null;
+  const params = await searchParams;
   return (
     <AccountDashboard
       focus="group"
@@ -19,6 +24,8 @@ export default async function AppGroupPage() {
       requests={account.requests}
       details={account.details}
       locationChanges={account.locationChanges}
+      invites={account.invites}
+      selectedId={params.id ?? ""}
     />
   );
 }

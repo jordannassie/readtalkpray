@@ -28,6 +28,7 @@ type Application = {
   commitments_agreed?: boolean;
   privacy_agreed?: boolean;
   created_at?: string;
+  co_leader?: { id: string; name: string; email: string; status: string; approved: boolean } | null;
 };
 
 type JoinRequest = { id: string; first_name: string; phone: string; email: string | null; status: string; address_shared: boolean; group_id: string };
@@ -157,7 +158,7 @@ export function AdminReview({
                   )}
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-semibold">{item.group_name || "Group name not provided"}</span>
-                    <span className="block truncate text-xs text-[#555]">{item.leader_name} · {place}</span>
+                    <span className="block truncate text-xs text-[#555]">{item.leader_name}{item.co_leader ? ` & ${item.co_leader.name}` : ""} · {place}</span>
                     <span className="block truncate text-xs text-[#777] sm:hidden">{item.created_at ? new Date(item.created_at).toLocaleDateString() : ""}</span>
                   </span>
                   <span className="hidden shrink-0 text-xs text-[#666] sm:block">{item.created_at ? new Date(item.created_at).toLocaleDateString() : ""}</span>
@@ -166,7 +167,18 @@ export function AdminReview({
                 </button>
                 {open ? (
                   <div className="space-y-3 border-t border-black/5 px-3 py-4 text-sm">
+                    <p>Primary leader: {item.leader_name}</p>
                     <p>{item.email} · <a className="inline-flex min-h-11 items-center font-semibold text-[#1976F3]" href={`tel:${item.phone}`}>{item.phone}</a></p>
+                    {item.co_leader ? (
+                      <p className="text-[#157a3a]">
+                        Co-leader: {item.co_leader.name} · {item.co_leader.email} · {item.co_leader.approved ? "Approved" : item.co_leader.status === "accepted" ? "Accepted" : "Invitation Pending"}
+                      </p>
+                    ) : (
+                      <p className="text-[#667085]">Co-leader: none</p>
+                    )}
+                    {item.co_leader && item.co_leader.status === "accepted" && !item.co_leader.approved ? (
+                      <button type="button" disabled={busy === item.id} onClick={() => void send(item.id, { action: "approve_co_leader" })} className="inline-flex h-11 items-center rounded-full bg-[#157a3a] px-4 text-sm font-semibold text-white">Approve co-leader</button>
+                    ) : null}
                     <p><a className="inline-flex min-h-11 items-center font-semibold text-[#1976F3]" href={`mailto:${item.email ?? ""}`}>Email applicant</a></p>
                     <p className="text-[#444]">{[item.city, item.state, item.country].filter(Boolean).join(", ")} · {item.location_type.replaceAll("_", " ")}</p>
                     <p className="text-[#444]">{item.meeting_location}</p>

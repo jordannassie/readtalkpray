@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ProfilePhoto } from "@/components/account/ProfilePhoto";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { publicLocationLabel } from "@/lib/groups/geo";
-import type { OwnedApplication, PublicGroup } from "@/lib/groups/types";
+import type { CoLeaderInvite, OwnedApplication, PublicGroup } from "@/lib/groups/types";
 
 type Profile = { user_id: string; full_name: string | null; phone: string | null; photo_url: string | null };
 type Application = OwnedApplication;
@@ -20,6 +20,9 @@ type Group = {
   duration?: string | null;
   leader_name: string;
   leader_photo_url?: string | null;
+  leader_user_id?: string | null;
+  co_leader_name?: string | null;
+  co_leader_photo_url?: string | null;
   city: string;
   state?: string | null;
   country?: string | null;
@@ -50,6 +53,8 @@ export function AccountDashboard({
   requests,
   details,
   locationChanges,
+  invites = [],
+  selectedId = "",
   focus = "all",
 }: {
   profile: Profile;
@@ -61,18 +66,14 @@ export function AccountDashboard({
   requests: RequestRow[];
   details: Detail[];
   locationChanges: LocationChange[];
+  invites?: CoLeaderInvite[];
+  selectedId?: string;
   focus?: "all" | "home" | "group" | "me";
 }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
-  const managed = groups.find((item) => item.status === "approved") ?? groups.find((item) => item.status !== "rejected") ?? groups[0] ?? null;
-  const application = applications.find((item) => item.status === "pending" || item.status === "changes_requested") ?? applications[0] ?? null;
-  const openApplication = application && (application.status === "pending" || application.status === "changes_requested") ? application : null;
-  const status = groups.some((group) => group.status === "suspended")
-    ? "suspended"
-    : groups.some((group) => group.status === "paused")
-      ? "paused"
-      : application?.status ?? "none";
+  const items = groupEntries(applications, groups, invites, profile.user_id);
+  const incoming = invites.filter((invite) => invite.invited_by !== profile.user_id && (invite.status === "pending" || invite.status === "accepted"));
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -133,6 +134,17 @@ export function AccountDashboard({
     if (response.ok) router.refresh();
   }
 
+  async function respondInvite(id: string, action: "accept" | "decline" | "cancel") {
+    const response = await fetch("/api/groups/co-leader", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action, id }),
+    });
+    const body = (await response.json()) as { error?: string };
+    setMessage(response.ok ? (action === "accept" ? "Invitation accepted. An admin still confirms both leaders." : action === "decline" ? "Invitation declined." : "Co-leader invitation cancelled.") : body.error || "That invitation did not update.");
+    if (response.ok) router.refresh();
+  }
+
   async function share(id: string) {
     const url = `${window.location.origin}/groups/${id}`;
     try {
@@ -148,30 +160,66 @@ export function AccountDashboard({
       {message ? <p className="rounded-2xl bg-white px-4 py-3 text-sm">{message}</p> : null}
 
       {focus === "home" || focus === "all" ? (
-        <HomeGroupCard
-          status={status}
-          application={application}
-          group={managed}
-          reviewMessage={application?.review_message ?? null}
-          photoUrl={profile.photo_url || googlePhotoUrl}
-        />
+        items[0] ? (
+          <div>
+            <EntryCard entry={items[0]} photoUrl={profile.photo_url || googlePhotoUrl} compact />
+            {items.length > 1 ? (
+              <Link href="/app/group" className="mt-3 inline-flex text-sm font-semibold text-[#157a3a]">You have {items.length} groups</Link>
+            ) : null}
+          </div>
+        ) : null
       ) : null}
 
       {focus === "group" || focus === "all" ? (
-        <GroupDesk
-          email={email}
-          profile={profile}
-          googlePhotoUrl={googlePhotoUrl}
-          application={openApplication}
-          group={managed}
-          people={managed ? requests.filter((item) => item.group_id === managed.id) : []}
-          detail={managed ? details.find((item) => item.group_id === managed.id) ?? null : null}
-          pendingLocation={managed ? locationChanges.find((item) => item.group_id === managed.id && item.status === "pending") ?? null : null}
-          onSaveGroup={saveGroup}
-          onStatus={setStatus}
-          onLocation={requestLocation}
-          onShare={share}
-        />
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-2xl font-semibold tracking-tight">My Groups</h2>
+            <Link href="/app/start" className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">+ Add Group</Link>
+          </div>
+          {incoming.map((invite) => (
+            <section key={invite.id} className="rounded-[22px] border border-[#d7f3e2] bg-white p-4 shadow-sm">
+              <p className="text-sm font-semibold text-[#157a3a]">{invite.status === "accepted" ? "Accepted" : "Invitation Pending"}</p>
+              <p className="mt-1 text-sm text-[#142033]">{invite.group_name || "A Bible group"} invited you to lead together.</p>
+              {invite.status === "pending" ? (
+                <div className="mt-3 flex gap-2">
+                  <button type="button" onClick={() => void respondInvite(invite.id, "accept")} className="inline-flex h-11 items-center rounded-full bg-[#157a3a] px-4 text-sm font-semibold text-white">Accept</button>
+                  <button type="button" onClick={() => void respondInvite(invite.id, "decline")} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Decline</button>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-[#157a3a]">An admin confirms you before the group shows both leaders.</p>
+              )}
+            </section>
+          ))}
+          {items.length === 0 ? (
+            <section className="rounded-3xl bg-white p-5 shadow-sm">
+              <p className="text-sm text-[#667085]">You do not have a group yet.</p>
+            </section>
+          ) : null}
+          {items.map((entry) => (
+            <div key={entry.key} className="space-y-3">
+              <EntryCard entry={entry} photoUrl={profile.photo_url || googlePhotoUrl} />
+              {selectedId === entry.key ? (
+                <GroupDesk
+                  email={email}
+                  profile={profile}
+                  googlePhotoUrl={googlePhotoUrl}
+                  application={entry.application}
+                  group={entry.group}
+                  invite={entry.invite}
+                  primary={entry.primary}
+                  people={entry.group ? requests.filter((item) => item.group_id === entry.group?.id) : []}
+                  detail={entry.group ? details.find((item) => item.group_id === entry.group?.id) ?? null : null}
+                  pendingLocation={entry.group ? locationChanges.find((item) => item.group_id === entry.group?.id && item.status === "pending") ?? null : null}
+                  onSaveGroup={saveGroup}
+                  onStatus={setStatus}
+                  onLocation={requestLocation}
+                  onShare={share}
+                  onCancelInvite={(id) => void respondInvite(id, "cancel")}
+                />
+              ) : null}
+            </div>
+          ))}
+        </div>
       ) : null}
 
       {focus === "me" || focus === "all" ? <section className="rounded-[28px] bg-white p-6 shadow-sm">
@@ -197,20 +245,9 @@ export function AccountDashboard({
   );
 }
 
-function HomeGroupCard({
-  status,
-  application,
-  group,
-  reviewMessage,
-  photoUrl,
-}: {
-  status: string;
-  application: Application | null;
-  group: Group | null;
-  reviewMessage: string | null;
-  photoUrl: string | null;
-}) {
-  if (status === "none") return null;
+function EntryCard({ entry, photoUrl, compact = false }: { entry: Entry; photoUrl: string | null; compact?: boolean }) {
+  const { application, group, invite } = entry;
+  const status = group?.status || application?.status || "none";
   const name = group?.name || application?.group_name?.trim() || "My Bible Group";
   const place = group?.public_location || (application ? safePlace(application) : "");
   const leader = group?.leader_name || application?.leader_name || "Group leader";
@@ -223,17 +260,18 @@ function HomeGroupCard({
     place,
   });
   if (!card) return null;
+  const inviteLabel = invite ? (invite.approved ? "Co-leader confirmed" : invite.status === "accepted" ? "Co-leader accepted" : "Invitation Pending") : "";
   return (
     <section className="rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
       <JoinGroupForm
         group={card}
         variant="panel"
         hideJoin
-        compact
+        compact={compact}
         statusLabel={STATUS_LABEL[status] ?? status}
-        footer={<Link href="/app/group" className="inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Manage Group</Link>}
+        footer={<Link href={`/app/group?id=${entry.key}`} className="inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Manage Group</Link>}
       />
-      {status === "rejected" && reviewMessage ? <p className="mt-3 text-sm text-[#9a3412]">{reviewMessage}</p> : null}
+      {inviteLabel ? <p className="mt-3 text-sm font-semibold text-[#157a3a]">{inviteLabel}{invite ? ` · ${invite.name}` : ""}</p> : null}
     </section>
   );
 }
@@ -244,6 +282,8 @@ function GroupDesk({
   googlePhotoUrl,
   application,
   group,
+  invite,
+  primary,
   people,
   detail,
   pendingLocation,
@@ -251,12 +291,15 @@ function GroupDesk({
   onStatus,
   onLocation,
   onShare,
+  onCancelInvite,
 }: {
   email: string;
   profile: Profile;
   googlePhotoUrl: string | null;
   application: Application | null;
   group: Group | null;
+  invite: CoLeaderInvite | null;
+  primary: boolean;
   people: RequestRow[];
   detail: Detail | null;
   pendingLocation: LocationChange | null;
@@ -264,6 +307,7 @@ function GroupDesk({
   onStatus: (id: string, action: "pause" | "resume") => void;
   onLocation: (event: FormEvent<HTMLFormElement>, id: string) => void;
   onShare: (id: string) => void;
+  onCancelInvite: (id: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [previewing, setPreviewing] = useState(false);
@@ -276,42 +320,30 @@ function GroupDesk({
   const approved = status === "approved";
   const previewGroup = toPublicGroup({ application, group, photo, leader, name, place });
 
-  if (!group && !application) {
-    return (
-      <section className="rounded-3xl bg-white p-5 shadow-sm">
-        <h2 className="text-2xl font-semibold tracking-tight">My Bible Group</h2>
-        <p className="mt-2 text-sm text-[#667085]">You do not have a group yet.</p>
-        <Link href="/app/start" className="mt-4 inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Start a Group</Link>
-      </section>
-    );
-  }
+  if (!group && !application) return null;
 
   return (
-    <div className="space-y-3">
-      {previewGroup ? (
-        <div className="rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
-          <JoinGroupForm
-            group={previewGroup}
-            variant="panel"
-            hideJoin
-            statusLabel={STATUS_LABEL[status] ?? status}
-            footer={(
-              <div className="flex flex-wrap gap-2">
-                {group ? (
-                  <button type="button" onClick={() => setEditing((value) => !value)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Edit Group</button>
-                ) : (
-                  <Link href="/app/start" className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Edit Group</Link>
-                )}
-                <button type="button" onClick={() => setPreviewing(true)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Preview Group</button>
-                {approved && group ? (
-                  <button type="button" onClick={() => void onShare(group.id)} className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Share Group</button>
-                ) : null}
-              </div>
-            )}
-          />
-        </div>
+    <div className="space-y-3 rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap gap-2">
+        {group ? (
+          <button type="button" onClick={() => setEditing((value) => !value)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Edit Group</button>
+        ) : (
+          <Link href={application ? `/app/start?application=${application.id}` : "/app/start"} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Edit Group</Link>
+        )}
+        <button type="button" onClick={() => setPreviewing(true)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Preview Group</button>
+        {approved && group ? (
+          <button type="button" onClick={() => void onShare(group.id)} className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Share Group</button>
+        ) : null}
+      </div>
+      <p className="text-sm leading-relaxed text-[#157a3a]">{statusCopy(status, application?.review_message ?? null, approved && group ? `/groups/${group.id}` : "")}</p>
+      {invite && primary ? (
+        <p className="text-sm font-semibold text-[#157a3a]">
+          {invite.name} · {invite.approved ? "Co-leader confirmed" : invite.status === "accepted" ? "Accepted" : "Invitation Pending"}
+          {invite.status !== "cancelled" ? (
+            <button type="button" onClick={() => onCancelInvite(invite.id)} className="ml-3 font-semibold text-[#1976F3]">Cancel</button>
+          ) : null}
+        </p>
       ) : null}
-      <p className="text-sm leading-relaxed text-[#52627a]">{statusCopy(status, application?.review_message ?? null, approved && group ? `/groups/${group.id}` : "")}</p>
       {approved ? (
         <button type="button" onClick={() => setShowPeople((value) => !value)} className="inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Manage Interested People</button>
       ) : null}
@@ -437,5 +469,50 @@ function toPublicGroup({
     meeting_time: group?.meeting_time ?? application?.meeting_time ?? null,
     leader_name: leader,
     leader_photo_url: photo,
+    co_leader_name: group?.co_leader_name ?? null,
+    co_leader_photo_url: group?.co_leader_photo_url ?? null,
   };
+}
+
+type Entry = {
+  key: string;
+  application: Application | null;
+  group: Group | null;
+  invite: CoLeaderInvite | null;
+  primary: boolean;
+};
+
+function groupEntries(applications: Application[], groups: Group[], invites: CoLeaderInvite[], userId: string) {
+  const used = new Set<string>();
+  const items: Entry[] = [];
+  for (const application of applications) {
+    if (application.status === "rejected") continue;
+    const group = application.group_id ? groups.find((item) => item.id === application.group_id) ?? null : null;
+    if (group) used.add(group.id);
+    items.push({
+      key: application.id,
+      application,
+      group,
+      invite: openInvite(invites, application.id, group?.id),
+      primary: true,
+    });
+  }
+  for (const group of groups) {
+    if (used.has(group.id) || group.status === "rejected") continue;
+    items.push({
+      key: group.id,
+      application: null,
+      group,
+      invite: openInvite(invites, null, group.id),
+      primary: group.leader_user_id === userId,
+    });
+  }
+  return items;
+}
+
+function openInvite(invites: CoLeaderInvite[], applicationId: string | null, groupId?: string | null) {
+  return invites.find((invite) => (
+    (invite.status === "pending" || invite.status === "accepted")
+    && ((applicationId && invite.application_id === applicationId) || (groupId && invite.group_id === groupId))
+  )) ?? null;
 }

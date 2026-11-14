@@ -5,7 +5,7 @@ import { FormEvent, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Calendar, Check, MapPin, Phone, User, Users } from "lucide-react";
 import { LocationPreview } from "@/components/groups/LocationPreview";
 import { isWebsitePhone } from "@/lib/leads/website";
-import { meetingWhen, type PublicGroup } from "@/lib/groups/types";
+import { leaderLine, meetingWhen, type PublicGroup } from "@/lib/groups/types";
 
 const fieldClass =
   "h-12 w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] pr-4 pl-11 text-base text-[#111] outline-none placeholder:text-[#8a8a8a] focus:border-[#16A34A] focus:bg-white";
@@ -108,7 +108,7 @@ export function JoinGroupForm({
             <MapPin size={16} className="mt-0.5 shrink-0 text-[#1976F3]" aria-hidden />
             <span>{place}</span>
           </p>
-          {statusLabel ? <p className="mt-3"><span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusLabel === "Approved" ? "bg-[#e8f8ee] text-[#157a3a]" : "bg-[#fff7ed] text-[#9a3412]"}`}>{statusLabel}</span></p> : null}
+          {statusLabel ? <p className="mt-3"><span className="inline-flex rounded-full bg-[#e8f8ee] px-3 py-1 text-xs font-semibold text-[#157a3a]">{statusLabel}</span></p> : null}
         </div>
         <div className="relative shrink-0">
           <LeaderFace group={group} size={variant === "page" ? 56 : 72} />
@@ -117,7 +117,7 @@ export function JoinGroupForm({
           ) : null}
         </div>
       </div>
-      {compact ? null : <p className="mt-4 text-sm font-medium text-[#142033]">Led by {group.leader_name}</p>}
+      {compact ? null : <p className="mt-4 text-sm font-medium text-[#142033]">Led by {leaderLine(group)}</p>}
       {variant === "page" ? (
         <div className="mt-4 overflow-hidden rounded-2xl border border-[#eee]">
           <iframe
@@ -255,15 +255,30 @@ function Confirmation({
 }
 
 function LeaderFace({ group, size }: { group: PublicGroup; size: number }) {
-  if (group.leader_photo_url) {
+  if (!group.co_leader_name) return <Face photo={group.leader_photo_url} name={group.leader_name} size={size} />;
+  const small = Math.round(size * 0.72);
+  return (
+    <span className="relative block" style={{ width: size + 18, height: size }}>
+      <span className="absolute top-1 left-0">
+        <Face photo={group.leader_photo_url} name={group.leader_name} size={small} />
+      </span>
+      <span className="absolute right-0 bottom-0 rounded-full ring-2 ring-white">
+        <Face photo={group.co_leader_photo_url} name={group.co_leader_name} size={small} />
+      </span>
+    </span>
+  );
+}
+
+function Face({ photo, name, size }: { photo?: string | null; name: string; size: number }) {
+  if (photo) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={group.leader_photo_url} alt="" width={size} height={size} className="shrink-0 rounded-full object-cover" style={{ width: size, height: size }} />
+      <img src={photo} alt="" width={size} height={size} className="shrink-0 rounded-full object-cover" style={{ width: size, height: size }} />
     );
   }
   return (
     <span className="grid shrink-0 place-items-center rounded-full bg-[var(--sending-blue)] font-semibold text-white" style={{ width: size, height: size }}>
-      {group.leader_name.slice(0, 1).toUpperCase()}
+      {name.slice(0, 1).toUpperCase()}
     </span>
   );
 }

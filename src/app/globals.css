@@ -61,6 +61,26 @@ a {
   text-align: center;
 }
 
+.rtp-pin-pair {
+  position: relative;
+}
+
+.rtp-pin-pair img {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+}
+
+.rtp-pin-pair img:first-child {
+  top: 10px;
+  left: 0;
+}
+
+.rtp-pin-pair img:last-child {
+  top: 10px;
+  right: 0;
+}
+
 .rtp-pin img,
 .rtp-pin span {
   display: grid;

@@ -251,15 +251,26 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
 }
 
 function LeaderPhoto({ group }: { group: PublicGroup }) {
-  if (group.leader_photo_url) {
+  if (!group.co_leader_name) return <FinderFace photo={group.leader_photo_url} name={group.leader_name} />;
+  return (
+    <span className="relative h-10 w-14 shrink-0">
+      <span className="absolute top-0 left-0"><FinderFace photo={group.leader_photo_url} name={group.leader_name} small /></span>
+      <span className="absolute right-0 bottom-0 rounded-full ring-2 ring-white"><FinderFace photo={group.co_leader_photo_url} name={group.co_leader_name} small /></span>
+    </span>
+  );
+}
+
+function FinderFace({ photo, name, small = false }: { photo?: string | null; name: string; small?: boolean }) {
+  const size = small ? "h-7 w-7 text-xs" : "h-10 w-10 text-sm";
+  if (photo) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={group.leader_photo_url} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
+      <img src={photo} alt="" className={`${size} shrink-0 rounded-full object-cover`} />
     );
   }
   return (
-    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#1976F3] text-sm font-semibold text-white">
-      {group.leader_name.slice(0, 1).toUpperCase()}
+    <span className={`grid ${size} shrink-0 place-items-center rounded-full bg-[#1976F3] font-semibold text-white`}>
+      {name.slice(0, 1).toUpperCase()}
     </span>
   );
 }

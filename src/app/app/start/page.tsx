@@ -4,12 +4,23 @@ import { googleAvatar } from "@/lib/auth/profile";
 
 export const dynamic = "force-dynamic";
 
-export default async function AppStartPage() {
+export default async function AppStartPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ application?: string }>;
+}) {
   const account = await loadAccount();
   if (!account.configured || !account.user?.email) return null;
+  const params = await searchParams;
+  const application = params.application
+    ? account.applications.find((item) => item.id === params.application) ?? null
+    : null;
+  const invite = application
+    ? account.invites.find((item) => item.application_id === application.id && (item.status === "pending" || item.status === "accepted")) ?? null
+    : null;
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight">Start a group</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">{application ? "Edit application" : "Start a group"}</h1>
       <p className="mt-2 text-sm leading-relaxed text-[#555]">An admin reviews the application before the group appears on the map.</p>
       <div className="mt-5">
         <StartGroupForm
@@ -19,7 +30,8 @@ export default async function AppStartPage() {
           photoUrl={account.profile.photo_url}
           googlePhotoUrl={googleAvatar(account.user)}
           phone={account.profile.phone}
-          application={account.applications.find((item) => item.status === "pending" || item.status === "changes_requested") ?? account.applications[0] ?? null}
+          application={application}
+          invite={invite}
         />
       </div>
     </div>

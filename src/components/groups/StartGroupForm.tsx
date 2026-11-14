@@ -13,7 +13,7 @@ import { isWebsitePhone } from "@/lib/leads/website";
 import { APPLICATION_PRIVACY, LEADER_COMMITMENTS, LEADER_COMMITMENT_SCRIPTURE } from "@/lib/groups/commitments";
 import { MEETING_DAYS, MEETING_DURATIONS } from "@/lib/groups/schedule";
 import { LAUNCH_TIME_ZONE, isIanaTimeZone } from "@/lib/groups/sunday";
-import { LOCATION_TYPES, type OwnedApplication } from "@/lib/groups/types";
+import { LOCATION_TYPES, type CoLeaderInvite, type OwnedApplication } from "@/lib/groups/types";
 
 type FoundPlace = {
   placeId?: string;
@@ -55,6 +55,7 @@ export function StartGroupForm({
   googlePhotoUrl = null,
   phone = null,
   application,
+  invite = null,
 }: {
   email: string;
   name?: string;
@@ -63,6 +64,7 @@ export function StartGroupForm({
   googlePhotoUrl?: string | null;
   phone?: string | null;
   application?: OwnedApplication | null;
+  invite?: CoLeaderInvite | null;
 }) {
   const router = useRouter();
   const editing = application?.status === "pending" || application?.status === "changes_requested";
@@ -94,6 +96,10 @@ export function StartGroupForm({
   const zoneTouched = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const lock = useRef(false);
+  const [savedId, setSavedId] = useState(editing ? application?.id ?? "" : "");
+  const [coLeaderOn, setCoLeaderOn] = useState(Boolean(invite && (invite.status === "pending" || invite.status === "accepted")));
+  const [coLeaderName, setCoLeaderName] = useState(invite?.name ?? "");
+  const [coLeaderEmail, setCoLeaderEmail] = useState(invite?.email ?? "");
 
   useEffect(() => {
     if (editing) return;
@@ -205,6 +211,8 @@ export function StartGroupForm({
       nextErrors.meetingLocation = "Choose a location from the suggestions.";
     }
     if (!isWebsitePhone(mobile)) nextErrors.mobile = "Enter a valid mobile number.";
+    if (coLeaderOn && !coLeaderName.trim()) nextErrors.coLeaderName = "Enter the co-leader's name.";
+    if (coLeaderOn && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(coLeaderEmail.trim())) nextErrors.coLeaderEmail = "Enter the co-leader's email.";
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       setError("");
@@ -236,9 +244,13 @@ export function StartGroupForm({
           description: description.trim(),
           leaderPhotoUrl,
           leaderAgreement: true,
+          applicationId: savedId || undefined,
+          coLeader: coLeaderOn,
+          coLeaderName: coLeaderName.trim(),
+          coLeaderEmail: coLeaderEmail.trim(),
         }),
       });
-      const body = (await response.json()) as { ok?: boolean; error?: string; fields?: Record<string, string> };
+      const body = (await response.json()) as { ok?: boolean; error?: string; fields?: Record<string, string>; warning?: string | null; applicationId?: string };
       if (!response.ok || !body.ok) {
         setFieldErrors(body.fields ?? {});
         setError(body.fields ? "" : body.error || "The application was not saved.");
@@ -246,7 +258,14 @@ export function StartGroupForm({
         setSubmitting(false);
         return;
       }
-      router.push("/app?submitted=1");
+      if (body.applicationId) setSavedId(body.applicationId);
+      if (body.warning) {
+        setError(body.warning);
+        lock.current = false;
+        setSubmitting(false);
+        return;
+      }
+      router.push("/app/group");
       router.refresh();
       return;
     } catch (caught) {
@@ -260,7 +279,7 @@ export function StartGroupForm({
     return (
       <div className="rounded-[28px] bg-white p-8 shadow-sm">
         <p className="text-lg font-medium">Your application is already on file. Open your dashboard to see the status.</p>
-        <a href="/app/group" className="mt-4 inline-flex min-h-12 items-center text-sm font-semibold text-[#1976F3]">Preview My Group</a>
+        <a href="/app/group" className="mt-4 inline-flex min-h-12 items-center text-sm font-semibold text-[#1976F3]">My Groups</a>
       </div>
     );
   }
@@ -289,7 +308,7 @@ export function StartGroupForm({
     <div className="lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start lg:gap-8">
     <form ref={formRef} onSubmit={onSubmit} className="min-w-0 space-y-4 rounded-[28px] bg-white p-6 shadow-sm sm:p-8" noValidate>
       {editing ? (
-        <p className="rounded-2xl bg-[#fff7ed] px-4 py-3 text-sm text-[#9a3412]">This updates your existing application. It does not create a second group.</p>
+        <p className="rounded-2xl bg-[#e8f8ee] px-4 py-3 text-sm text-[#157a3a]">This updates this application. It does not create another group.</p>
       ) : null}
       {application?.status === "changes_requested" ? (
         <p className="rounded-2xl bg-[#fff7ed] px-4 py-3 text-sm text-[#9a3412]">{application.review_message || "A reviewer asked for changes."}</p>
@@ -418,6 +437,21 @@ export function StartGroupForm({
         Group description
         <textarea name="description" rows={4} value={description} onChange={(event) => setDescription(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] px-4 py-3 text-sm outline-none focus:border-[var(--sending-blue)] focus:bg-white" placeholder="Who the group is for, and what you read together." />
       </label>
+      <div className="rounded-2xl border border-[#e6ebf2] p-4">
+        <label className="flex min-h-11 items-center justify-between gap-3">
+          <span>
+            <span className="block text-sm font-semibold">Add a Co-Leader</span>
+            <span className="mt-1 block text-sm font-normal text-[#667085]">Leading this group with someone else?</span>
+          </span>
+          <input type="checkbox" className="h-5 w-5" checked={coLeaderOn} onChange={(event) => setCoLeaderOn(event.target.checked)} />
+        </label>
+        {coLeaderOn ? (
+          <div className="mt-3 space-y-3">
+            <Field label="Co-Leader Full Name" name="coLeaderName" required value={coLeaderName} error={fieldErrors.coLeaderName} onChange={(value) => { setCoLeaderName(value); clearField("coLeaderName"); }} />
+            <Field label="Co-Leader Email" name="coLeaderEmail" type="email" required autoComplete="off" value={coLeaderEmail} error={fieldErrors.coLeaderEmail} onChange={(value) => { setCoLeaderEmail(value); clearField("coLeaderEmail"); }} />
+          </div>
+        ) : null}
+      </div>
       <fieldset className="space-y-3">
         <legend className="text-base font-semibold">Leader Agreement</legend>
         <Accordion title="Statement of Faith">

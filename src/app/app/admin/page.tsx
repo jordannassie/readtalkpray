@@ -66,9 +66,16 @@ export default async function AppAdminPage({
     supabase.from("rtp_location_changes").select("id, group_id, public_location, private_address, status").eq("status", "pending").limit(PAGE_SIZE),
   ]);
   const ids = (applications ?? []).map((item) => item.id);
-  const { data: reviews } = ids.length
-    ? await supabase.from("rtp_application_reviews").select("id, application_id, action, note, message, created_at").in("application_id", ids).order("created_at", { ascending: false })
-    : { data: [] };
+  const [{ data: reviews }, { data: invites }] = ids.length
+    ? await Promise.all([
+        supabase.from("rtp_application_reviews").select("id, application_id, action, note, message, created_at").in("application_id", ids).order("created_at", { ascending: false }),
+        supabase.from("rtp_co_leader_invites").select("id, application_id, name, email, status, approved").in("application_id", ids).in("status", ["pending", "accepted"]),
+      ])
+    : [{ data: [] }, { data: [] }];
+  const applicationsWithLeaders = (applications ?? []).map((item) => ({
+    ...item,
+    co_leader: (invites ?? []).find((invite) => invite.application_id === item.id) ?? null,
+  }));
   const total = applicationCount ?? 0;
   return (
     <div>
@@ -79,7 +86,7 @@ export default async function AppAdminPage({
       <DemoToggle initial={demoOn} />
       <AdminUsers />
       <AdminReview
-        applications={applications ?? []}
+        applications={applicationsWithLeaders}
         requests={requests ?? []}
         groups={groups ?? []}
         reviews={reviews ?? []}

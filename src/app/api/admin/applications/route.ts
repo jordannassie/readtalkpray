@@ -95,6 +95,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  if (body.action === "approve_co_leader") {
+    const { data: applicationRow } = await supabase.from("rtp_group_applications").select("id, group_id").eq("id", body.id).maybeSingle();
+    const { data: invite } = await supabase
+      .from("rtp_co_leader_invites")
+      .select("id, name, email, status, approved, accepted_by, group_id")
+      .eq("application_id", body.id)
+      .eq("status", "accepted")
+      .maybeSingle();
+    if (!invite?.accepted_by) {
+      return NextResponse.json({ ok: false, error: "The co-leader has not accepted the invitation yet." }, { status: 422 });
+    }
+    const groupId = applicationRow?.group_id || invite.group_id;
+    const { error: flagError } = await supabase.from("rtp_co_leader_invites").update({ approved: true, group_id: groupId }).eq("id", invite.id);
+    if (flagError) return NextResponse.json({ ok: false, error: "The co-leader approval was not saved." }, { status: 500 });
+    if (groupId) {
+      const published = await publishCoLeader(supabase, groupId, invite);
+      if (published) return NextResponse.json({ ok: false, error: published }, { status: 500 });
+    }
+    await logReview("checklist", "Co-leader approved.");
+    return NextResponse.json({ ok: true });
+  }
+
   if (body.action === "location") {
     const { data: change } = await supabase.from("rtp_location_changes").select("id, group_id, public_location").eq("id", body.id).maybeSingle();
     if (!change) return NextResponse.json({ ok: false }, { status: 404 });
@@ -254,6 +276,19 @@ export async function POST(request: Request) {
   });
   if (leaderError) return NextResponse.json({ ok: false }, { status: 500 });
 
+  const { data: invite } = await supabase
+    .from("rtp_co_leader_invites")
+    .select("id, name, email, status, approved, accepted_by, group_id")
+    .eq("application_id", application.id)
+    .in("status", ["pending", "accepted"])
+    .maybeSingle();
+  if (invite) {
+    await supabase.from("rtp_co_leader_invites").update({ group_id: group.id }).eq("id", invite.id);
+    if (invite.status === "accepted" && invite.approved && invite.accepted_by) {
+      await publishCoLeader(supabase, group.id, invite);
+    }
+  }
+
   const { error: applicationError } = await supabase
     .from("rtp_group_applications")
     .update({ status: "approved", group_id: group.id })
@@ -262,4 +297,41 @@ export async function POST(request: Request) {
   await logReview("approve", null);
 
   return NextResponse.json({ ok: true, groupId: group.id });
+}
+
+async function publishCoLeader(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  groupId: string,
+  invite: { id: string; name: string; email: string; accepted_by: string | null },
+) {
+  const { data: existing } = await supabase
+    .from("rtp_group_leaders")
+    .select("id")
+    .eq("group_id", groupId)
+    .eq("is_primary", false)
+    .maybeSingle();
+  let photo: string | null = null;
+  if (invite.accepted_by) {
+    const { data: profile } = await supabase.from("rtp_profiles").select("photo_url").eq("user_id", invite.accepted_by).maybeSingle();
+    photo = profile?.photo_url ?? null;
+  }
+  if (!existing) {
+    const { count } = await supabase.from("rtp_group_leaders").select("id", { count: "exact", head: true }).eq("group_id", groupId);
+    if ((count ?? 0) >= 2) return "This group already has two leaders.";
+    const { error } = await supabase.from("rtp_group_leaders").insert({
+      group_id: groupId,
+      user_id: invite.accepted_by,
+      name: invite.name,
+      email: invite.email,
+      photo_url: photo,
+      is_primary: false,
+    });
+    if (error) return "The co-leader could not be added to this group.";
+  }
+  const { error: groupError } = await supabase
+    .from("rtp_groups")
+    .update({ co_leader_name: invite.name, co_leader_photo_url: photo })
+    .eq("id", groupId);
+  if (groupError && !/co_leader/i.test(groupError.message)) return "The public co-leader profile was not saved.";
+  return null;
 }

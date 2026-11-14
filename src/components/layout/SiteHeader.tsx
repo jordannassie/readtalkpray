@@ -28,7 +28,7 @@ export function SiteHeader({ activeHref }: { tone?: "solid" | "overlay" | "light
   const [account, setAccount] = useState<Account | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const start = account?.hasGroup
-    ? { href: "/app/group", label: "My Group" }
+    ? { href: "/app/group", label: "My Groups" }
     : { href: "/app/start", label: "Start a Group" };
 
   useEffect(() => {
@@ -41,10 +41,11 @@ export function SiteHeader({ activeHref }: { tone?: "solid" | "overlay" | "light
         setAccount(null);
         return;
       }
-      const [profile, application, group, admin] = await Promise.all([
+      const [profile, application, group, leader, admin] = await Promise.all([
         supabase.from("rtp_profiles").select("full_name, photo_url").eq("user_id", user.id).maybeSingle(),
         supabase.from("rtp_group_applications").select("id").eq("user_id", user.id).in("status", ["pending", "changes_requested", "approved", "suspended"]).limit(1),
         supabase.from("rtp_groups").select("id").eq("leader_user_id", user.id).in("status", ["approved", "suspended", "paused"]).limit(1),
+        supabase.from("rtp_group_leaders").select("id").eq("user_id", user.id).limit(1),
         supabase.from("rtp_admins").select("user_id").eq("user_id", user.id).maybeSingle(),
       ]);
       if (!alive) return;
@@ -54,7 +55,7 @@ export function SiteHeader({ activeHref }: { tone?: "solid" | "overlay" | "light
         email: user.email ?? "",
         name: profile.data?.full_name || (typeof metaName === "string" ? metaName : "") || "Your account",
         photo: profile.data?.photo_url || (typeof metaPhoto === "string" && metaPhoto.startsWith("https://") ? metaPhoto : null),
-        hasGroup: Boolean(application.data?.length || group.data?.length),
+        hasGroup: Boolean(application.data?.length || group.data?.length || leader.data?.length),
         admin: Boolean(admin.data),
       });
     }
@@ -174,7 +175,7 @@ function AccountMenu({ account, onClose, onSignOut }: { account: Account; onClos
       <MenuLink href="/app" onClick={onClose}>Home</MenuLink>
       <MenuLink href="/app/groups" onClick={onClose}>Find a Group</MenuLink>
       <MenuLink href="/app/start" onClick={onClose}>Start a Group</MenuLink>
-      <MenuLink href="/app/group" onClick={onClose}>My Group</MenuLink>
+      <MenuLink href="/app/group" onClick={onClose}>My Groups</MenuLink>
       <MenuLink href="/app/me" onClick={onClose}>Account Settings</MenuLink>
       {account.admin ? <MenuLink href="/app/admin" onClick={onClose}>Admin Dashboard</MenuLink> : null}
       <button type="button" onClick={onSignOut} className="flex w-full items-center gap-2 bg-[#fff1f1] px-4 py-3 text-left text-sm font-semibold text-[#e10600]">

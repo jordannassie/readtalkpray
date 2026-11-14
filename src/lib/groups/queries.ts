@@ -2,27 +2,29 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { PUBLIC_GROUP_COLUMNS, type PublicGroup } from "./types";
 
+const PUBLIC_GROUP_COLUMNS_WITH_CO_LEADER = `${PUBLIC_GROUP_COLUMNS}, co_leader_name, co_leader_photo_url`;
+
+async function selectApproved(filter: { id?: string }) {
+  const supabase = await createClient();
+  const columns = [PUBLIC_GROUP_COLUMNS_WITH_CO_LEADER, PUBLIC_GROUP_COLUMNS];
+  for (const columnList of columns) {
+    let query = supabase.from("rtp_groups").select(columnList).eq("status", "approved");
+    query = filter.id ? query.eq("id", filter.id) : query.order("city", { ascending: true });
+    const { data, error } = filter.id ? await query.maybeSingle() : await query;
+    if (!error) return data as PublicGroup | PublicGroup[] | null;
+    if (!/co_leader/i.test(error.message)) return null;
+  }
+  return null;
+}
+
 export async function listApprovedGroups(): Promise<PublicGroup[]> {
   if (!isSupabaseConfigured()) return [];
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("rtp_groups")
-    .select(PUBLIC_GROUP_COLUMNS)
-    .eq("status", "approved")
-    .order("city", { ascending: true });
-  if (error || !data) return [];
-  return data as PublicGroup[];
+  const data = await selectApproved({});
+  return Array.isArray(data) ? data : [];
 }
 
 export async function getApprovedGroup(id: string): Promise<PublicGroup | null> {
   if (!isSupabaseConfigured()) return null;
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("rtp_groups")
-    .select(PUBLIC_GROUP_COLUMNS)
-    .eq("id", id)
-    .eq("status", "approved")
-    .maybeSingle();
-  if (error || !data) return null;
-  return data as PublicGroup;
+  const data = await selectApproved({ id });
+  return data && !Array.isArray(data) ? data : null;
 }

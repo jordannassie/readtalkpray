@@ -18,6 +18,8 @@ export type PublicGroup = {
   meeting_time: string | null;
   leader_name: string;
   leader_photo_url: string | null;
+  co_leader_name?: string | null;
+  co_leader_photo_url?: string | null;
   is_demo?: boolean;
 };
 
@@ -69,5 +71,23 @@ export type OwnedApplication = {
   exact_latitude: number | null;
   exact_longitude: number | null;
   phone: string | null;
+  group_id?: string | null;
   created_at: string;
 };
+
+export type CoLeaderInvite = {
+  id: string;
+  application_id: string | null;
+  group_id: string | null;
+  invited_by: string;
+  name: string;
+  email: string;
+  group_name: string | null;
+  status: string;
+  approved: boolean;
+  accepted_by: string | null;
+};
+
+export function leaderLine(group: Pick<PublicGroup, "leader_name" | "co_leader_name">) {
+  return group.co_leader_name ? `${group.leader_name} & ${group.co_leader_name}` : group.leader_name;
+}

@@ -38,8 +38,8 @@ export async function POST(request: Request) {
 
   if ((body.action === "pause" || body.action === "resume") && body.id && isUuid(body.id)) {
     const status = body.action === "pause" ? "paused" : "approved";
-    const { error } = await supabase.from("rtp_groups").update({ status }).eq("id", body.id).eq("leader_user_id", user.id);
-    if (error) return NextResponse.json({ ok: false }, { status: 500 });
+    const { data: updated, error } = await supabase.from("rtp_groups").update({ status }).eq("id", body.id).select("id");
+    if (error || !updated?.length) return NextResponse.json({ ok: false }, { status: 403 });
     return NextResponse.json({ ok: true, status });
   }
 
@@ -66,8 +66,8 @@ export async function POST(request: Request) {
     if (typeof body.meetingTime === "string") patch.meeting_time = cleanText(body.meetingTime, 40);
     if (body.leaderPhotoUrl !== undefined) patch.leader_photo_url = safePhotoUrl(body.leaderPhotoUrl);
     if (!patch.name) return NextResponse.json({ ok: false }, { status: 400 });
-    const { error } = await supabase.from("rtp_groups").update(patch).eq("id", body.id).eq("leader_user_id", user.id);
-    if (error) return NextResponse.json({ ok: false }, { status: 500 });
+    const { data: updated, error } = await supabase.from("rtp_groups").update(patch).eq("id", body.id).select("id");
+    if (error || !updated?.length) return NextResponse.json({ ok: false }, { status: 403 });
     return NextResponse.json({ ok: true });
   }
 
