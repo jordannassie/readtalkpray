@@ -721,6 +721,7 @@ create policy "signed-in people can apply"
     and lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
     and faith_agreed
     and commitments_agreed
+    and privacy_agreed
     and char_length(leader_name) between 1 and 120
     and char_length(coalesce(group_name, '')) between 1 and 120
     and char_length(city) between 1 and 80
@@ -792,6 +793,7 @@ create policy "signed-in people can apply"
     and lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
     and faith_agreed
     and commitments_agreed
+    and privacy_agreed
     and char_length(leader_name) between 1 and 120
     and char_length(coalesce(group_name, '')) between 1 and 120
     and char_length(city) between 1 and 80

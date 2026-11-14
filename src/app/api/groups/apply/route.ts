@@ -10,7 +10,6 @@ import { cleanText, safePhotoUrl } from "@/lib/groups/text";
 import { MEETING_DAYS, MEETING_DURATIONS, displayMeetingTime } from "@/lib/groups/schedule";
 import { isIanaTimeZone, LAUNCH_TIME_ZONE } from "@/lib/groups/sunday";
 import { applicationFieldIssues } from "@/lib/groups/application";
-import { AGREEMENT_POLICY_VERSION } from "@/lib/groups/commitments";
 import { LOCATION_TYPES, type LocationType } from "@/lib/groups/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -63,7 +62,7 @@ export async function POST(request: Request) {
       faithAgreed: true,
       commitmentsAgreed: true,
       zoomAgreed: false,
-      privacyAgreed: false,
+      privacyAgreed: true,
     }),
   };
   if (!LOCATION_TYPES.includes(locationType)) fields.locationType = "Choose a location type.";
@@ -112,9 +111,7 @@ export async function POST(request: Request) {
     faith_agreed: true,
     commitments_agreed: true,
     zoom_agreed: false,
-    privacy_agreed: false,
-    agreement_accepted_at: new Date().toISOString(),
-    agreement_policy_version: AGREEMENT_POLICY_VERSION,
+    privacy_agreed: true,
     status: "pending",
   };
   const { data: existing } = await supabase
@@ -133,21 +130,7 @@ export async function POST(request: Request) {
     if (updateError) return NextResponse.json({ ok: false, error: safeDbMessage(updateError.message) }, { status: 500 });
     return NextResponse.json({ ok: true, status: "pending" });
   }
-  let payload: Record<string, unknown> = application;
-  let error: { message: string } | null = null;
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    const result = await supabase.from("rtp_group_applications").insert(payload);
-    error = result.error;
-    if (!error) break;
-    const missing = error.message.match(/Could not find the '([a-z_]+)' column/i);
-    if (missing && missing[1] in payload) {
-      const rest = { ...payload };
-      delete rest[missing[1]];
-      payload = rest;
-      continue;
-    }
-    break;
-  }
+  const { error } = await supabase.from("rtp_group_applications").insert(application);
   if (error) return NextResponse.json({ ok: false, error: safeDbMessage(error.message) }, { status: 500 });
 
   const lead = startLeadRows([{ name: leaderName, mobile: phone.phone, location: cityPlace }])[0];

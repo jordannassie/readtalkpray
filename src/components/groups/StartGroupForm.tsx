@@ -435,13 +435,13 @@ export function StartGroupForm({
           ))}
           <p className="text-[#666]">{LEADER_COMMITMENT_SCRIPTURE}</p>
         </Accordion>
-        <Accordion title="Privacy">
+        <Accordion title="Privacy" open>
           {APPLICATION_PRIVACY.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
         </Accordion>
       </fieldset>
-      <p className="text-sm leading-relaxed">By selecting Submit Group, I agree to the Statement of Faith and Leader Commitments.</p>
+      <p className="text-sm leading-relaxed">By selecting Submit Group, I agree to the Statement of Faith and Leader Commitments, and I consent to the privacy disclosure above.</p>
       {error ? <p role="alert" className="text-sm text-[#c2410c]">{error}</p> : null}
       <button type="submit" disabled={submitting} className="inline-flex h-[52px] w-full items-center justify-center rounded-full bg-[var(--sending-blue)] font-semibold text-white disabled:opacity-70">
         {submitting ? "Sending…" : "Submit Group"}
@@ -472,9 +472,9 @@ function GroupListingPreview({ group }: { group: PublicGroup }) {
   );
 }
 
-function Accordion({ title, children }: { title: string; children: ReactNode }) {
+function Accordion({ title, children, open = false }: { title: string; children: ReactNode; open?: boolean }) {
   return (
-    <details className="rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] px-4 py-3 text-sm leading-relaxed">
+    <details open={open || undefined} className="rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] px-4 py-3 text-sm leading-relaxed">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold">
         {title}
         <ChevronDown size={16} aria-hidden />

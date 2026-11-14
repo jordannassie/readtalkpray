@@ -20,8 +20,8 @@ export function applicationFieldIssues(input: AgreementInput) {
   if (!input.city.trim()) fields.city = "Enter a city.";
   if (!input.country.trim()) fields.country = "Enter a country.";
   if (!input.meetingLocation.trim()) fields.meetingLocation = "Enter a meeting location.";
-  if (!input.faithAgreed || !input.commitmentsAgreed) {
-    fields.leaderAgreement = "Agreement to the statement of faith and leader commitments is required.";
+  if (!input.faithAgreed || !input.commitmentsAgreed || !input.privacyAgreed) {
+    fields.leaderAgreement = "Agreement to the statement of faith, leader commitments, and privacy disclosure is required.";
   }
   return fields;
 }

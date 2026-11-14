@@ -139,6 +139,7 @@ export function AdminReview({
                 <ul className="mt-3 space-y-1 text-sm">
                   <li>Statement of faith: {item.faith_agreed ? "Agreed" : "Not agreed"}</li>
                   <li>Leader commitments: {item.commitments_agreed ? "Agreed" : "Not agreed"}</li>
+                  <li>Privacy disclosure: {item.privacy_agreed ? "Agreed" : "Not agreed"}</li>
                 </ul>
                 <fieldset className="mt-4 space-y-2">
                   <legend className="text-sm font-semibold">Approval checklist</legend>

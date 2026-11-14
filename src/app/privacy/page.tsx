@@ -14,7 +14,7 @@ export default function PrivacyPage() {
       <SiteHeader />
       <main className="mx-auto max-w-3xl px-5 py-14 text-[#1c1c1c]">
         <h1 className="text-4xl font-semibold tracking-tight">Privacy Policy</h1>
-        <p className="mt-4 text-sm text-[#666]">Last updated November 13, 2026. This page describes how the site works today. It has not been reviewed by a lawyer.</p>
+        <p className="mt-4 text-sm text-[#666]">Last updated November 14, 2026. This page describes how the site works today. It has not been reviewed by a lawyer.</p>
         <Legal>
           <h2>Who operates this site</h2>
           <p>
@@ -32,7 +32,7 @@ export default function PrivacyPage() {
           </p>
           <h2>Group applications</h2>
           <p>
-            Starting a group asks for your name, phone number, photo, group name, city, state, country, meeting place, day, time, time zone, and an optional description. The application records that you agreed to the statement of faith and leader commitments, and the time that agreement was saved. Prior attendance at a group is not required. A separate privacy checkbox is not stored as accepted.
+            Starting a group asks for your name, phone number, photo, group name, city, state, country, meeting place, day, time, time zone, and an optional description. Submitting the application records that you agreed to the Statement of Faith, the Leader Commitments, and the privacy disclosure on that form. Prior attendance at a group is not required.
           </p>
           <p>
             Applications stay pending until an admin reviews them. A private home address is stored separately from the location shown on the public map. The public map shows an approved public location, not an applicant&apos;s private home address, unless an admin has approved that text as the public location.
