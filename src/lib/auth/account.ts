@@ -21,7 +21,7 @@ export const loadAccount = cache(async () => {
       .order("created_at", { ascending: false }),
     supabase
       .from("rtp_groups")
-      .select("id, name, description, public_location, meeting_day, meeting_time, leader_name, city, status")
+      .select("id, name, description, public_location, meeting_day, meeting_time, duration, leader_name, leader_photo_url, city, state, country, location_type, latitude, longitude, status")
       .eq("leader_user_id", data.user.id),
   ]);
   const ids = (groups ?? []).map((group) => group.id);

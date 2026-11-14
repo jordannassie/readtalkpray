@@ -7,17 +7,14 @@ import { googleAvatar } from "@/lib/auth/profile";
 
 export const dynamic = "force-dynamic";
 
-export default async function AppHomePage({ searchParams }: { searchParams: Promise<{ submitted?: string }> }) {
-  const submitted = (await searchParams).submitted === "1";
+export default async function AppHomePage() {
   const account = await loadAccount();
   if (!account.configured || !account.user) return null;
   const name = account.profile.full_name || "Welcome";
-  const pending = account.applications.some((item) => item.status === "pending");
+  const hasGroup = account.groups.some((group) => group.status === "approved" || group.status === "suspended" || group.status === "paused")
+    || account.applications.some((item) => item.status === "pending" || item.status === "changes_requested" || item.status === "approved" || item.status === "suspended");
   return (
     <div>
-      {submitted && pending ? (
-        <p className="mb-4 rounded-2xl bg-white px-4 py-3 text-sm font-medium shadow-sm">Group application submitted. It is pending approval.</p>
-      ) : null}
       <div className="flex flex-col items-center px-2 pt-2 text-center">
         <ProfilePhoto
           userId={account.profile.user_id}
@@ -34,7 +31,11 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
       </div>
       <div className="mt-6 grid grid-cols-2 gap-3">
         <Link href="/app/groups" className="flex h-12 items-center justify-center rounded-full bg-[#1976F3] px-4 text-center text-sm font-semibold text-white">Find a Group</Link>
-        <Link href="/app/start" className="flex h-12 items-center justify-center rounded-full bg-white px-4 text-center text-sm font-semibold text-[#1976F3] shadow-sm">Start a Group</Link>
+        {hasGroup ? (
+          <Link href="/app/group" className="flex h-12 items-center justify-center rounded-full bg-white px-4 text-center text-sm font-semibold text-[#1976F3] shadow-sm">My Group</Link>
+        ) : (
+          <Link href="/app/start" className="flex h-12 items-center justify-center rounded-full bg-white px-4 text-center text-sm font-semibold text-[#1976F3] shadow-sm">Start a Group</Link>
+        )}
       </div>
       <AccountDashboard
         focus="home"
