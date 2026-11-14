@@ -19,7 +19,7 @@ export default async function AppStartPage() {
           photoUrl={account.profile.photo_url}
           googlePhotoUrl={googleAvatar(account.user)}
           phone={account.profile.phone}
-          application={account.applications[0] ?? null}
+          application={account.applications.find((item) => item.status === "pending" || item.status === "changes_requested") ?? account.applications[0] ?? null}
         />
       </div>
     </div>

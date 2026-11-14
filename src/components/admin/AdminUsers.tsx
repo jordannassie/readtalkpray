@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type AccountUser = {
   user_id: string;
@@ -29,10 +29,6 @@ export function AdminUsers() {
     setMessage("");
   }
 
-  useEffect(() => {
-    void load();
-  }, []);
-
   const needle = query.trim().toLowerCase();
   const visible = users.filter((user) => {
     if (!needle) return true;
@@ -57,8 +53,8 @@ export function AdminUsers() {
   }
 
   return (
-    <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold">Users</h2>
+    <details className="mt-6 rounded-3xl bg-white p-5 shadow-sm" onToggle={(event) => { if (event.currentTarget.open && users.length === 0) void load(); }}>
+      <summary className="cursor-pointer text-lg font-semibold">Users</summary>
       <input
         value={query}
         onChange={(event) => setQuery(event.target.value)}
@@ -111,6 +107,6 @@ export function AdminUsers() {
           </div>
         </div>
       ) : null}
-    </section>
+    </details>
   );
 }

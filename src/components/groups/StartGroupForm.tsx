@@ -13,7 +13,7 @@ import { isWebsitePhone } from "@/lib/leads/website";
 import { APPLICATION_PRIVACY, LEADER_COMMITMENTS, LEADER_COMMITMENT_SCRIPTURE } from "@/lib/groups/commitments";
 import { MEETING_DAYS, MEETING_DURATIONS } from "@/lib/groups/schedule";
 import { LAUNCH_TIME_ZONE, isIanaTimeZone } from "@/lib/groups/sunday";
-import { LOCATION_TYPES } from "@/lib/groups/types";
+import { LOCATION_TYPES, type OwnedApplication } from "@/lib/groups/types";
 
 type FoundPlace = {
   placeId?: string;
@@ -62,45 +62,49 @@ export function StartGroupForm({
   photoUrl?: string | null;
   googlePhotoUrl?: string | null;
   phone?: string | null;
-  application?: { status: string; review_message: string | null } | null;
+  application?: OwnedApplication | null;
 }) {
   const router = useRouter();
+  const editing = application?.status === "pending" || application?.status === "changes_requested";
+  const savedPoint = editing ? savedPlace(application) : null;
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [leaderPhotoUrl, setLeaderPhotoUrl] = useState(photoUrl);
-  const [leaderName, setLeaderName] = useState(name);
-  const [groupName, setGroupName] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [city, setCity] = useState("");
-  const [stateName, setStateName] = useState("");
-  const [country, setCountry] = useState("");
-  const [locationType, setLocationType] = useState("public_venue");
-  const [meetingLocation, setMeetingLocation] = useState("");
+  const [leaderPhotoUrl, setLeaderPhotoUrl] = useState(editing ? application?.leader_photo_url || photoUrl : photoUrl);
+  const [leaderName, setLeaderName] = useState(editing ? application?.leader_name || name : name);
+  const [groupName, setGroupName] = useState(editing ? application?.group_name ?? "" : "");
+  const [mobile, setMobile] = useState(editing ? application?.phone || phone || "" : phone || "");
+  const [city, setCity] = useState(editing ? application?.city ?? "" : "");
+  const [stateName, setStateName] = useState(editing ? application?.state ?? "" : "");
+  const [country, setCountry] = useState(editing ? application?.country ?? "" : "");
+  const [locationType, setLocationType] = useState(editing && application?.location_type ? application.location_type : "public_venue");
+  const [meetingLocation, setMeetingLocation] = useState(editing ? application?.meeting_location ?? "" : "");
   const [suggestions, setSuggestions] = useState<FoundPlace[]>([]);
   const [searchNote, setSearchNote] = useState("");
   const searchTimer = useRef<number | null>(null);
   const searchSeq = useRef(0);
-  const [preview, setPreview] = useState<FoundPlace | null>(null);
-  const [selectedPlace, setSelectedPlace] = useState<FoundPlace | null>(null);
-  const [description, setDescription] = useState("");
-  const nameEdited = useRef(false);
-  const [timeZone, setTimeZone] = useState(LAUNCH_TIME_ZONE);
-  const [meetingDay, setMeetingDay] = useState("Sunday");
-  const [meetingTime, setMeetingTime] = useState("09:00");
-  const [duration, setDuration] = useState("1 hour");
+  const [preview, setPreview] = useState<FoundPlace | null>(savedPoint);
+  const [selectedPlace, setSelectedPlace] = useState<FoundPlace | null>(savedPoint);
+  const [description, setDescription] = useState(editing ? application?.description ?? "" : "");
+  const nameEdited = useRef(editing);
+  const [timeZone, setTimeZone] = useState(editing && application?.timezone && isIanaTimeZone(application.timezone) ? application.timezone : LAUNCH_TIME_ZONE);
+  const [meetingDay, setMeetingDay] = useState(editing && MEETING_DAYS.includes(application?.meeting_day as (typeof MEETING_DAYS)[number]) ? application?.meeting_day ?? "Sunday" : "Sunday");
+  const [meetingTime, setMeetingTime] = useState(clockValue(editing ? application?.meeting_time : null));
+  const [duration, setDuration] = useState(editing && MEETING_DURATIONS.includes(application?.duration as (typeof MEETING_DURATIONS)[number]) ? application?.duration ?? "1 hour" : "1 hour");
   const zoneTouched = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const lock = useRef(false);
 
   useEffect(() => {
+    if (editing) return;
     const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (isIanaTimeZone(detected)) setTimeZone(detected);
-  }, []);
+  }, [editing]);
 
   useEffect(() => {
-    if (!nameEdited.current && name) setLeaderName(name);
-  }, [name]);
+    if (editing || nameEdited.current || !name) return;
+    setLeaderName(name);
+  }, [editing, name]);
 
   function clearField(key: string) {
     setFieldErrors((current) => {
@@ -252,15 +256,11 @@ export function StartGroupForm({
     }
   }
 
-  if (application?.status === "pending" || application?.status === "approved" || application?.status === "suspended") {
+  if (application?.status === "approved" || application?.status === "suspended") {
     return (
       <div className="rounded-[28px] bg-white p-8 shadow-sm">
-        <p className="text-lg font-medium">
-          {application.status === "pending"
-            ? "Your application is being reviewed. Our team will contact you before your group is approved."
-            : "Your application is already on file. Open your dashboard to see the status."}
-        </p>
-        <a href="/app" className="mt-4 inline-flex min-h-12 items-center text-sm font-semibold text-[#1976F3]">Open the app</a>
+        <p className="text-lg font-medium">Your application is already on file. Open your dashboard to see the status.</p>
+        <a href="/app/group" className="mt-4 inline-flex min-h-12 items-center text-sm font-semibold text-[#1976F3]">Preview My Group</a>
       </div>
     );
   }
@@ -288,6 +288,9 @@ export function StartGroupForm({
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start lg:gap-8">
     <form ref={formRef} onSubmit={onSubmit} className="min-w-0 space-y-4 rounded-[28px] bg-white p-6 shadow-sm sm:p-8" noValidate>
+      {editing ? (
+        <p className="rounded-2xl bg-[#fff7ed] px-4 py-3 text-sm text-[#9a3412]">This updates your existing application. It does not create a second group.</p>
+      ) : null}
       {application?.status === "changes_requested" ? (
         <p className="rounded-2xl bg-[#fff7ed] px-4 py-3 text-sm text-[#9a3412]">{application.review_message || "A reviewer asked for changes."}</p>
       ) : null}
@@ -517,5 +520,33 @@ function Field({
       {hint ? <span className="mt-1 block text-sm font-normal text-[#666]">{hint}</span> : null}
     </label>
   );
+}
+
+function savedPlace(application: OwnedApplication | null | undefined): FoundPlace | null {
+  if (!application) return null;
+  const latitude = application.exact_latitude ?? application.latitude;
+  const longitude = application.exact_longitude ?? application.longitude;
+  if (latitude == null || longitude == null || !Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude))) return null;
+  return {
+    name: application.meeting_location,
+    address: application.meeting_location,
+    latitude: Number(latitude),
+    longitude: Number(longitude),
+    label: application.meeting_location,
+    city: application.city,
+    state: application.state ?? "",
+    country: application.country,
+  };
+}
+
+function clockValue(value: string | null | undefined) {
+  const clock = /^(\d{1,2}):(\d{2})\s*([AaPp][Mm])?$/.exec(value?.trim() ?? "");
+  if (!clock) return "09:00";
+  let hour = Number(clock[1]);
+  const suffix = clock[3]?.toUpperCase();
+  if (suffix === "PM" && hour < 12) hour += 12;
+  if (suffix === "AM" && hour === 12) hour = 0;
+  if (hour > 23) return "09:00";
+  return `${String(hour).padStart(2, "0")}:${clock[2]}`;
 }
 

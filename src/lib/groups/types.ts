@@ -46,3 +46,28 @@ export function placeLabel(group: Pick<PublicGroup, "city" | "state" | "country"
 export function meetingWhen(group: Pick<PublicGroup, "meeting_day" | "meeting_time">) {
   return [group.meeting_day, group.meeting_time].filter(Boolean).join(" · ");
 }
+
+export type OwnedApplication = {
+  id: string;
+  status: string;
+  review_message: string | null;
+  group_name: string | null;
+  leader_name: string | null;
+  city: string;
+  state: string | null;
+  country: string;
+  location_type: string;
+  meeting_location: string;
+  meeting_day: string | null;
+  meeting_time: string | null;
+  duration: string | null;
+  timezone: string | null;
+  description: string | null;
+  leader_photo_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  exact_latitude: number | null;
+  exact_longitude: number | null;
+  phone: string | null;
+  created_at: string;
+};

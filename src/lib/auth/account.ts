@@ -16,7 +16,7 @@ export const loadAccount = cache(async () => {
   const [{ data: applications }, { data: groups }] = await Promise.all([
     supabase
       .from("rtp_group_applications")
-      .select("id, status, review_message, group_name, city, created_at")
+      .select("id, status, review_message, group_name, leader_name, city, state, country, location_type, meeting_location, meeting_day, meeting_time, duration, timezone, description, leader_photo_url, latitude, longitude, exact_latitude, exact_longitude, phone, created_at")
       .eq("user_id", data.user.id)
       .order("created_at", { ascending: false }),
     supabase

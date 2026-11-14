@@ -4,16 +4,19 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ProfilePhoto } from "@/components/account/ProfilePhoto";
+import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
+import { publicLocationLabel } from "@/lib/groups/geo";
+import type { OwnedApplication, PublicGroup } from "@/lib/groups/types";
 
 type Profile = { user_id: string; full_name: string | null; phone: string | null; photo_url: string | null };
-type Application = { id: string; status: string; review_message: string | null; group_name: string | null; city: string; created_at: string };
+type Application = OwnedApplication;
 type Group = { id: string; name: string; description: string | null; public_location: string; meeting_day: string | null; meeting_time: string | null; leader_name: string; city: string; status: string };
 type RequestRow = { id: string; group_id: string; first_name: string; phone: string; status: string; created_at: string };
 type Detail = { group_id: string; address: string | null };
 type LocationChange = { id: string; group_id: string; public_location: string; status: string; created_at: string };
 
 const STATUS_LABEL: Record<string, string> = {
-  pending: "Pending Review",
+  pending: "Pending Approval",
   changes_requested: "Changes Requested",
   approved: "Approved",
   rejected: "Rejected",
@@ -46,7 +49,8 @@ export function AccountDashboard({
 }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
-  const application = applications[0] ?? null;
+  const application = applications.find((item) => item.status === "pending" || item.status === "changes_requested") ?? applications[0] ?? null;
+  const openApplication = application && (application.status === "pending" || application.status === "changes_requested") ? application : null;
   const status = groups.some((group) => group.status === "suspended")
     ? "suspended"
     : groups.some((group) => group.status === "paused")
@@ -137,24 +141,40 @@ export function AccountDashboard({
             You have not applied to start a group. <Link href="/app/start" className="font-semibold text-[#1976F3]">Start a group</Link>
           </p>
         ) : null}
+        {openApplication && groups.length === 0 ? <OwnerGroupPreview application={openApplication} photoUrl={profile.photo_url || googlePhotoUrl} /> : null}
         {status === "pending" ? (
-          <p className="mt-4 text-sm leading-relaxed text-[#444]">Your application is being reviewed. Our team will contact you before your group is approved.</p>
+          <p className="mt-4 text-sm leading-relaxed text-[#444]">This group is awaiting administrator review. It stays private until it is approved.</p>
         ) : null}
         {status === "changes_requested" ? (
           <p className="mt-4 text-sm leading-relaxed text-[#444]">
             {application?.review_message || "A reviewer asked for changes."} <Link href="/app/start" className="font-semibold text-[#1976F3]">Update the application</Link>
           </p>
         ) : null}
+        {groups[0]?.status === "approved" ? (
+          <div className="mt-4">
+            <p className="text-sm text-[#444]">{groups[0].name} · {groups[0].public_location} · {[groups[0].meeting_day, groups[0].meeting_time].filter(Boolean).join(" · ")}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link href={`/groups/${groups[0].id}`} className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Public group link</Link>
+              <Link href="/app/group" className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Manage group</Link>
+            </div>
+          </div>
+        ) : null}
         {status === "rejected" ? <p className="mt-4 text-sm leading-relaxed text-[#444]">{application?.review_message || "This application was not approved."}</p> : null}
         {status === "suspended" ? <p className="mt-4 text-sm leading-relaxed text-[#444]">This group is suspended and hidden from the public map.</p> : null}
       </section> : null}
 
       {focus === "group" || focus === "all" ? groups.length === 0 ? (
+        openApplication ? (
+          <section className="rounded-[28px] bg-white p-6 shadow-sm">
+            <OwnerGroupPreview application={openApplication} photoUrl={profile.photo_url || googlePhotoUrl} />
+          </section>
+        ) : (
         <section className="rounded-[28px] bg-white p-6 shadow-sm">
           <h2 className="text-2xl font-semibold tracking-tight">My Group</h2>
           <p className="mt-3 text-sm leading-relaxed text-[#444]">You do not have a group yet. An application stays pending until an admin approves it.</p>
           <Link href="/app/start" className="mt-4 inline-flex h-12 items-center justify-center rounded-full bg-[#1976F3] px-5 text-sm font-semibold text-white">Start a group</Link>
         </section>
+        )
       ) : groups.map((group) => {
         const detail = details.find((item) => item.group_id === group.id);
         const people = requests.filter((item) => item.group_id === group.id);
@@ -178,11 +198,13 @@ export function AccountDashboard({
             <p className="mt-2 text-sm text-[#555]">{group.public_location} · {[group.meeting_day, group.meeting_time].filter(Boolean).join(" · ")}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {group.status === "approved" ? (
-                <Link href={`/groups/${group.id}`} className="rounded-full border border-black/10 px-4 py-2 text-sm">View public page</Link>
+                <Link href={`/groups/${group.id}`} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm">Public group link</Link>
               ) : (
                 <span className="rounded-full bg-[#f6f6f6] px-4 py-2 text-sm text-[#666]">Hidden from the public map</span>
               )}
-              <button type="button" onClick={() => void share(group.id)} className="rounded-full border border-black/10 px-4 py-2 text-sm">Share group</button>
+              {group.status === "approved" ? (
+                <button type="button" onClick={() => void share(group.id)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm">Share Group</button>
+              ) : null}
               {group.status === "approved" ? (
                 <button type="button" onClick={() => void setStatus(group.id, "pause")} className="rounded-full border border-black/10 px-4 py-2 text-sm">Pause group</button>
               ) : null}
@@ -244,6 +266,54 @@ export function AccountDashboard({
           <button type="submit" className="inline-flex h-12 items-center justify-center rounded-full bg-[#1976F3] px-5 text-sm font-semibold text-white">Save account</button>
         </form>
       </section> : null}
+    </div>
+  );
+}
+
+function OwnerGroupPreview({ application, photoUrl }: { application: OwnedApplication; photoUrl: string | null }) {
+  const locationType = application.location_type === "home" || application.location_type === "other" ? application.location_type : "public_venue";
+  const latitude = Number(application.latitude);
+  const longitude = Number(application.longitude);
+  const group: PublicGroup = {
+    id: application.id,
+    name: application.group_name?.trim() || `${application.city} Bible Group`,
+    description: application.description,
+    city: application.city,
+    state: application.state,
+    country: application.country || "",
+    location_type: locationType,
+    public_location: publicLocationLabel({
+      locationType,
+      meetingLocation: application.meeting_location,
+      city: application.city,
+      state: application.state ?? "",
+    }),
+    address: null,
+    latitude: Number.isFinite(latitude) ? latitude : 0,
+    longitude: Number.isFinite(longitude) ? longitude : 0,
+    meeting_day: application.meeting_day,
+    meeting_time: application.meeting_time,
+    leader_name: application.leader_name || "Group leader",
+    leader_photo_url: application.leader_photo_url || photoUrl,
+  };
+  const pending = application.status === "pending";
+  return (
+    <div className="mt-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold tracking-tight">My Group</h2>
+        <span className="rounded-full bg-[#fff7ed] px-3 py-1 text-xs font-semibold text-[#9a3412]">{pending ? "Pending Approval" : "Changes Requested"}</span>
+      </div>
+      <JoinGroupForm group={group} variant="panel" preview />
+      <p className="mt-3 text-sm leading-relaxed text-[#444]">
+        {pending
+          ? "This group is awaiting administrator review. Only you and an admin can see it."
+          : application.review_message || "A reviewer asked for changes. Update the application and submit it again."}
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Link href="/app/group" className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Preview My Group</Link>
+        <Link href="/app/start" className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Edit Application</Link>
+        <Link href="/app" className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">View Application Status</Link>
+      </div>
     </div>
   );
 }
