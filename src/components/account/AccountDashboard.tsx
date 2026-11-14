@@ -44,7 +44,6 @@ const STATUS_LABEL: Record<string, string> = {
 export function AccountDashboard({
   profile,
   email,
-  isAdmin,
   googlePhotoUrl = null,
   applications,
   groups,
@@ -145,8 +144,7 @@ export function AccountDashboard({
   }
 
   return (
-    <div className="mt-8 space-y-6">
-      {isAdmin && focus !== "me" ? <Link href="/app/admin" className="inline-flex min-h-12 items-center text-sm font-semibold text-[#1976F3]">Open admin review</Link> : null}
+    <div className={focus === "home" ? "mt-5" : "mt-2 space-y-6"}>
       {message ? <p className="rounded-2xl bg-white px-4 py-3 text-sm">{message}</p> : null}
 
       {focus === "home" || focus === "all" ? (
@@ -155,6 +153,7 @@ export function AccountDashboard({
           application={application}
           group={managed}
           reviewMessage={application?.review_message ?? null}
+          photoUrl={profile.photo_url || googlePhotoUrl}
         />
       ) : null}
 
@@ -203,35 +202,38 @@ function HomeGroupCard({
   application,
   group,
   reviewMessage,
+  photoUrl,
 }: {
   status: string;
   application: Application | null;
   group: Group | null;
   reviewMessage: string | null;
+  photoUrl: string | null;
 }) {
-  const name = group?.name || application?.group_name || "My Bible Group";
+  if (status === "none") return null;
+  const name = group?.name || application?.group_name?.trim() || "My Bible Group";
   const place = group?.public_location || (application ? safePlace(application) : "");
-  const when = [group?.meeting_day || application?.meeting_day, group?.meeting_time || application?.meeting_time].filter(Boolean).join(" · ");
-  if (status === "none") {
-    return (
-      <section className="rounded-3xl bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold">My Bible Group</h2>
-        <p className="mt-2 text-sm text-[#667085]">You have not started a group yet.</p>
-      </section>
-    );
-  }
+  const leader = group?.leader_name || application?.leader_name || "Group leader";
+  const card = toPublicGroup({
+    application,
+    group,
+    photo: group?.leader_photo_url || application?.leader_photo_url || photoUrl,
+    leader,
+    name,
+    place,
+  });
+  if (!card) return null;
   return (
-    <section className="rounded-3xl bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold tracking-wide text-[#667085]">MY BIBLE GROUP</p>
-          <h2 className="mt-1 truncate text-lg font-semibold">{name}</h2>
-          <p className="mt-1 truncate text-sm text-[#52627a]">{[when, place].filter(Boolean).join(" · ")}</p>
-        </div>
-        <StatusPill status={status} />
-      </div>
+    <section className="rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
+      <JoinGroupForm
+        group={card}
+        variant="panel"
+        hideJoin
+        compact
+        statusLabel={STATUS_LABEL[status] ?? status}
+        footer={<Link href="/app/group" className="inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Manage Group</Link>}
+      />
       {status === "rejected" && reviewMessage ? <p className="mt-3 text-sm text-[#9a3412]">{reviewMessage}</p> : null}
-      <Link href="/app/group" className="mt-4 inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Manage group</Link>
     </section>
   );
 }
@@ -271,10 +273,6 @@ function GroupDesk({
   const name = group?.name || application?.group_name?.trim() || "My Bible Group";
   const status = group?.status || application?.status || "none";
   const place = group?.public_location || (application ? safePlace(application) : "");
-  const city = group?.city || application?.city || "";
-  const when = [group?.meeting_day || application?.meeting_day, group?.meeting_time || application?.meeting_time].filter(Boolean).join(" · ");
-  const duration = group?.duration || application?.duration;
-  const description = group?.description || application?.description;
   const approved = status === "approved";
   const previewGroup = toPublicGroup({ application, group, photo, leader, name, place });
 
@@ -289,56 +287,40 @@ function GroupDesk({
   }
 
   return (
-    <section className="rounded-3xl bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-sm font-semibold tracking-wide text-[#667085]">My Bible Group</h2>
-          <p className="mt-1 text-2xl font-semibold tracking-tight">{name}</p>
+    <div className="space-y-3">
+      {previewGroup ? (
+        <div className="rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
+          <JoinGroupForm
+            group={previewGroup}
+            variant="panel"
+            hideJoin
+            statusLabel={STATUS_LABEL[status] ?? status}
+            footer={(
+              <div className="flex flex-wrap gap-2">
+                {group ? (
+                  <button type="button" onClick={() => setEditing((value) => !value)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Edit Group</button>
+                ) : (
+                  <Link href="/app/start" className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Edit Group</Link>
+                )}
+                <button type="button" onClick={() => setPreviewing(true)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Preview Group</button>
+                {approved && group ? (
+                  <button type="button" onClick={() => void onShare(group.id)} className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Share Group</button>
+                ) : null}
+              </div>
+            )}
+          />
         </div>
-        <StatusPill status={status} />
-      </div>
-      {status === "pending" ? (
-        <p className="mt-3 rounded-2xl bg-[#f7f7f7] px-3 py-2 text-sm text-[#444]">Your application has been received. Our team will contact you before your group appears publicly.</p>
       ) : null}
-      {status === "changes_requested" ? (
-        <p className="mt-3 rounded-2xl bg-[#fff7ed] px-3 py-2 text-sm text-[#9a3412]">{application?.review_message || "A reviewer asked for changes."}</p>
+      <p className="text-sm leading-relaxed text-[#52627a]">{statusCopy(status, application?.review_message ?? null, approved && group ? `/groups/${group.id}` : "")}</p>
+      {approved ? (
+        <button type="button" onClick={() => setShowPeople((value) => !value)} className="inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Manage Interested People</button>
       ) : null}
-      <div className="mt-4 flex gap-3">
-        {photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo} alt="" className="h-16 w-16 shrink-0 rounded-full object-cover" />
-        ) : (
-          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-[#e7f0ff] text-lg font-semibold text-[#1976F3]">{leader.slice(0, 1).toUpperCase()}</span>
-        )}
-        <div className="min-w-0 text-sm">
-          <p className="font-semibold">{leader}</p>
-          {when ? <p className="mt-1 text-[#52627a]">{when}</p> : null}
-          <p className="mt-1 text-[#52627a]">{[city, place].filter(Boolean).join(" · ")}</p>
-          {duration ? <p className="mt-1 text-[#52627a]">{duration}</p> : null}
-        </div>
-      </div>
-      {description ? <p className="mt-3 text-sm leading-relaxed text-[#444]">{description}</p> : null}
-      <div className="mt-4 flex flex-wrap gap-2">
-        {group ? (
-          <button type="button" onClick={() => setEditing((value) => !value)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Edit Group</button>
-        ) : (
-          <Link href="/app/start" className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Edit Group</Link>
-        )}
-        <button type="button" onClick={() => setPreviewing(true)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Preview Group</button>
-        {approved && group ? (
-          <button type="button" onClick={() => void onShare(group.id)} className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Share Group</button>
-        ) : null}
-        {approved ? (
-          <button type="button" onClick={() => setShowPeople((value) => !value)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Manage Interested People</button>
-        ) : null}
-        {group?.status === "approved" ? (
-          <button type="button" onClick={() => void onStatus(group.id, "pause")} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm">Pause group</button>
-        ) : null}
-        {group?.status === "paused" ? (
-          <button type="button" onClick={() => void onStatus(group.id, "resume")} className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Resume group</button>
-        ) : null}
-      </div>
-      {approved && group ? <p className="mt-3 break-all text-sm text-[#1976F3]">/groups/{group.id}</p> : null}
+      {group?.status === "approved" ? (
+        <button type="button" onClick={() => void onStatus(group.id, "pause")} className="ml-3 inline-flex h-11 items-center text-sm font-semibold text-[#52627a]">Pause group</button>
+      ) : null}
+      {group?.status === "paused" ? (
+        <button type="button" onClick={() => void onStatus(group.id, "resume")} className="inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Resume group</button>
+      ) : null}
       {editing && group ? (
         <div className="mt-4 space-y-4 border-t border-black/5 pt-4">
           <form className="space-y-3" onSubmit={(event) => onSaveGroup(event, group.id)}>
@@ -380,7 +362,7 @@ function GroupDesk({
         </div>
       ) : null}
       {previewing && previewGroup ? <GroupPreview group={previewGroup} onClose={() => setPreviewing(false)} /> : null}
-    </section>
+    </div>
   );
 }
 
@@ -398,9 +380,13 @@ function GroupPreview({ group, onClose }: { group: PublicGroup; onClose: () => v
   );
 }
 
-function StatusPill({ status }: { status: string }) {
-  const tone = status === "approved" ? "bg-[#e8f8ee] text-[#157a3a]" : status === "suspended" || status === "rejected" ? "bg-[#f3f4f6] text-[#444]" : "bg-[#fff7ed] text-[#9a3412]";
-  return <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${tone}`}>{STATUS_LABEL[status] ?? status}</span>;
+function statusCopy(status: string, message: string | null, publicPath: string) {
+  if (status === "pending") return "Your application has been received. Our team will contact you before your group appears publicly.";
+  if (status === "changes_requested") return message || "A reviewer asked for changes.";
+  if (status === "approved") return publicPath ? `Your group is approved and visible on the map. ${publicPath}` : "Your group is approved and visible on the map.";
+  if (status === "suspended" || status === "paused") return "This group is hidden from the public map.";
+  if (status === "rejected") return message || "This application was not approved.";
+  return "";
 }
 
 function safePlace(application: OwnedApplication) {

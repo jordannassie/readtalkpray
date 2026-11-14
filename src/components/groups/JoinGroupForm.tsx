@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Calendar, Check, MapPin, Phone, User, Users } from "lucide-react";
 import { LocationPreview } from "@/components/groups/LocationPreview";
 import { isWebsitePhone } from "@/lib/leads/website";
@@ -15,11 +15,19 @@ export function JoinGroupForm({
   variant = "page",
   onFindAnother,
   preview = false,
+  hideJoin = false,
+  compact = false,
+  statusLabel,
+  footer,
 }: {
   group: PublicGroup;
   variant?: "page" | "panel";
   onFindAnother?: () => void;
   preview?: boolean;
+  hideJoin?: boolean;
+  compact?: boolean;
+  statusLabel?: string;
+  footer?: ReactNode;
 }) {
   const [firstName, setFirstName] = useState("");
   const [mobile, setMobile] = useState("");
@@ -100,15 +108,16 @@ export function JoinGroupForm({
             <MapPin size={16} className="mt-0.5 shrink-0 text-[#1976F3]" aria-hidden />
             <span>{place}</span>
           </p>
+          {statusLabel ? <p className="mt-3"><span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusLabel === "Approved" ? "bg-[#e8f8ee] text-[#157a3a]" : "bg-[#fff7ed] text-[#9a3412]"}`}>{statusLabel}</span></p> : null}
         </div>
         <div className="relative shrink-0">
           <LeaderFace group={group} size={variant === "page" ? 56 : 72} />
-          {preview || group.is_demo ? (
+          {!hideJoin && (preview || group.is_demo) ? (
             <span className="absolute -top-1 -right-1 rounded-full bg-[#e7f0ff] px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-[#1976F3] uppercase">{preview ? "Preview" : "Demo"}</span>
           ) : null}
         </div>
       </div>
-      <p className="mt-4 text-sm font-medium text-[#142033]">Led by {group.leader_name}</p>
+      {compact ? null : <p className="mt-4 text-sm font-medium text-[#142033]">Led by {group.leader_name}</p>}
       {variant === "page" ? (
         <div className="mt-4 overflow-hidden rounded-2xl border border-[#eee]">
           <iframe
@@ -118,17 +127,20 @@ export function JoinGroupForm({
           />
         </div>
       ) : null}
-      {home ? (
+      {!compact && home ? (
         <p className="mt-2 text-sm leading-relaxed text-[#52627a]">The exact address is shared after the leader confirms you are coming.</p>
       ) : null}
-      {!home && group.address ? <p className="mt-2 text-sm text-[#333]">{group.address}</p> : null}
-      {group.description ? <p className="mt-3 text-sm leading-relaxed text-[#52627a]">{group.description}</p> : null}
+      {!compact && !home && group.address ? <p className="mt-2 text-sm text-[#333]">{group.address}</p> : null}
+      {!compact && group.description ? <p className="mt-3 text-sm leading-relaxed text-[#52627a]">{group.description}</p> : null}
       {preview && Number.isFinite(group.latitude) && Number.isFinite(group.longitude) && (group.latitude !== 0 || group.longitude !== 0) ? (
         <div className="mt-4 overflow-hidden rounded-2xl border border-[#eee]">
           <LocationPreview latitude={group.latitude} longitude={group.longitude} photoUrl={group.leader_photo_url} name={group.leader_name} />
         </div>
       ) : null}
 
+      {hideJoin ? (
+        footer ? <div className="mt-5 border-t border-[#e6ebf2] pt-5">{footer}</div> : null
+      ) : (
       <div className="mt-5 border-t border-[#e6ebf2] pt-5">
           <form className="space-y-3" onSubmit={onSubmit} noValidate>
             <h3 className="text-xl font-semibold tracking-tight">Join This Group</h3>
@@ -181,6 +193,7 @@ export function JoinGroupForm({
             </button>
           </form>
       </div>
+      )}
     </div>
   );
 }

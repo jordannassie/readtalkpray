@@ -438,7 +438,7 @@ export function StartGroupForm({
           ))}
           <p className="text-[#666]">{LEADER_COMMITMENT_SCRIPTURE}</p>
         </Accordion>
-        <Accordion title="Privacy" open>
+        <Accordion title="Privacy">
           {APPLICATION_PRIVACY.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
