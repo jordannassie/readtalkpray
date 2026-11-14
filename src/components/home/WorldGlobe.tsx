@@ -168,11 +168,10 @@ export function WorldGlobe({ places = [] }: { places?: GlobePlace[] }) {
         const position = positions[index];
         if (!card || !position) return;
         const on = index === spotlight && position.visible;
-        const cardX = Math.min(width - 98, Math.max(98, position.x));
-        const placeBelow = position.y < 92;
-        const cardY = Math.min(height - 12, Math.max(12, position.y));
+        const cardX = Math.min(width - 120, Math.max(120, cx + (position.x - cx) * 0.52));
+        const cardY = Math.min(height - 48, Math.max(48, cy + (position.y - cy) * 0.52));
         card.style.opacity = on ? "1" : "0";
-        card.style.transform = `translate(${cardX}px, ${cardY}px) translate(-50%, ${placeBelow ? "14px" : "-118%"}) scale(${on ? scale : 0.84})`;
+        card.style.transform = `translate(${cardX}px, ${cardY}px) translate(-50%, -50%) scale(${on ? scale : 0.84})`;
       });
 
       frame = requestAnimationFrame(draw);
