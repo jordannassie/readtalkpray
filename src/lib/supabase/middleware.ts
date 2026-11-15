@@ -4,7 +4,7 @@ import { getSupabaseAnonKey, getSupabaseUrl } from "./env";
 
 export async function updateSession(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-rtp-path", request.nextUrl.pathname);
+  requestHeaders.set("x-rtp-path", `${request.nextUrl.pathname}${request.nextUrl.search}`);
   let supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
 
   const supabase = createServerClient(getSupabaseUrl(), getSupabaseAnonKey(), {

@@ -4,6 +4,7 @@ import { ProfilePhoto } from "@/components/account/ProfilePhoto";
 import { BibleGroupGuide } from "@/components/app/BibleGroupGuide";
 import { loadAccount } from "@/lib/auth/account";
 import { googleAvatar } from "@/lib/auth/profile";
+import { ownsGroup } from "@/lib/groups/ownership";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +12,7 @@ export default async function AppHomePage() {
   const account = await loadAccount();
   if (!account.configured || !account.user) return null;
   const name = account.profile.full_name || "Welcome";
-  const hasGroup = account.groups.some((group) => group.status === "approved" || group.status === "suspended" || group.status === "paused")
-    || account.applications.some((item) => item.status === "pending" || item.status === "changes_requested" || item.status === "approved" || item.status === "suspended");
+  const hasGroup = ownsGroup(account.applications, account.groups);
   return (
     <div>
       <div className="flex flex-col items-center px-2 pt-2 text-center">
@@ -32,7 +32,7 @@ export default async function AppHomePage() {
       <div className="mt-6 grid grid-cols-2 gap-3">
         <Link href="/app/groups" className="flex h-12 items-center justify-center rounded-full bg-[#1976F3] px-4 text-center text-sm font-semibold text-white">Find a Group</Link>
         {hasGroup ? (
-          <Link href="/app/group" className="flex h-12 items-center justify-center rounded-full bg-white px-4 text-center text-sm font-semibold text-[#1976F3] shadow-sm">My Groups</Link>
+          <Link href="/app/group" className="flex h-12 items-center justify-center rounded-full bg-white px-4 text-center text-sm font-semibold text-[#1976F3] shadow-sm">My Group</Link>
         ) : (
           <Link href="/app/start" className="flex h-12 items-center justify-center rounded-full bg-white px-4 text-center text-sm font-semibold text-[#1976F3] shadow-sm">Start a Group</Link>
         )}

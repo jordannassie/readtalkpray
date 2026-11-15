@@ -4,6 +4,7 @@ import { checklistComplete } from "@/lib/auth/review";
 import { approximateCoordinates, publicLocationLabel } from "@/lib/groups/geo";
 import { isIanaTimeZone } from "@/lib/groups/sunday";
 import { geocodePlace } from "@/lib/groups/geo";
+import { ownsGroup } from "@/lib/groups/ownership";
 import { nextGroupSlug } from "@/lib/groups/slug";
 import { cleanText, isUuid, safePhotoUrl } from "@/lib/groups/text";
 import { createClient } from "@/lib/supabase/server";
@@ -209,6 +210,17 @@ export async function POST(request: Request) {
       { ok: false, error: "Add a city that can be found on the map before approving." },
       { status: 422 },
     );
+  }
+
+  if (flags.user_id) {
+    const [{ data: apps }, { data: groups }] = await Promise.all([
+      supabase.from("rtp_group_applications").select("id, status").eq("user_id", flags.user_id),
+      supabase.from("rtp_groups").select("status").eq("leader_user_id", flags.user_id),
+    ]);
+    const others = (apps ?? []).filter((item) => item.id !== application.id);
+    if (ownsGroup(others, groups ?? [])) {
+      return NextResponse.json({ ok: false, error: "This person already has a group. The extra application was kept and was not approved." }, { status: 409 });
+    }
   }
 
   const home = application.location_type === "home";

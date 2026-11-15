@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 const TABS = [
   { href: "/app", label: "Home", icon: Home },
   { href: "/app/groups", label: "Groups", icon: MapPin },
-  { href: "/app/group", label: "My Groups", icon: Users },
+  { href: "/app/group", label: "My Group", icon: Users },
   { href: "/app/me", label: "Me", icon: UserRound },
 ];
 
@@ -20,12 +20,14 @@ export function AppShell({
   email,
   photoUrl,
   isAdmin,
+  hasGroup,
 }: {
   children: React.ReactNode;
   name: string | null;
   email: string;
   photoUrl: string | null;
   isAdmin: boolean;
+  hasGroup: boolean;
 }) {
   const pathname = usePathname();
   const map = pathname.startsWith("/app/groups");
@@ -89,8 +91,7 @@ export function AppShell({
                 <div className="my-1 border-t border-black/5" />
                 <MenuLink href="/app" onClick={() => setOpen(false)}>Home</MenuLink>
                 <MenuLink href="/app/groups" onClick={() => setOpen(false)}>Find a Group</MenuLink>
-                <MenuLink href="/app/start" onClick={() => setOpen(false)}>Start a Group</MenuLink>
-                <MenuLink href="/app/group" onClick={() => setOpen(false)}>My Groups</MenuLink>
+                {hasGroup ? <MenuLink href="/app/group" onClick={() => setOpen(false)}>My Group</MenuLink> : <MenuLink href="/app/start" onClick={() => setOpen(false)}>Start a Group</MenuLink>}
                 <MenuLink href="/app/me" onClick={() => setOpen(false)}>Account Settings</MenuLink>
                 {isAdmin ? <MenuLink href="/app/admin" onClick={() => setOpen(false)}>Admin Dashboard</MenuLink> : null}
                 <button type="button" onClick={() => void signOut()} className="flex w-full items-center gap-2 bg-[#fff1f1] px-4 py-3 text-left text-sm font-semibold text-[#e10600]">

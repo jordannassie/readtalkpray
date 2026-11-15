@@ -1,6 +1,8 @@
+import { redirect } from "next/navigation";
 import { StartGroupForm } from "@/components/groups/StartGroupForm";
 import { loadAccount } from "@/lib/auth/account";
 import { googleAvatar } from "@/lib/auth/profile";
+import { ownsGroup } from "@/lib/groups/ownership";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +19,7 @@ export default async function AppStartPage({
     : null;
   const published = account.groups.find((item) => item.id === (params.group || application?.group_id)) ?? null;
   const editing = Boolean(application || published);
+  if (!editing && ownsGroup(account.applications, account.groups)) redirect("/app/group");
   return (
     <div>
       <h1 className="text-3xl font-semibold tracking-tight">{editing ? "Edit Group" : "Start a Bible Group"}</h1>

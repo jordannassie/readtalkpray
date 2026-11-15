@@ -17,9 +17,17 @@ const APP_PATHS = new Set([
 export function safeAppReturnPath(value: string | null) {
   if (!value) return null;
   if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\") || value.includes("://")) return null;
-  const path = value.split("?")[0]?.split("#")[0];
-  if (!path || !APP_PATHS.has(path)) return null;
-  return path;
+  const [path, query] = value.split("#")[0]?.split("?") ?? [];
+  if (!path || !APP_PATHS.has(path) || path.includes("..")) return null;
+  if (!query) return path;
+  const incoming = new URLSearchParams(query);
+  const kept = new URLSearchParams();
+  for (const key of path === "/app/start" ? ["application", "group"] : path === "/app/group" ? ["id"] : []) {
+    const item = incoming.get(key);
+    if (item && /^[0-9a-f-]{36}$/i.test(item)) kept.set(key, item);
+  }
+  const suffix = kept.toString();
+  return suffix ? `${path}?${suffix}` : path;
 }
 
 export function safeLeadsReturnPath(value: string | null) {

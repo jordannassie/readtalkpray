@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return clearNext(NextResponse.redirect(new URL(next, origin)));
+      return clearNext(NextResponse.redirect(new URL(next, origin), 303));
     }
   }
 

@@ -359,7 +359,7 @@ export function StartGroupForm({
     return (
       <div className="rounded-[28px] bg-white p-8 shadow-sm">
         <p className="text-lg font-medium">Your application is already on file. Open your dashboard to see the status.</p>
-        <a href="/app/group" className="mt-4 inline-flex min-h-12 items-center text-sm font-semibold text-[#1976F3]">My Groups</a>
+        <a href="/app/group" className="mt-4 inline-flex min-h-12 items-center text-sm font-semibold text-[#1976F3]">My Group</a>
       </div>
     );
   }

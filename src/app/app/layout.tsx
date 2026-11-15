@@ -5,6 +5,7 @@ import { AppShell } from "@/components/app/AppShell";
 import { loadAccount } from "@/lib/auth/account";
 import { googleAvatar } from "@/lib/auth/profile";
 import { safeAppReturnPath } from "@/lib/auth/return-path";
+import { ownsGroup } from "@/lib/groups/ownership";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       email={account.user.email ?? ""}
       photoUrl={account.profile.photo_url || googleAvatar(account.user)}
       isAdmin={account.admin}
+      hasGroup={ownsGroup(account.applications, account.groups)}
     >
       {children}
     </AppShell>

@@ -130,7 +130,7 @@ export function AccountDashboard({
           <div>
             <EntryCard entry={items[0]} photoUrl={profile.photo_url || googlePhotoUrl} compact />
             {items.length > 1 ? (
-              <Link href="/app/group" className="mt-3 inline-flex text-sm font-semibold text-[#157a3a]">You have {items.length} groups</Link>
+              <p className="mt-3 text-sm text-[#9a3412]">You have {items.length} group records. The extras were kept for review and no new group can be added.</p>
             ) : null}
           </div>
         ) : null
@@ -139,8 +139,8 @@ export function AccountDashboard({
       {focus === "group" || focus === "all" ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-2xl font-semibold tracking-tight">My Groups</h2>
-            <Link href="/app/start" className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">+ Add Group</Link>
+            <h2 className="text-2xl font-semibold tracking-tight">My Group</h2>
+            {items.length === 0 ? <Link href="/app/start" className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Start a Group</Link> : null}
           </div>
           {items.length === 0 ? (
             <section className="rounded-3xl bg-white p-5 shadow-sm">

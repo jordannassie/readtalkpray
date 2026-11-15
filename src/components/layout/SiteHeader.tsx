@@ -28,7 +28,7 @@ export function SiteHeader({ activeHref }: { tone?: "solid" | "overlay" | "light
   const [account, setAccount] = useState<Account | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const start = account?.hasGroup
-    ? { href: "/app/group", label: "My Groups" }
+    ? { href: "/app/group", label: "My Group" }
     : { href: "/app/start", label: "Start a Group" };
 
   useEffect(() => {
@@ -174,8 +174,7 @@ function AccountMenu({ account, onClose, onSignOut }: { account: Account; onClos
       <div className="my-1 border-t border-black/5" />
       <MenuLink href="/app" onClick={onClose}>Home</MenuLink>
       <MenuLink href="/app/groups" onClick={onClose}>Find a Group</MenuLink>
-      <MenuLink href="/app/start" onClick={onClose}>Start a Group</MenuLink>
-      <MenuLink href="/app/group" onClick={onClose}>My Groups</MenuLink>
+      {account.hasGroup ? <MenuLink href="/app/group" onClick={onClose}>My Group</MenuLink> : <MenuLink href="/app/start" onClick={onClose}>Start a Group</MenuLink>}
       <MenuLink href="/app/me" onClick={onClose}>Account Settings</MenuLink>
       {account.admin ? <MenuLink href="/app/admin" onClick={onClose}>Admin Dashboard</MenuLink> : null}
       <button type="button" onClick={onSignOut} className="flex w-full items-center gap-2 bg-[#fff1f1] px-4 py-3 text-left text-sm font-semibold text-[#e10600]">

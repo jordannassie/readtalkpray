@@ -10,6 +10,7 @@ import { cleanText, isUuid, ownApplicationPhotoUrl, safePhotoUrl } from "@/lib/g
 import { MEETING_DAYS, MEETING_DURATIONS, displayMeetingTime } from "@/lib/groups/schedule";
 import { isIanaTimeZone, LAUNCH_TIME_ZONE } from "@/lib/groups/sunday";
 import { applicationFieldIssues } from "@/lib/groups/application";
+import { ownsGroup } from "@/lib/groups/ownership";
 import { LOCATION_TYPES, type LocationType } from "@/lib/groups/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -141,6 +142,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, applicationId: existing.id });
   }
 
+  const [{ data: existingApplications }, { data: existingGroups }] = await Promise.all([
+    supabase.from("rtp_group_applications").select("status").eq("user_id", user.id),
+    supabase.from("rtp_groups").select("status").eq("leader_user_id", user.id),
+  ]);
+  if (ownsGroup(existingApplications ?? [], existingGroups ?? [])) {
+    return NextResponse.json({ ok: false, error: "You already have a group.", existing: true }, { status: 409 });
+  }
+
   const { data: inserted, error } = await supabase.from("rtp_group_applications").insert(payload).select("id").single();
   if (error?.message && /co_leader/i.test(error.message)) {
     const retry = await supabase.from("rtp_group_applications").insert(application).select("id").single();
@@ -152,7 +161,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: false,
       error: duplicate
-        ? "A second group needs the database update in supabase/multi-groups.sql before it can be saved. The existing group was not changed."
+        ? "You already have a group. The existing group was not changed."
         : safeDbMessage(error?.message ?? ""),
     }, { status: duplicate ? 409 : 500 });
   }
