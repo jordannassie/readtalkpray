@@ -17,8 +17,8 @@ export default async function AppStartPage({
     : null;
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight">{application ? "Edit application" : "Start a group"}</h1>
-      <p className="mt-2 text-sm leading-relaxed text-[#555]">An admin reviews the application before the group appears on the map.</p>
+      <h1 className="text-3xl font-semibold tracking-tight">{application ? "Edit application" : "Start a Bible Group"}</h1>
+      <p className="mt-2 text-sm leading-relaxed text-[#555]">{application ? "An admin reviews the application before the group appears on the map." : "Just a few details. We'll help you get started."}</p>
       <div className="mt-5">
         <StartGroupForm
           email={account.user.email}

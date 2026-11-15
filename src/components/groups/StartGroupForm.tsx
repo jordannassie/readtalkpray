@@ -318,23 +318,46 @@ export function StartGroupForm({
       {application?.status === "rejected" ? (
         <p className="rounded-2xl bg-[#fff7ed] px-4 py-3 text-sm text-[#9a3412]">{application.review_message || "The last application was not approved. You can submit a new one."}</p>
       ) : null}
-      <ProfilePhoto
-        userId={userId}
-        name={name || null}
-        email={email}
-        photoUrl={leaderPhotoUrl}
-        googlePhotoUrl={googlePhotoUrl}
-        fullName={name || null}
-        phone={phone}
-        size={144}
-        onSaved={setLeaderPhotoUrl}
-      />
-      <Field label="Your name" name="name" required autoComplete="name" value={leaderName} error={fieldErrors.leaderName} onChange={(value) => { nameEdited.current = true; setLeaderName(value); clearField("leaderName"); }} />
-      <label className="block text-sm font-medium">
-        Email
-        <input name="email" type="email" readOnly value={email} className={fieldClass} />
-        {fieldErrors.email ? <span className="mt-1 block text-sm font-normal text-[#c2410c]">{fieldErrors.email}</span> : null}
-      </label>
+      <section>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold">Group Leaders</h2>
+            <p className="mt-1 text-sm text-[#667085]">Who&apos;s leading this group?</p>
+          </div>
+          <div className="flex shrink-0 rounded-full bg-[#f2f4f7] p-1">
+            <button type="button" onClick={() => setCoLeaderOn(false)} className={`inline-flex h-9 items-center rounded-full px-3 text-sm font-semibold ${coLeaderOn ? "text-[#667085]" : "bg-[#111] text-white"}`}>1 Leader</button>
+            <button type="button" onClick={() => setCoLeaderOn(true)} className={`inline-flex h-9 items-center rounded-full px-3 text-sm font-semibold ${coLeaderOn ? "bg-[#111] text-white" : "text-[#667085]"}`}>2 Leaders</button>
+          </div>
+        </div>
+        <div className={coLeaderOn ? "mt-5 grid grid-cols-2 items-start gap-3 sm:gap-6" : "mt-5 mx-auto max-w-xs"}>
+          <div className="min-w-0 text-center">
+            <ProfilePhoto
+              userId={userId}
+              name={name || null}
+              email={email}
+              photoUrl={leaderPhotoUrl}
+              googlePhotoUrl={googlePhotoUrl}
+              fullName={name || null}
+              phone={phone}
+              size={112}
+              onSaved={setLeaderPhotoUrl}
+            />
+            <p className="mt-2 text-sm font-medium">Primary Leader</p>
+            <div className="mt-3 text-left">
+              <Field label="Your Name" name="name" required autoComplete="name" value={leaderName} error={fieldErrors.leaderName} onChange={(value) => { nameEdited.current = true; setLeaderName(value); clearField("leaderName"); }} />
+            </div>
+          </div>
+          {coLeaderOn ? (
+            <div className="min-w-0 text-center">
+              <CoLeaderPhoto userId={userId} name={coLeaderName} photoUrl={coLeaderPhoto} onUploaded={setCoLeaderPhoto} onError={setCoLeaderPhotoError} />
+              <p className="mt-2 text-sm font-medium">Co-Leader</p>
+              <div className="mt-3 text-left">
+                <Field label="Co-Leader Name" name="coLeaderName" required placeholder="Full name" value={coLeaderName} error={fieldErrors.coLeaderName || coLeaderPhotoError} onChange={(value) => { setCoLeaderName(value); clearField("coLeaderName"); }} />
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </section>
       <Field
         label="Group Name"
         name="groupName"
@@ -345,6 +368,11 @@ export function StartGroupForm({
         error={fieldErrors.groupName}
         onChange={(value) => { setGroupName(value); clearField("groupName"); }}
       />
+      <label className="block text-sm font-medium">
+        Email
+        <input name="email" type="email" readOnly value={email} className={fieldClass} />
+        {fieldErrors.email ? <span className="mt-1 block text-sm font-normal text-[#c2410c]">{fieldErrors.email}</span> : null}
+      </label>
       <Field label="Mobile number" name="mobile" type="tel" required autoComplete="tel" value={mobile} error={fieldErrors.mobile} onChange={(value) => { setMobile(value); clearField("mobile"); }} />
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label="City" name="city" required value={city} error={fieldErrors.city} onChange={(value) => { setCity(value); clearField("city"); }} onBlur={() => void suggestZone()} />
@@ -439,25 +467,6 @@ export function StartGroupForm({
         Group description
         <textarea name="description" rows={4} value={description} onChange={(event) => setDescription(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] px-4 py-3 text-sm outline-none focus:border-[var(--sending-blue)] focus:bg-white" placeholder="Who the group is for, and what you read together." />
       </label>
-      <div className="rounded-2xl border border-[#e6ebf2] p-4">
-        <div className="flex items-center justify-between gap-3">
-          <span>
-            <span className="block text-sm font-semibold">Add a Co-Leader</span>
-            <span className="mt-1 block text-sm font-normal text-[#667085]">Leading with your spouse or someone else?</span>
-          </span>
-          <span className="flex shrink-0 gap-2">
-            <button type="button" onClick={() => setCoLeaderOn(false)} className={`inline-flex h-11 items-center rounded-full px-4 text-sm font-semibold ${coLeaderOn ? "border border-black/10" : "bg-[#1976F3] text-white"}`}>No</button>
-            <button type="button" onClick={() => setCoLeaderOn(true)} className={`inline-flex h-11 items-center rounded-full px-4 text-sm font-semibold ${coLeaderOn ? "bg-[#1976F3] text-white" : "border border-black/10"}`}>Yes</button>
-          </span>
-        </div>
-        {coLeaderOn ? (
-          <div className="mt-4 space-y-3">
-            <CoLeaderPhoto userId={userId} name={coLeaderName} photoUrl={coLeaderPhoto} onUploaded={setCoLeaderPhoto} onError={setCoLeaderPhotoError} />
-            {coLeaderPhotoError ? <p className="text-sm text-[#c2410c]">{coLeaderPhotoError}</p> : null}
-            <Field label="Co-Leader Name" name="coLeaderName" required value={coLeaderName} error={fieldErrors.coLeaderName} onChange={(value) => { setCoLeaderName(value); clearField("coLeaderName"); }} />
-          </div>
-        ) : null}
-      </div>
       <fieldset className="space-y-3">
         <legend className="text-base font-semibold">Leader Agreement</legend>
         <Accordion title="Statement of Faith">
