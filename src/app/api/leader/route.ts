@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { LEAD_STATUSES, type LeadStatus } from "@/lib/leads/types";
-import { cleanText, isUuid, safePhotoUrl } from "@/lib/groups/text";
+import { groupMeUrl } from "@/lib/groups/types";
+import { cleanText, isUuid, ownApplicationPhotoUrl, safePhotoUrl } from "@/lib/groups/text";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
@@ -18,6 +19,9 @@ export async function POST(request: Request) {
     meetingTime?: string;
     publicLocation?: string;
     leaderPhotoUrl?: string | null;
+    groupmeUrl?: string;
+    coLeaderName?: string;
+    coLeaderPhotoUrl?: string | null;
     requestId?: string;
     status?: string;
     addressShared?: boolean;
@@ -56,6 +60,35 @@ export async function POST(request: Request) {
     });
     if (error) return NextResponse.json({ ok: false }, { status: 500 });
     return NextResponse.json({ ok: true, locationPending: true });
+  }
+
+  if (body.action === "groupme" && body.id && isUuid(body.id)) {
+    const raw = cleanText(String(body.groupmeUrl ?? ""), 300);
+    const link = raw ? groupMeUrl(raw) : null;
+    if (raw && !link) return NextResponse.json({ ok: false, error: "Use a GroupMe link from groupme.com." }, { status: 400 });
+    const { data: updated, error } = await supabase.from("rtp_groups").update({ groupme_url: link }).eq("id", body.id).eq("leader_user_id", user.id).select("id");
+    if (error && /groupme_url/i.test(error.message)) {
+      return NextResponse.json({ ok: false, error: "Run supabase/co-leader-photo.sql before a GroupMe link can be saved." }, { status: 409 });
+    }
+    if (error || !updated?.length) return NextResponse.json({ ok: false }, { status: 403 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (body.action === "co-leader" && body.id && isUuid(body.id)) {
+    const name = cleanText(String(body.coLeaderName ?? ""), 120);
+    const photo = body.coLeaderPhotoUrl ? ownApplicationPhotoUrl(user.id, body.coLeaderPhotoUrl) : null;
+    if (body.coLeaderPhotoUrl && !photo) return NextResponse.json({ ok: false, error: "Upload the co-leader photo again." }, { status: 400 });
+    const { data: updated, error } = await supabase
+      .from("rtp_groups")
+      .update({ co_leader_name: name || null, co_leader_photo_url: name ? photo : null })
+      .eq("id", body.id)
+      .eq("leader_user_id", user.id)
+      .select("id");
+    if (error && /co_leader/i.test(error.message)) {
+      return NextResponse.json({ ok: false, error: "Run supabase/co-leader-photo.sql before the co-leader can be saved." }, { status: 409 });
+    }
+    if (error || !updated?.length) return NextResponse.json({ ok: false }, { status: 403 });
+    return NextResponse.json({ ok: true });
   }
 
   if (body.action === "update" && body.id && isUuid(body.id)) {

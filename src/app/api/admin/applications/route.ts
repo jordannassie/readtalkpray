@@ -4,7 +4,7 @@ import { checklistComplete } from "@/lib/auth/review";
 import { approximateCoordinates, publicLocationLabel } from "@/lib/groups/geo";
 import { isIanaTimeZone } from "@/lib/groups/sunday";
 import { geocodePlace } from "@/lib/groups/geo";
-import { cleanText, isUuid } from "@/lib/groups/text";
+import { cleanText, isUuid, safePhotoUrl } from "@/lib/groups/text";
 import { createClient } from "@/lib/supabase/server";
 
 type ApplicationRow = {
@@ -232,11 +232,13 @@ export async function POST(request: Request) {
     timezone: typeof storedZone === "string" && isIanaTimeZone(storedZone) ? storedZone : null,
     leader_name: application.leader_name,
     leader_photo_url: application.leader_photo_url,
+    co_leader_name: cleanText(String((data as { co_leader_name?: unknown }).co_leader_name ?? ""), 120) || null,
+    co_leader_photo_url: safePhotoUrl(typeof (data as { co_leader_photo_url?: unknown }).co_leader_photo_url === "string" ? (data as { co_leader_photo_url: string }).co_leader_photo_url : null),
     status: "approved",
   };
   let group: { id: string } | null = null;
   let groupError: { message: string } | null = null;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
     const result = await supabase.from("rtp_groups").insert(groupPayload).select("id").single();
     group = result.data;
     groupError = result.error;
@@ -248,6 +250,11 @@ export async function POST(request: Request) {
     }
     if (/duration/i.test(groupError.message) && "duration" in groupPayload) {
       const { duration: _duration, ...rest } = groupPayload;
+      groupPayload = rest;
+      continue;
+    }
+    if (/co_leader/i.test(groupError.message)) {
+      const { co_leader_name: _name, co_leader_photo_url: _photo, ...rest } = groupPayload;
       groupPayload = rest;
       continue;
     }

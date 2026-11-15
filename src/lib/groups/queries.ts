@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { PUBLIC_GROUP_COLUMNS, type PublicGroup } from "./types";
 
-const PUBLIC_GROUP_COLUMNS_WITH_CO_LEADER = `${PUBLIC_GROUP_COLUMNS}, co_leader_name, co_leader_photo_url`;
+const PUBLIC_GROUP_COLUMNS_WITH_CO_LEADER = `${PUBLIC_GROUP_COLUMNS}, co_leader_name, co_leader_photo_url, groupme_url`;
 
 async function selectApproved(filter: { id?: string }) {
   const supabase = await createClient();
@@ -12,7 +12,7 @@ async function selectApproved(filter: { id?: string }) {
     query = filter.id ? query.eq("id", filter.id) : query.order("city", { ascending: true });
     const { data, error } = filter.id ? await query.maybeSingle() : await query;
     if (!error) return data as PublicGroup | PublicGroup[] | null;
-    if (!/co_leader/i.test(error.message)) return null;
+    if (!/co_leader|groupme_url/i.test(error.message)) return null;
   }
   return null;
 }

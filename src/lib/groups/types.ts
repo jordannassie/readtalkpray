@@ -20,6 +20,7 @@ export type PublicGroup = {
   leader_photo_url: string | null;
   co_leader_name?: string | null;
   co_leader_photo_url?: string | null;
+  groupme_url?: string | null;
   is_demo?: boolean;
 };
 
@@ -72,6 +73,8 @@ export type OwnedApplication = {
   exact_longitude: number | null;
   phone: string | null;
   group_id?: string | null;
+  co_leader_name?: string | null;
+  co_leader_photo_url?: string | null;
   created_at: string;
 };
 
@@ -90,4 +93,16 @@ export type CoLeaderInvite = {
 
 export function leaderLine(group: Pick<PublicGroup, "leader_name" | "co_leader_name">) {
   return group.co_leader_name ? `${group.leader_name} & ${group.co_leader_name}` : group.leader_name;
+}
+
+export function groupMeUrl(value: string | null | undefined) {
+  if (!value) return null;
+  try {
+    const url = new URL(value.trim());
+    const host = url.hostname.replace(/^www\./, "");
+    if (url.protocol !== "https:" || (host !== "groupme.com" && host !== "web.groupme.com")) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
 }

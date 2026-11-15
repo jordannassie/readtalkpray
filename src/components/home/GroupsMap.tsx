@@ -24,10 +24,6 @@ function photoSrc(url: string | null) {
 function pinHtml(group: PublicGroup) {
   const initial = escapeHtml(group.leader_name.slice(0, 1).toUpperCase() || "•");
   const src = photoSrc(group.leader_photo_url);
-  const coSrc = photoSrc(group.co_leader_photo_url ?? null);
-  if (group.co_leader_name && src && coSrc) {
-    return `<div class="rtp-pin rtp-pin-pair"><img src="${escapeHtml(src)}" alt="" /><img src="${escapeHtml(coSrc)}" alt="" /></div>`;
-  }
   const photo = src ? `<img src="${escapeHtml(src)}" alt="" />` : `<span>${initial}</span>`;
   return `<div class="rtp-pin">${photo}</div>`;
 }

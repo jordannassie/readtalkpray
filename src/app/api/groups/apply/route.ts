@@ -6,7 +6,7 @@ import { LEADS_TABLE } from "@/lib/leads/table";
 import { RTP_UPSERT_OPTIONS } from "@/lib/leads/types";
 import { isWebsitePhone } from "@/lib/leads/website";
 import { geocodePlace } from "@/lib/groups/geo";
-import { cleanText, isUuid, safePhotoUrl } from "@/lib/groups/text";
+import { cleanText, isUuid, ownApplicationPhotoUrl, safePhotoUrl } from "@/lib/groups/text";
 import { MEETING_DAYS, MEETING_DURATIONS, displayMeetingTime } from "@/lib/groups/schedule";
 import { isIanaTimeZone, LAUNCH_TIME_ZONE } from "@/lib/groups/sunday";
 import { applicationFieldIssues } from "@/lib/groups/application";
@@ -114,12 +114,12 @@ export async function POST(request: Request) {
     privacy_agreed: true,
     status: "pending",
   };
-  const requestedId = isUuid(String(record.applicationId ?? "")) ? String(record.applicationId) : "";
-  const coLeader = coLeaderInput(record.coLeader, record.coLeaderName, record.coLeaderEmail, user.email);
+  const coLeader = coLeaderInput(record.coLeader, record.coLeaderName, record.coLeaderPhotoUrl, user.id);
   if (coLeader.error) {
-    return NextResponse.json({ ok: false, error: coLeader.error, fields: { coLeaderEmail: coLeader.error } }, { status: 400 });
+    return NextResponse.json({ ok: false, error: coLeader.error, fields: { coLeaderName: coLeader.error } }, { status: 400 });
   }
-  let applicationId = requestedId;
+  const payload = { ...application, ...coLeader.value };
+  const requestedId = isUuid(String(record.applicationId ?? "")) ? String(record.applicationId) : "";
   if (requestedId) {
     const { data: existing } = await supabase
       .from("rtp_group_applications")
@@ -131,93 +131,51 @@ export async function POST(request: Request) {
     if (existing.status !== "pending" && existing.status !== "changes_requested") {
       return NextResponse.json({ ok: false, error: "This application can no longer be edited. Add a group to start another one." }, { status: 409 });
     }
-    const { error: updateError } = await supabase.from("rtp_group_applications").update(application).eq("id", existing.id).eq("user_id", user.id);
+    const { error: updateError } = await supabase.from("rtp_group_applications").update(payload).eq("id", existing.id).eq("user_id", user.id);
+    if (updateError && /co_leader/i.test(updateError.message)) {
+      const retry = await supabase.from("rtp_group_applications").update(application).eq("id", existing.id).eq("user_id", user.id);
+      if (retry.error) return NextResponse.json({ ok: false, error: safeDbMessage(retry.error.message) }, { status: 500 });
+      return NextResponse.json({ ok: true, applicationId: existing.id, warning: "The application was saved. Run supabase/co-leader-photo.sql before the co-leader name and photo can be stored." });
+    }
     if (updateError) return NextResponse.json({ ok: false, error: safeDbMessage(updateError.message) }, { status: 500 });
-  } else {
-    const { data: inserted, error } = await supabase.from("rtp_group_applications").insert(application).select("id").single();
-    if (error || !inserted) {
-      const duplicate = /rtp_applications_one_open|duplicate key/i.test(error?.message ?? "");
-      return NextResponse.json({
-        ok: false,
-        error: duplicate
-          ? "A second group needs the database update in supabase/multi-groups.sql before it can be saved. The existing group was not changed."
-          : safeDbMessage(error?.message ?? ""),
-      }, { status: duplicate ? 409 : 500 });
-    }
-    applicationId = inserted.id;
-    const lead = startLeadRows([{ name: leaderName, mobile: phone.phone, location: cityPlace }])[0];
-    if (lead) {
-      await supabase.from(LEADS_TABLE).upsert(
-        [{
-          ...lead,
-          email: user.email,
-          full_name: storedLeadName(leaderName, ""),
-          city,
-        }],
-        RTP_UPSERT_OPTIONS,
-      );
-    }
+    return NextResponse.json({ ok: true, applicationId: existing.id });
   }
-  const inviteWarning = await saveCoLeader(supabase, user.id, applicationId, groupName, coLeader.value);
 
-  return NextResponse.json({ ok: true, applicationId, warning: inviteWarning });
+  const { data: inserted, error } = await supabase.from("rtp_group_applications").insert(payload).select("id").single();
+  if (error?.message && /co_leader/i.test(error.message)) {
+    const retry = await supabase.from("rtp_group_applications").insert(application).select("id").single();
+    if (retry.error || !retry.data) return NextResponse.json({ ok: false, error: safeDbMessage(retry.error?.message ?? "") }, { status: 500 });
+    return NextResponse.json({ ok: true, applicationId: retry.data.id, warning: "The group was saved. Run supabase/co-leader-photo.sql before the co-leader name and photo can be stored." });
+  }
+  if (error || !inserted) {
+    const duplicate = /rtp_applications_one_open|duplicate key/i.test(error?.message ?? "");
+    return NextResponse.json({
+      ok: false,
+      error: duplicate
+        ? "A second group needs the database update in supabase/multi-groups.sql before it can be saved. The existing group was not changed."
+        : safeDbMessage(error?.message ?? ""),
+    }, { status: duplicate ? 409 : 500 });
+  }
+  const lead = startLeadRows([{ name: leaderName, mobile: phone.phone, location: cityPlace }])[0];
+  if (lead) {
+    await supabase.from(LEADS_TABLE).upsert(
+      [{
+        ...lead,
+        email: user.email,
+        full_name: storedLeadName(leaderName, ""),
+        city,
+      }],
+      RTP_UPSERT_OPTIONS,
+    );
+  }
+  return NextResponse.json({ ok: true, applicationId: inserted.id });
 }
 
-function coLeaderInput(enabled: unknown, name: unknown, email: unknown, ownerEmail: string) {
-  if (enabled !== true) return { value: null as null, error: "" };
+function coLeaderInput(enabled: unknown, name: unknown, photo: unknown, userId: string): { value: { co_leader_name: string | null; co_leader_photo_url: string | null }; error: string } {
+  if (enabled !== true) return { value: { co_leader_name: null, co_leader_photo_url: null }, error: "" };
   const coName = cleanText(String(name ?? ""), 120);
-  const coEmail = cleanText(String(email ?? ""), 200).toLowerCase();
-  if (!coName) return { value: null, error: "Enter the co-leader's name." };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(coEmail)) return { value: null, error: "Enter the co-leader's email." };
-  if (coEmail === ownerEmail.toLowerCase()) return { value: null, error: "A co-leader needs their own email address." };
-  return { value: { name: coName, email: coEmail }, error: "" };
-}
-
-async function saveCoLeader(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  applicationId: string,
-  groupName: string,
-  coLeader: { name: string; email: string } | null,
-) {
-  const { data: open, error: readError } = await supabase
-    .from("rtp_co_leader_invites")
-    .select("id, email, status")
-    .eq("application_id", applicationId)
-    .in("status", ["pending", "accepted"])
-    .maybeSingle();
-  if (readError) {
-    if (/rtp_co_leader_invites|schema cache|does not exist/i.test(readError.message)) {
-      return coLeader ? "The group was saved. Run supabase/multi-groups.sql before a co-leader invitation can be sent." : null;
-    }
-    return safeDbMessage(readError.message);
-  }
-  if (!coLeader) {
-    if (open?.status === "pending") {
-      await supabase.from("rtp_co_leader_invites").update({ status: "cancelled" }).eq("id", open.id).eq("invited_by", userId);
-    }
-    return null;
-  }
-  if (open && open.email.toLowerCase() === coLeader.email) {
-    if (open.status === "pending") {
-      await supabase.from("rtp_co_leader_invites").update({ name: coLeader.name, group_name: groupName }).eq("id", open.id);
-    }
-    return null;
-  }
-  if (open?.status === "accepted") return "Cancel the current co-leader before inviting someone else.";
-  if (open) {
-    const { error: cancelError } = await supabase.from("rtp_co_leader_invites").update({ status: "cancelled" }).eq("id", open.id).eq("invited_by", userId);
-    if (cancelError) return safeDbMessage(cancelError.message);
-  }
-  const { error } = await supabase.from("rtp_co_leader_invites").insert({
-    application_id: applicationId,
-    invited_by: userId,
-    name: coLeader.name,
-    email: coLeader.email,
-    group_name: groupName,
-    status: "pending",
-    approved: false,
-  });
-  if (error) return safeDbMessage(error.message);
-  return null;
+  if (!coName) return { value: { co_leader_name: null, co_leader_photo_url: null }, error: "Enter the co-leader's name." };
+  const coPhoto = typeof photo === "string" && photo ? ownApplicationPhotoUrl(userId, photo) : null;
+  if (photo && !coPhoto) return { value: { co_leader_name: null, co_leader_photo_url: null }, error: "Upload the co-leader photo again." };
+  return { value: { co_leader_name: coName, co_leader_photo_url: coPhoto }, error: "" };
 }

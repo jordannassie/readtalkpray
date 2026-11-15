@@ -5,7 +5,7 @@ import { FormEvent, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Calendar, Check, MapPin, Phone, User, Users } from "lucide-react";
 import { LocationPreview } from "@/components/groups/LocationPreview";
 import { isWebsitePhone } from "@/lib/leads/website";
-import { leaderLine, meetingWhen, type PublicGroup } from "@/lib/groups/types";
+import { groupMeUrl, leaderLine, meetingWhen, type PublicGroup } from "@/lib/groups/types";
 
 const fieldClass =
   "h-12 w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] pr-4 pl-11 text-base text-[#111] outline-none placeholder:text-[#8a8a8a] focus:border-[#16A34A] focus:bg-white";
@@ -132,6 +132,9 @@ export function JoinGroupForm({
       ) : null}
       {!compact && !home && group.address ? <p className="mt-2 text-sm text-[#333]">{group.address}</p> : null}
       {!compact && group.description ? <p className="mt-3 text-sm leading-relaxed text-[#52627a]">{group.description}</p> : null}
+      {!hideJoin && groupMeUrl(group.groupme_url) ? (
+        <a href={groupMeUrl(group.groupme_url) ?? undefined} className="mt-4 inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Join GroupMe</a>
+      ) : null}
       {preview && Number.isFinite(group.latitude) && Number.isFinite(group.longitude) && (group.latitude !== 0 || group.longitude !== 0) ? (
         <div className="mt-4 overflow-hidden rounded-2xl border border-[#eee]">
           <LocationPreview latitude={group.latitude} longitude={group.longitude} photoUrl={group.leader_photo_url} name={group.leader_name} />
@@ -256,13 +259,11 @@ function Confirmation({
 
 function LeaderFace({ group, size }: { group: PublicGroup; size: number }) {
   if (!group.co_leader_name) return <Face photo={group.leader_photo_url} name={group.leader_name} size={size} />;
-  const small = Math.round(size * 0.72);
+  const small = Math.round(size * 0.78);
   return (
-    <span className="relative block" style={{ width: size + 18, height: size }}>
-      <span className="absolute top-1 left-0">
-        <Face photo={group.leader_photo_url} name={group.leader_name} size={small} />
-      </span>
-      <span className="absolute right-0 bottom-0 rounded-full ring-2 ring-white">
+    <span className="flex items-center">
+      <Face photo={group.leader_photo_url} name={group.leader_name} size={small} />
+      <span className="-ml-2 rounded-full ring-2 ring-white">
         <Face photo={group.co_leader_photo_url} name={group.co_leader_name} size={small} />
       </span>
     </span>

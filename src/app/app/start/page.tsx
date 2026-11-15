@@ -15,9 +15,6 @@ export default async function AppStartPage({
   const application = params.application
     ? account.applications.find((item) => item.id === params.application) ?? null
     : null;
-  const invite = application
-    ? account.invites.find((item) => item.application_id === application.id && (item.status === "pending" || item.status === "accepted")) ?? null
-    : null;
   return (
     <div>
       <h1 className="text-3xl font-semibold tracking-tight">{application ? "Edit application" : "Start a group"}</h1>
@@ -31,7 +28,6 @@ export default async function AppStartPage({
           googlePhotoUrl={googleAvatar(account.user)}
           phone={account.profile.phone}
           application={application}
-          invite={invite}
         />
       </div>
     </div>

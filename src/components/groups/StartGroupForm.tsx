@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown } from "lucide-react";
+import { Camera, ChevronDown } from "lucide-react";
 import { ProfilePhoto } from "@/components/account/ProfilePhoto";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { publicLocationLabel } from "@/lib/groups/geo";
@@ -13,7 +13,9 @@ import { isWebsitePhone } from "@/lib/leads/website";
 import { APPLICATION_PRIVACY, LEADER_COMMITMENTS, LEADER_COMMITMENT_SCRIPTURE } from "@/lib/groups/commitments";
 import { MEETING_DAYS, MEETING_DURATIONS } from "@/lib/groups/schedule";
 import { LAUNCH_TIME_ZONE, isIanaTimeZone } from "@/lib/groups/sunday";
-import { LOCATION_TYPES, type CoLeaderInvite, type OwnedApplication } from "@/lib/groups/types";
+import { LOCATION_TYPES, type OwnedApplication } from "@/lib/groups/types";
+import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 type FoundPlace = {
   placeId?: string;
@@ -55,7 +57,6 @@ export function StartGroupForm({
   googlePhotoUrl = null,
   phone = null,
   application,
-  invite = null,
 }: {
   email: string;
   name?: string;
@@ -64,7 +65,6 @@ export function StartGroupForm({
   googlePhotoUrl?: string | null;
   phone?: string | null;
   application?: OwnedApplication | null;
-  invite?: CoLeaderInvite | null;
 }) {
   const router = useRouter();
   const editing = application?.status === "pending" || application?.status === "changes_requested";
@@ -97,9 +97,10 @@ export function StartGroupForm({
   const formRef = useRef<HTMLFormElement>(null);
   const lock = useRef(false);
   const [savedId, setSavedId] = useState(editing ? application?.id ?? "" : "");
-  const [coLeaderOn, setCoLeaderOn] = useState(Boolean(invite && (invite.status === "pending" || invite.status === "accepted")));
-  const [coLeaderName, setCoLeaderName] = useState(invite?.name ?? "");
-  const [coLeaderEmail, setCoLeaderEmail] = useState(invite?.email ?? "");
+  const [coLeaderOn, setCoLeaderOn] = useState(Boolean(editing && application?.co_leader_name));
+  const [coLeaderName, setCoLeaderName] = useState(editing ? application?.co_leader_name ?? "" : "");
+  const [coLeaderPhoto, setCoLeaderPhoto] = useState(editing ? application?.co_leader_photo_url ?? "" : "");
+  const [coLeaderPhotoError, setCoLeaderPhotoError] = useState("");
 
   useEffect(() => {
     if (editing) return;
@@ -212,7 +213,6 @@ export function StartGroupForm({
     }
     if (!isWebsitePhone(mobile)) nextErrors.mobile = "Enter a valid mobile number.";
     if (coLeaderOn && !coLeaderName.trim()) nextErrors.coLeaderName = "Enter the co-leader's name.";
-    if (coLeaderOn && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(coLeaderEmail.trim())) nextErrors.coLeaderEmail = "Enter the co-leader's email.";
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       setError("");
@@ -247,7 +247,7 @@ export function StartGroupForm({
           applicationId: savedId || undefined,
           coLeader: coLeaderOn,
           coLeaderName: coLeaderName.trim(),
-          coLeaderEmail: coLeaderEmail.trim(),
+          coLeaderPhotoUrl: coLeaderPhoto,
         }),
       });
       const body = (await response.json()) as { ok?: boolean; error?: string; fields?: Record<string, string>; warning?: string | null; applicationId?: string };
@@ -302,6 +302,8 @@ export function StartGroupForm({
     meeting_time: displayMeetingTime(meetingTime),
     leader_name: leaderName.trim() || "Group leader",
     leader_photo_url: leaderPhotoUrl || googlePhotoUrl,
+    co_leader_name: coLeaderOn ? coLeaderName.trim() || null : null,
+    co_leader_photo_url: coLeaderOn ? coLeaderPhoto || null : null,
   };
 
   return (
@@ -438,17 +440,21 @@ export function StartGroupForm({
         <textarea name="description" rows={4} value={description} onChange={(event) => setDescription(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] px-4 py-3 text-sm outline-none focus:border-[var(--sending-blue)] focus:bg-white" placeholder="Who the group is for, and what you read together." />
       </label>
       <div className="rounded-2xl border border-[#e6ebf2] p-4">
-        <label className="flex min-h-11 items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <span>
             <span className="block text-sm font-semibold">Add a Co-Leader</span>
-            <span className="mt-1 block text-sm font-normal text-[#667085]">Leading this group with someone else?</span>
+            <span className="mt-1 block text-sm font-normal text-[#667085]">Leading with your spouse or someone else?</span>
           </span>
-          <input type="checkbox" className="h-5 w-5" checked={coLeaderOn} onChange={(event) => setCoLeaderOn(event.target.checked)} />
-        </label>
+          <span className="flex shrink-0 gap-2">
+            <button type="button" onClick={() => setCoLeaderOn(false)} className={`inline-flex h-11 items-center rounded-full px-4 text-sm font-semibold ${coLeaderOn ? "border border-black/10" : "bg-[#1976F3] text-white"}`}>No</button>
+            <button type="button" onClick={() => setCoLeaderOn(true)} className={`inline-flex h-11 items-center rounded-full px-4 text-sm font-semibold ${coLeaderOn ? "bg-[#1976F3] text-white" : "border border-black/10"}`}>Yes</button>
+          </span>
+        </div>
         {coLeaderOn ? (
-          <div className="mt-3 space-y-3">
-            <Field label="Co-Leader Full Name" name="coLeaderName" required value={coLeaderName} error={fieldErrors.coLeaderName} onChange={(value) => { setCoLeaderName(value); clearField("coLeaderName"); }} />
-            <Field label="Co-Leader Email" name="coLeaderEmail" type="email" required autoComplete="off" value={coLeaderEmail} error={fieldErrors.coLeaderEmail} onChange={(value) => { setCoLeaderEmail(value); clearField("coLeaderEmail"); }} />
+          <div className="mt-4 space-y-3">
+            <CoLeaderPhoto userId={userId} name={coLeaderName} photoUrl={coLeaderPhoto} onUploaded={setCoLeaderPhoto} onError={setCoLeaderPhotoError} />
+            {coLeaderPhotoError ? <p className="text-sm text-[#c2410c]">{coLeaderPhotoError}</p> : null}
+            <Field label="Co-Leader Name" name="coLeaderName" required value={coLeaderName} error={fieldErrors.coLeaderName} onChange={(value) => { setCoLeaderName(value); clearField("coLeaderName"); }} />
           </div>
         ) : null}
       </div>
@@ -553,6 +559,65 @@ function Field({
       {error ? <span className="mt-1 block text-sm font-normal text-[#c2410c]">{error}</span> : null}
       {hint ? <span className="mt-1 block text-sm font-normal text-[#666]">{hint}</span> : null}
     </label>
+  );
+}
+
+function CoLeaderPhoto({
+  userId,
+  name,
+  photoUrl,
+  onUploaded,
+  onError,
+}: {
+  userId: string;
+  name: string;
+  photoUrl: string;
+  onUploaded: (url: string) => void;
+  onError: (message: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  async function choose(file: File | null) {
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      onError("Use a JPG, PNG, or WebP photo.");
+      return;
+    }
+    if (file.size > 2_000_000) {
+      onError("Use a photo under 2 MB.");
+      return;
+    }
+    if (!isSupabaseConfigured()) {
+      onError("Photo storage is not available.");
+      return;
+    }
+    onError("");
+    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+    const path = `applications/${userId}/${crypto.randomUUID()}.${ext}`;
+    const supabase = createClient();
+    const { error } = await supabase.storage.from("rtp-photos").upload(path, file, { contentType: file.type, upsert: false });
+    if (error) {
+      onError("The photo did not upload.");
+      return;
+    }
+    onUploaded(supabase.storage.from("rtp-photos").getPublicUrl(path).data.publicUrl);
+  }
+  return (
+    <div className="flex justify-center">
+      <div className="relative h-28 w-28">
+        <div className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-[#e7f0ff] text-2xl font-semibold text-[#1976F3]">
+          {photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photoUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            (name || "C").slice(0, 1).toUpperCase()
+          )}
+        </div>
+        <button type="button" aria-label="Add co-leader photo" onClick={() => inputRef.current?.click()} className="absolute -right-1 -bottom-1 grid h-10 w-10 place-items-center rounded-full bg-[#1976F3] text-white shadow-md">
+          <Camera size={18} aria-hidden />
+        </button>
+        <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { void choose(event.target.files?.[0] ?? null); event.target.value = ""; }} />
+      </div>
+    </div>
   );
 }
 

@@ -12,6 +12,12 @@ export function ownProfilePhotoUrl(userId: string, value: string | null | undefi
   return url.includes(`/rtp-photos/profiles/${userId}/`) ? url : null;
 }
 
+export function ownApplicationPhotoUrl(userId: string, value: string | null | undefined) {
+  const url = safePhotoUrl(value);
+  if (!url || !isUuid(userId)) return null;
+  return url.includes(`/rtp-photos/applications/${userId}/`) ? url : null;
+}
+
 export function safePhotoUrl(value: string | null | undefined) {
   if (!value) return null;
   try {

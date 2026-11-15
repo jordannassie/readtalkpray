@@ -23,6 +23,7 @@ type Group = {
   leader_user_id?: string | null;
   co_leader_name?: string | null;
   co_leader_photo_url?: string | null;
+  groupme_url?: string | null;
   city: string;
   state?: string | null;
   country?: string | null;
@@ -73,7 +74,6 @@ export function AccountDashboard({
   const router = useRouter();
   const [message, setMessage] = useState("");
   const items = groupEntries(applications, groups, invites, profile.user_id);
-  const incoming = invites.filter((invite) => invite.invited_by !== profile.user_id && (invite.status === "pending" || invite.status === "accepted"));
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -134,14 +134,16 @@ export function AccountDashboard({
     if (response.ok) router.refresh();
   }
 
-  async function respondInvite(id: string, action: "accept" | "decline" | "cancel") {
-    const response = await fetch("/api/groups/co-leader", {
+  async function saveGroupMe(event: FormEvent<HTMLFormElement>, id: string) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const response = await fetch("/api/leader", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action, id }),
+      body: JSON.stringify({ action: "groupme", id, groupmeUrl: form.get("groupmeUrl") }),
     });
     const body = (await response.json()) as { error?: string };
-    setMessage(response.ok ? (action === "accept" ? "Invitation accepted. An admin still confirms both leaders." : action === "decline" ? "Invitation declined." : "Co-leader invitation cancelled.") : body.error || "That invitation did not update.");
+    setMessage(response.ok ? "GroupMe link saved." : body.error || "That GroupMe link did not save.");
     if (response.ok) router.refresh();
   }
 
@@ -176,20 +178,6 @@ export function AccountDashboard({
             <h2 className="text-2xl font-semibold tracking-tight">My Groups</h2>
             <Link href="/app/start" className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">+ Add Group</Link>
           </div>
-          {incoming.map((invite) => (
-            <section key={invite.id} className="rounded-[22px] border border-[#d7f3e2] bg-white p-4 shadow-sm">
-              <p className="text-sm font-semibold text-[#157a3a]">{invite.status === "accepted" ? "Accepted" : "Invitation Pending"}</p>
-              <p className="mt-1 text-sm text-[#142033]">{invite.group_name || "A Bible group"} invited you to lead together.</p>
-              {invite.status === "pending" ? (
-                <div className="mt-3 flex gap-2">
-                  <button type="button" onClick={() => void respondInvite(invite.id, "accept")} className="inline-flex h-11 items-center rounded-full bg-[#157a3a] px-4 text-sm font-semibold text-white">Accept</button>
-                  <button type="button" onClick={() => void respondInvite(invite.id, "decline")} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Decline</button>
-                </div>
-              ) : (
-                <p className="mt-2 text-sm text-[#157a3a]">An admin confirms you before the group shows both leaders.</p>
-              )}
-            </section>
-          ))}
           {items.length === 0 ? (
             <section className="rounded-3xl bg-white p-5 shadow-sm">
               <p className="text-sm text-[#667085]">You do not have a group yet.</p>
@@ -198,14 +186,13 @@ export function AccountDashboard({
           {items.map((entry) => (
             <div key={entry.key} className="space-y-3">
               <EntryCard entry={entry} photoUrl={profile.photo_url || googlePhotoUrl} />
-              {selectedId === entry.key ? (
+              {(selectedId || (items.length === 1 ? items[0]?.key : "")) === entry.key ? (
                 <GroupDesk
                   email={email}
                   profile={profile}
                   googlePhotoUrl={googlePhotoUrl}
                   application={entry.application}
                   group={entry.group}
-                  invite={entry.invite}
                   primary={entry.primary}
                   people={entry.group ? requests.filter((item) => item.group_id === entry.group?.id) : []}
                   detail={entry.group ? details.find((item) => item.group_id === entry.group?.id) ?? null : null}
@@ -214,7 +201,7 @@ export function AccountDashboard({
                   onStatus={setStatus}
                   onLocation={requestLocation}
                   onShare={share}
-                  onCancelInvite={(id) => void respondInvite(id, "cancel")}
+                  onGroupMe={saveGroupMe}
                 />
               ) : null}
             </div>
@@ -246,7 +233,7 @@ export function AccountDashboard({
 }
 
 function EntryCard({ entry, photoUrl, compact = false }: { entry: Entry; photoUrl: string | null; compact?: boolean }) {
-  const { application, group, invite } = entry;
+  const { application, group } = entry;
   const status = group?.status || application?.status || "none";
   const name = group?.name || application?.group_name?.trim() || "My Bible Group";
   const place = group?.public_location || (application ? safePlace(application) : "");
@@ -260,7 +247,6 @@ function EntryCard({ entry, photoUrl, compact = false }: { entry: Entry; photoUr
     place,
   });
   if (!card) return null;
-  const inviteLabel = invite ? (invite.approved ? "Co-leader confirmed" : invite.status === "accepted" ? "Co-leader accepted" : "Invitation Pending") : "";
   return (
     <section className="rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
       <JoinGroupForm
@@ -271,7 +257,6 @@ function EntryCard({ entry, photoUrl, compact = false }: { entry: Entry; photoUr
         statusLabel={STATUS_LABEL[status] ?? status}
         footer={<Link href={`/app/group?id=${entry.key}`} className="inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Manage Group</Link>}
       />
-      {inviteLabel ? <p className="mt-3 text-sm font-semibold text-[#157a3a]">{inviteLabel}{invite ? ` · ${invite.name}` : ""}</p> : null}
     </section>
   );
 }
@@ -282,7 +267,6 @@ function GroupDesk({
   googlePhotoUrl,
   application,
   group,
-  invite,
   primary,
   people,
   detail,
@@ -291,14 +275,13 @@ function GroupDesk({
   onStatus,
   onLocation,
   onShare,
-  onCancelInvite,
+  onGroupMe,
 }: {
   email: string;
   profile: Profile;
   googlePhotoUrl: string | null;
   application: Application | null;
   group: Group | null;
-  invite: CoLeaderInvite | null;
   primary: boolean;
   people: RequestRow[];
   detail: Detail | null;
@@ -307,11 +290,10 @@ function GroupDesk({
   onStatus: (id: string, action: "pause" | "resume") => void;
   onLocation: (event: FormEvent<HTMLFormElement>, id: string) => void;
   onShare: (id: string) => void;
-  onCancelInvite: (id: string) => void;
+  onGroupMe: (event: FormEvent<HTMLFormElement>, id: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [previewing, setPreviewing] = useState(false);
-  const [showPeople, setShowPeople] = useState(false);
   const photo = group?.leader_photo_url || application?.leader_photo_url || profile.photo_url || googlePhotoUrl;
   const leader = group?.leader_name || application?.leader_name || profile.full_name || email;
   const name = group?.name || application?.group_name?.trim() || "My Bible Group";
@@ -336,17 +318,6 @@ function GroupDesk({
         ) : null}
       </div>
       <p className="text-sm leading-relaxed text-[#157a3a]">{statusCopy(status, application?.review_message ?? null, approved && group ? `/groups/${group.id}` : "")}</p>
-      {invite && primary ? (
-        <p className="text-sm font-semibold text-[#157a3a]">
-          {invite.name} · {invite.approved ? "Co-leader confirmed" : invite.status === "accepted" ? "Accepted" : "Invitation Pending"}
-          {invite.status !== "cancelled" ? (
-            <button type="button" onClick={() => onCancelInvite(invite.id)} className="ml-3 font-semibold text-[#1976F3]">Cancel</button>
-          ) : null}
-        </p>
-      ) : null}
-      {approved ? (
-        <button type="button" onClick={() => setShowPeople((value) => !value)} className="inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Manage Interested People</button>
-      ) : null}
       {group?.status === "approved" ? (
         <button type="button" onClick={() => void onStatus(group.id, "pause")} className="ml-3 inline-flex h-11 items-center text-sm font-semibold text-[#52627a]">Pause group</button>
       ) : null}
@@ -364,6 +335,14 @@ function GroupDesk({
             <label className="block text-sm font-medium">Description<textarea name="description" defaultValue={group.description ?? ""} rows={3} className="mt-1 w-full rounded-2xl border border-[#e6e6e6] px-3 py-2" /></label>
             <button type="submit" className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Save group</button>
           </form>
+          {primary ? (
+            <form className="space-y-3" onSubmit={(event) => onGroupMe(event, group.id)}>
+              <h3 className="font-semibold">GroupMe</h3>
+              <p className="text-sm text-[#666]">Optional. Paste the GroupMe invitation link for this group.</p>
+              <input name="groupmeUrl" defaultValue={group.groupme_url ?? ""} placeholder="https://groupme.com/join_group/..." className="h-11 w-full rounded-2xl border border-[#e6e6e6] px-3 text-sm" />
+              <button type="submit" className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Save GroupMe link</button>
+            </form>
+          ) : null}
           <form className="space-y-3" onSubmit={(event) => onLocation(event, group.id)}>
             <h3 className="font-semibold">Public location</h3>
             <p className="text-sm text-[#666]">The current public location stays visible until an admin approves a change. A home address is not published.</p>
@@ -376,18 +355,19 @@ function GroupDesk({
           </form>
         </div>
       ) : null}
-      {approved && showPeople ? (
+      {approved ? (
         <div className="mt-4 border-t border-black/5 pt-4">
-          <h3 className="font-semibold">Interested people</h3>
+          <h3 className="font-semibold">Interested People <span className="font-medium text-[#157a3a]">({people.length})</span></h3>
           {people.length === 0 ? <p className="mt-2 text-sm text-[#666]">No one has asked to join yet.</p> : null}
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-3 space-y-3">
             {people.map((person) => (
               <li key={person.id} className="flex items-center justify-between gap-3 text-sm">
-                <span className="min-w-0 truncate">{person.first_name}</span>
-                <span className="flex shrink-0 gap-3">
-                  <a href={`sms:${person.phone}`} className="inline-flex h-11 items-center font-semibold text-[#1976F3]">Text</a>
-                  <a href={`tel:${person.phone}`} className="inline-flex h-11 items-center font-semibold text-[#1976F3]">{person.phone}</a>
+                <span className="min-w-0">
+                  <span className="block truncate font-medium">{person.first_name}</span>
+                  <span className="block text-[#52627a]">{person.phone}</span>
+                  <span className="block text-xs text-[#667085]">{new Date(person.created_at).toLocaleDateString()}</span>
                 </span>
+                <a href={`sms:${person.phone}`} className="inline-flex h-11 shrink-0 items-center rounded-full bg-[#1976F3] px-4 font-semibold text-white">Text</a>
               </li>
             ))}
           </ul>
@@ -469,8 +449,9 @@ function toPublicGroup({
     meeting_time: group?.meeting_time ?? application?.meeting_time ?? null,
     leader_name: leader,
     leader_photo_url: photo,
-    co_leader_name: group?.co_leader_name ?? null,
-    co_leader_photo_url: group?.co_leader_photo_url ?? null,
+    co_leader_name: group?.co_leader_name ?? application?.co_leader_name ?? null,
+    co_leader_photo_url: group?.co_leader_photo_url ?? application?.co_leader_photo_url ?? null,
+    groupme_url: group?.groupme_url ?? null,
   };
 }
 

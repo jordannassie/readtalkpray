@@ -33,7 +33,7 @@ export default async function AppAdminPage({
   const supabase = await createClient();
   let applicationsQuery = supabase
     .from("rtp_group_applications")
-    .select("id, leader_name, email, phone, city, state, country, location_type, meeting_location, meeting_day, meeting_time, duration, timezone, description, leader_photo_url, group_name, status, faith_agreed, commitments_agreed, privacy_agreed, created_at", { count: "exact" })
+    .select("id, leader_name, email, phone, city, state, country, location_type, meeting_location, meeting_day, meeting_time, duration, timezone, description, leader_photo_url, co_leader_name, co_leader_photo_url, group_name, status, faith_agreed, commitments_agreed, privacy_agreed, created_at", { count: "exact" })
     .order("created_at", { ascending: false });
   if (filter === "pending") applicationsQuery = applicationsQuery.in("status", ["pending", "changes_requested"]);
   else if (filter !== "all") applicationsQuery = applicationsQuery.eq("status", filter);
@@ -66,16 +66,9 @@ export default async function AppAdminPage({
     supabase.from("rtp_location_changes").select("id, group_id, public_location, private_address, status").eq("status", "pending").limit(PAGE_SIZE),
   ]);
   const ids = (applications ?? []).map((item) => item.id);
-  const [{ data: reviews }, { data: invites }] = ids.length
-    ? await Promise.all([
-        supabase.from("rtp_application_reviews").select("id, application_id, action, note, message, created_at").in("application_id", ids).order("created_at", { ascending: false }),
-        supabase.from("rtp_co_leader_invites").select("id, application_id, name, email, status, approved").in("application_id", ids).in("status", ["pending", "accepted"]),
-      ])
-    : [{ data: [] }, { data: [] }];
-  const applicationsWithLeaders = (applications ?? []).map((item) => ({
-    ...item,
-    co_leader: (invites ?? []).find((invite) => invite.application_id === item.id) ?? null,
-  }));
+  const { data: reviews } = ids.length
+    ? await supabase.from("rtp_application_reviews").select("id, application_id, action, note, message, created_at").in("application_id", ids).order("created_at", { ascending: false })
+    : { data: [] };
   const total = applicationCount ?? 0;
   return (
     <div>
@@ -86,7 +79,7 @@ export default async function AppAdminPage({
       <DemoToggle initial={demoOn} />
       <AdminUsers />
       <AdminReview
-        applications={applicationsWithLeaders}
+        applications={applications ?? []}
         requests={requests ?? []}
         groups={groups ?? []}
         reviews={reviews ?? []}

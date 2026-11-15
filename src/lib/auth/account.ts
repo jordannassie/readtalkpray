@@ -6,8 +6,9 @@ import type { CoLeaderInvite } from "@/lib/groups/types";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
+const APPLICATION_COLUMNS = "id, status, review_message, group_name, leader_name, city, state, country, location_type, meeting_location, meeting_day, meeting_time, duration, timezone, description, leader_photo_url, latitude, longitude, exact_latitude, exact_longitude, phone, group_id, created_at";
 const GROUP_COLUMNS = "id, name, description, public_location, meeting_day, meeting_time, duration, leader_name, leader_photo_url, leader_user_id, city, state, country, location_type, latitude, longitude, status";
-const GROUP_COLUMNS_WITH_CO = `${GROUP_COLUMNS}, co_leader_name, co_leader_photo_url`;
+const GROUP_COLUMNS_WITH_CO = `${GROUP_COLUMNS}, co_leader_name, co_leader_photo_url, groupme_url`;
 
 export const loadAccount = cache(async () => {
   if (!isSupabaseConfigured()) return { configured: false as const };
@@ -17,12 +18,8 @@ export const loadAccount = cache(async () => {
   const session = await getSessionAdmin();
   await claimLeaderGroups(supabase, data.user, session.admin);
   const profile = await ensureProfile(data.user);
-  const [{ data: applications }, ownedGroups, { data: leaderRows }] = await Promise.all([
-    supabase
-      .from("rtp_group_applications")
-      .select("id, status, review_message, group_name, leader_name, city, state, country, location_type, meeting_location, meeting_day, meeting_time, duration, timezone, description, leader_photo_url, latitude, longitude, exact_latitude, exact_longitude, phone, group_id, created_at")
-      .eq("user_id", data.user.id)
-      .order("created_at", { ascending: false }),
+  const [applications, ownedGroups, { data: leaderRows }] = await Promise.all([
+    selectApplications(supabase, data.user.id),
     selectOwnGroups(supabase, data.user.id),
     supabase.from("rtp_group_leaders").select("group_id").eq("user_id", data.user.id).eq("is_primary", false),
   ]);
@@ -64,10 +61,22 @@ export const loadAccount = cache(async () => {
   };
 });
 
+async function selectApplications(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  const withCo = await supabase
+    .from("rtp_group_applications")
+    .select(`${APPLICATION_COLUMNS}, co_leader_name, co_leader_photo_url`)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (!withCo.error) return withCo.data ?? [];
+  if (!/co_leader/i.test(withCo.error.message)) return [];
+  const plain = await supabase.from("rtp_group_applications").select(APPLICATION_COLUMNS).eq("user_id", userId).order("created_at", { ascending: false });
+  return plain.data ?? [];
+}
+
 async function selectOwnGroups(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const withCo = await supabase.from("rtp_groups").select(GROUP_COLUMNS_WITH_CO).eq("leader_user_id", userId);
   if (!withCo.error) return withCo.data ?? [];
-  if (!/co_leader/i.test(withCo.error.message)) return [];
+  if (!/co_leader|groupme_url/i.test(withCo.error.message)) return [];
   const plain = await supabase.from("rtp_groups").select(GROUP_COLUMNS).eq("leader_user_id", userId);
   return plain.data ?? [];
 }
@@ -75,7 +84,7 @@ async function selectOwnGroups(supabase: Awaited<ReturnType<typeof createClient>
 async function selectGroupsByIds(supabase: Awaited<ReturnType<typeof createClient>>, ids: string[]) {
   const withCo = await supabase.from("rtp_groups").select(GROUP_COLUMNS_WITH_CO).in("id", ids);
   if (!withCo.error) return withCo.data ?? [];
-  if (!/co_leader/i.test(withCo.error.message)) return [];
+  if (!/co_leader|groupme_url/i.test(withCo.error.message)) return [];
   const plain = await supabase.from("rtp_groups").select(GROUP_COLUMNS).in("id", ids);
   return plain.data ?? [];
 }
