@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { SHARE_IMAGE } from "@/components/brand/logos";
 import { GroupLanding, PausedGroupPage } from "@/components/groups/GroupLanding";
 import { getDemoGroup } from "@/lib/groups/demo";
 import { getApprovedGroup, publicGroupState } from "@/lib/groups/queries";
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     title: `${group.name} | Read Talk Pray`,
     description,
     alternates: canonical ? { canonical } : undefined,
-    openGraph: { title: `${group.name} | Read Talk Pray`, description, url: canonical, siteName: "Read Talk Pray", type: "website" },
+    openGraph: { title: `${group.name} | Read Talk Pray`, description, url: canonical, siteName: "Read Talk Pray", type: "website", images: [{ url: SHARE_IMAGE, width: 1080, height: 1080, alt: "Read Talk Pray" }] },
   };
 }
 

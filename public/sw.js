@@ -1,4 +1,4 @@
-const CACHE = "rtp-icons-v1";
+const CACHE = "rtp-icons-v2";
 const ASSETS = ["/icon-192.png", "/icon-512.png", "/apple-touch-icon.png", "/favicon.ico"];
 
 self.addEventListener("install", (event) => {

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { RegisterServiceWorker } from "@/components/app/RegisterServiceWorker";
+import { SHARE_IMAGE } from "@/components/brand/logos";
 import { DemoAuthProvider } from "@/lib/demo/auth";
 import "./globals.css";
 
@@ -27,6 +28,19 @@ export const metadata: Metadata = {
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  openGraph: {
+    title: "Read Talk Pray",
+    description: "A simple way to follow Jesus together. Join or start a Bible study group.",
+    siteName: "Read Talk Pray",
+    type: "website",
+    images: [{ url: SHARE_IMAGE, width: 1080, height: 1080, alt: "Read Talk Pray" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Read Talk Pray",
+    description: "A simple way to follow Jesus together. Join or start a Bible study group.",
+    images: [SHARE_IMAGE],
   },
 };
 
