@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Calendar, Check, MapPin, Phone, User, Users } from "lucide-react";
 import { LocationPreview } from "@/components/groups/LocationPreview";
 import { isWebsitePhone } from "@/lib/leads/website";
+import { LiveStatus } from "@/components/groups/LiveStatus";
 import { cityState, groupMeUrl, leaderLine, meetingWhen, venueName, type PublicGroup } from "@/lib/groups/types";
 
 const fieldClass =
@@ -18,6 +19,7 @@ export function JoinGroupForm({
   hideJoin = false,
   compact = false,
   statusLabel,
+  availability,
   footer,
 }: {
   group: PublicGroup;
@@ -27,6 +29,7 @@ export function JoinGroupForm({
   hideJoin?: boolean;
   compact?: boolean;
   statusLabel?: string;
+  availability?: "live" | "paused";
   footer?: ReactNode;
 }) {
   const [firstName, setFirstName] = useState("");
@@ -115,7 +118,7 @@ export function JoinGroupForm({
             <span>{place}</span>
           </p>
           {venue ? <p className="mt-1 pl-6 text-sm text-[#52627a]">{venue}</p> : null}
-          {statusLabel ? <p className="mt-3"><span className="inline-flex rounded-full bg-[#e8f8ee] px-3 py-1 text-xs font-semibold text-[#157a3a]">{statusLabel}</span></p> : null}
+          {availability ? <p className="mt-3"><LiveStatus live={availability === "live"} /></p> : statusLabel ? <p className="mt-3"><span className="inline-flex rounded-full bg-[#e8f8ee] px-3 py-1 text-xs font-semibold text-[#157a3a]">{statusLabel}</span></p> : null}
         </div>
         <div className="relative shrink-0">
           <LeaderFace group={group} compact={variant === "panel"} />

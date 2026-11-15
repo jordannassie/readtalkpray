@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ProfilePhoto } from "@/components/account/ProfilePhoto";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
+import { LiveStatus, LiveToggle } from "@/components/groups/LiveStatus";
 import { publicLocationLabel } from "@/lib/groups/geo";
 import { cityState, type CoLeaderInvite, type OwnedApplication, type PublicGroup } from "@/lib/groups/types";
 
@@ -88,6 +89,16 @@ export function AccountDashboard({
     if (response.ok) router.refresh();
   }
 
+  async function setLive(id: string, live: boolean) {
+    const response = await fetch("/api/leader", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: live ? "resume" : "pause", id }),
+    });
+    setMessage(response.ok ? (live ? "Your group is live." : "Your group is paused.") : "That status did not change.");
+    if (response.ok) router.refresh();
+  }
+
   async function share(id: string) {
     const url = `${window.location.origin}/groups/${id}`;
     try {
@@ -138,7 +149,7 @@ export function AccountDashboard({
                         <span className="block truncate font-semibold">{label}</span>
                         <span className="block truncate text-[#667085]">{place}</span>
                       </span>
-                      <span className="shrink-0 rounded-full bg-[#e8f8ee] px-2.5 py-1 text-[11px] font-semibold text-[#157a3a]">{STATUS_LABEL[status] ?? status}</span>
+                      <span className="shrink-0">{status === "approved" || status === "paused" ? <LiveStatus live={status === "approved"} /> : <span className="rounded-full bg-[#fff7ed] px-2.5 py-1 text-[11px] font-semibold text-[#9a3412]">{STATUS_LABEL[status] ?? status}</span>}</span>
                     </Link>
                   </li>
                 );
@@ -154,7 +165,9 @@ export function AccountDashboard({
               application={entry.application}
               group={entry.group}
               people={entry.group ? requests.filter((item) => item.group_id === entry.group?.id) : []}
+              primary={entry.primary}
               onShare={share}
+              onLive={setLive}
             />
           ))}
         </div>
@@ -219,7 +232,9 @@ function GroupDesk({
   application,
   group,
   people,
+  primary,
   onShare,
+  onLive,
 }: {
   email: string;
   profile: Profile;
@@ -227,7 +242,9 @@ function GroupDesk({
   application: Application | null;
   group: Group | null;
   people: RequestRow[];
+  primary: boolean;
   onShare: (id: string) => void;
+  onLive: (id: string, live: boolean) => void;
 }) {
   const [previewing, setPreviewing] = useState(false);
   const photo = group?.leader_photo_url || application?.leader_photo_url || profile.photo_url || googlePhotoUrl;
@@ -235,7 +252,9 @@ function GroupDesk({
   const name = group?.name || application?.group_name?.trim() || "My Bible Group";
   const status = group?.status || application?.status || "none";
   const place = group?.public_location || (application ? safePlace(application) : "");
-  const approved = status === "approved";
+  const live = status === "approved";
+  const paused = status === "paused";
+  const approved = live || paused;
   const previewGroup = toPublicGroup({ application, group, photo, leader, name, place });
   const editHref = application ? `/app/start?application=${application.id}` : group ? `/app/start?group=${group.id}` : "/app/start";
 
@@ -245,9 +264,10 @@ function GroupDesk({
     <div className="space-y-3">
       {previewGroup ? (
         <section className="rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
-          <JoinGroupForm group={previewGroup} variant="panel" hideJoin statusLabel={STATUS_LABEL[status] ?? status} />
+          <JoinGroupForm group={previewGroup} variant="panel" hideJoin availability={live ? "live" : paused ? "paused" : undefined} statusLabel={live || paused ? undefined : STATUS_LABEL[status] ?? status} />
         </section>
       ) : null}
+      {primary && group && (live || paused) ? <LiveToggle live={live} onChange={(next) => onLive(group.id, next)} /> : null}
       <div className="flex flex-wrap gap-2">
         <Link href={editHref} className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Edit Group</Link>
         {approved && group ? (

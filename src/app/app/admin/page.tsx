@@ -46,9 +46,10 @@ export default async function AppAdminPage({
   const groupStatus = filter === "suspended" ? "suspended" : filter === "all" ? null : "approved";
   let groupsQuery = supabase
     .from("rtp_groups")
-    .select("id, name, city, state, status, public_location, address, location_type, meeting_day, meeting_time, description, leader_name, leader_photo_url, co_leader_name, co_leader_photo_url", { count: "exact" })
+    .select("id, name, city, state, country, status, public_location, address, location_type, latitude, longitude, meeting_day, meeting_time, description, leader_name, leader_photo_url, co_leader_name, co_leader_photo_url", { count: "exact" })
     .order("city");
-  if (groupStatus) groupsQuery = groupsQuery.eq("status", groupStatus);
+  if (groupStatus === "approved") groupsQuery = groupsQuery.in("status", ["approved", "paused"]);
+  else if (groupStatus) groupsQuery = groupsQuery.eq("status", groupStatus);
   if (query) {
     const pattern = `"%${query.replace(/"/g, "")}%"`;
     const { data: emailMatches } = await supabase.from("rtp_group_applications").select("group_id").ilike("email", `%${query}%`).limit(50);

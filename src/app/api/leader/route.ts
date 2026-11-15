@@ -42,10 +42,17 @@ export async function POST(request: Request) {
   }
 
   if ((body.action === "pause" || body.action === "resume") && body.id && isUuid(body.id)) {
-    const status = body.action === "pause" ? "paused" : "approved";
-    const { data: updated, error } = await supabase.from("rtp_groups").update({ status }).eq("id", body.id).select("id");
+    const { data: current } = await supabase.from("rtp_groups").select("id, status, leader_user_id").eq("id", body.id).maybeSingle();
+    if (!current) return NextResponse.json({ ok: false }, { status: 404 });
+    const next = body.action === "pause" ? "paused" : "approved";
+    const allowed = (current.status === "approved" && next === "paused") || (current.status === "paused" && next === "approved");
+    if (!allowed) return NextResponse.json({ ok: false }, { status: 403 });
+    const { getSessionAdmin } = await import("@/lib/auth/admin");
+    const session = await getSessionAdmin();
+    if (current.leader_user_id !== user.id && !session.admin) return NextResponse.json({ ok: false }, { status: 403 });
+    const { data: updated, error } = await supabase.from("rtp_groups").update({ status: next }).eq("id", body.id).select("id");
     if (error || !updated?.length) return NextResponse.json({ ok: false }, { status: 403 });
-    return NextResponse.json({ ok: true, status });
+    return NextResponse.json({ ok: true, status: next });
   }
 
   if (body.action === "location" && body.id && isUuid(body.id)) {

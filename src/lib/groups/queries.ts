@@ -28,3 +28,11 @@ export async function getApprovedGroup(id: string): Promise<PublicGroup | null> 
   const data = await selectApproved({ id });
   return data && !Array.isArray(data) ? data : null;
 }
+
+export async function publicGroupState(id: string) {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("rtp_public_group_state", { target: id });
+  if (error || typeof data !== "string") return null;
+  return data === "live" || data === "paused" ? data : "hidden";
+}

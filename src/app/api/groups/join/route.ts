@@ -35,11 +35,11 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: group, error: groupError } = await supabase
     .from("rtp_groups")
-    .select("id, name, city, state, country")
+    .select("id, name, city, state, country, status")
     .eq("id", record.groupId)
-    .eq("status", "approved")
     .maybeSingle();
-  if (groupError || !group) return NextResponse.json({ ok: false }, { status: 404 });
+  if (groupError || !group || (group.status !== "approved" && group.status !== "paused")) return NextResponse.json({ ok: false }, { status: 404 });
+  if (group.status !== "approved") return NextResponse.json({ ok: false, paused: true }, { status: 403 });
 
   const { error } = await supabase.from("rtp_join_requests").insert({
     group_id: group.id,

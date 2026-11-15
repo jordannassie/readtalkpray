@@ -1,10 +1,12 @@
 "use client";
 
-import { ChevronDown, Eye } from "lucide-react";
+import { ChevronDown, Eye, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { cityState, meetingWhen } from "@/lib/groups/types";
+import { useEffect, useState } from "react";
+import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
+import { LiveStatus, LiveToggle } from "@/components/groups/LiveStatus";
+import { cityState, meetingWhen, type PublicGroup } from "@/lib/groups/types";
 
 type Application = {
   id: string;
@@ -42,6 +44,9 @@ type Group = {
   public_location: string;
   address?: string | null;
   location_type?: string | null;
+  country?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   meeting_day?: string | null;
   meeting_time?: string | null;
   description?: string | null;
@@ -96,6 +101,13 @@ export function AdminReview({
   const [openId, setOpenId] = useState("");
   const [verified, setVerified] = useState<Record<string, boolean>>({});
   const [managedId, setManagedId] = useState("");
+  const [viewing, setViewing] = useState<Group | null>(null);
+  useEffect(() => {
+    if (!viewing) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setViewing(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [viewing]);
 
   async function send(id: string, payload: Record<string, unknown>) {
     setBusy(id);
@@ -109,6 +121,22 @@ export function AdminReview({
     setBusy("");
     if (!response.ok) {
       setError(body.error || "That update did not save.");
+      return;
+    }
+    router.refresh();
+  }
+
+  async function setLive(id: string, live: boolean) {
+    setBusy(id);
+    setError("");
+    const response = await fetch("/api/leader", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: live ? "resume" : "pause", id }),
+    });
+    setBusy("");
+    if (!response.ok) {
+      setError("That group could not change between Live and Paused.");
       return;
     }
     router.refresh();
@@ -275,14 +303,14 @@ export function AdminReview({
                     <p className="truncate text-xs text-[#555]">{group.leader_name}{group.co_leader_name ? ` & ${group.co_leader_name}` : ""}</p>
                     <p className="truncate text-xs text-[#667085]">{[place, when].filter(Boolean).join(" · ")}</p>
                   </div>
-                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${pillClass(group.status)}`}>{pillLabel(group.status)}</span>
+                  {group.status === "approved" || group.status === "paused" ? <LiveStatus live={group.status === "approved"} /> : <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${pillClass(group.status)}`}>{pillLabel(group.status)}</span>}
                 </div>
                 <div className="mt-3 flex gap-2">
-                  {group.status === "approved" ? (
-                    <Link href={`/groups/${group.id}`} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1976F3] px-3 text-sm font-semibold text-white">
+                  {group.status === "approved" || group.status === "paused" ? (
+                    <button type="button" onClick={() => setViewing(group)} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1976F3] px-3 text-sm font-semibold text-white">
                       <Eye size={15} aria-hidden />
                       View Group
-                    </Link>
+                    </button>
                   ) : null}
                   <button type="button" onClick={() => setManagedId(open ? "" : group.id)} className="inline-flex h-10 items-center rounded-full border border-[#e6ebf2] px-3 text-sm font-semibold">
                     {open ? "Close" : "Manage"}
@@ -295,6 +323,11 @@ export function AdminReview({
                     <p>Co-leader: {group.co_leader_name || "None"}</p>
                     <p>Location: {group.location_type === "home" ? `${place} area` : group.public_location}</p>
                     {group.location_type === "home" && group.address ? <p>Private address: {group.address}</p> : null}
+                    {group.status === "approved" || group.status === "paused" ? (
+                      <div className="pt-2">
+                        <LiveToggle live={group.status === "approved"} busy={busy === group.id} onChange={(live) => void setLive(group.id, live)} />
+                      </div>
+                    ) : null}
                     <div className="pt-2">
                       <button type="button" disabled={busy === group.id} onClick={() => void send(group.id, { action: "group", decision: group.status === "suspended" ? "reactivate" : "suspend" })} className="inline-flex h-10 items-center rounded-full border border-black/10 px-3 text-sm">
                         {group.status === "suspended" ? "Reactivate" : "Suspend group"}
@@ -338,6 +371,44 @@ export function AdminReview({
           ))}
         </ul>
       </section>
+      {viewing ? <GroupDrawer group={viewing} onClose={() => setViewing(null)} /> : null}
+    </div>
+  );
+}
+
+function GroupDrawer({ group, onClose }: { group: Group; onClose: () => void }) {
+  const locationType = group.location_type === "home" || group.location_type === "other" ? group.location_type : "public_venue";
+  const profile: PublicGroup = {
+    id: group.id,
+    name: group.name,
+    description: group.description ?? null,
+    city: group.city,
+    state: group.state ?? null,
+    country: group.country || "",
+    location_type: locationType,
+    public_location: group.public_location,
+    address: locationType === "home" ? null : group.address ?? null,
+    latitude: Number(group.latitude ?? 0),
+    longitude: Number(group.longitude ?? 0),
+    meeting_day: group.meeting_day ?? null,
+    meeting_time: group.meeting_time ?? null,
+    leader_name: group.leader_name,
+    leader_photo_url: group.leader_photo_url ?? null,
+    co_leader_name: group.co_leader_name ?? null,
+    co_leader_photo_url: group.co_leader_photo_url ?? null,
+  };
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
+      <aside className="flex h-full w-full flex-col overflow-y-auto bg-[#f4f7fb] shadow-xl sm:w-[440px]" role="dialog" aria-modal="true" aria-label={group.name} onClick={(event) => event.stopPropagation()}>
+        <div className="flex h-14 items-center justify-between px-4">
+          <button type="button" onClick={onClose} className="inline-flex h-11 items-center text-sm font-semibold sm:hidden">Close</button>
+          <p className="text-sm font-semibold">Group profile</p>
+          <button type="button" onClick={onClose} aria-label="Close" className="grid h-11 w-11 place-items-center"><X size={18} /></button>
+        </div>
+        <div className="px-4 pb-6">
+          <JoinGroupForm group={profile} variant="page" hideJoin availability={group.status === "paused" ? "paused" : group.status === "approved" ? "live" : undefined} statusLabel={group.status === "approved" || group.status === "paused" ? undefined : pillLabel(group.status)} />
+        </div>
+      </aside>
     </div>
   );
 }
