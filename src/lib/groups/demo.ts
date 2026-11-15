@@ -167,6 +167,18 @@ export async function demoGroupsEnabled() {
   return true;
 }
 
+export function demoAccounts() {
+  return DEMO_GROUPS.map((group) => ({
+    user_id: `demo:${group.id}`,
+    email: null as string | null,
+    full_name: group.leader_name,
+    photo_url: group.leader_photo_url ?? null,
+    is_admin: false,
+    is_demo: true as const,
+    group_names: group.name,
+  }));
+}
+
 export async function demoGroups(): Promise<PublicGroup[]> {
   return (await demoGroupsEnabled()) ? DEMO_GROUPS : [];
 }

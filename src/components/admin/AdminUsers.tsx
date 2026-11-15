@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 
-type AccountUser = {
+export type AccountUser = {
   user_id: string;
   email: string | null;
   full_name: string | null;
   photo_url: string | null;
   is_admin: boolean;
+  is_demo?: boolean;
   group_names: string | null;
 };
 
-export function AdminUsers() {
+export function AdminUsers({ demoOn, demoAccounts }: { demoOn: boolean; demoAccounts: AccountUser[] }) {
   const [users, setUsers] = useState<AccountUser[]>([]);
   const [query, setQuery] = useState("");
+  const [showDemo, setShowDemo] = useState(false);
   const [message, setMessage] = useState("");
   const [selected, setSelected] = useState<AccountUser | null>(null);
   const [confirm, setConfirm] = useState("");
@@ -30,7 +32,10 @@ export function AdminUsers() {
   }
 
   const needle = query.trim().toLowerCase();
-  const visible = users.filter((user) => {
+  const realIds = new Set(users.map((user) => user.user_id));
+  const seeded = demoAccounts.filter((account) => account.is_demo && !realIds.has(account.user_id));
+  const visible = [...users, ...seeded].filter((user) => {
+    if (user.is_demo && !demoOn && !showDemo) return false;
     if (!needle) return true;
     return `${user.full_name ?? ""} ${user.email ?? ""}`.toLowerCase().includes(needle);
   });
@@ -61,6 +66,12 @@ export function AdminUsers() {
         placeholder="Search name or email"
         className="mt-3 h-11 w-full rounded-2xl border border-[#e6e6e6] px-3 text-sm"
       />
+      {demoOn ? null : (
+        <label className="mt-3 flex items-center gap-2 text-sm text-[#555]">
+          <input type="checkbox" checked={showDemo} onChange={(event) => setShowDemo(event.target.checked)} />
+          Show demo accounts
+        </label>
+      )}
       {message ? <p className="mt-3 text-sm">{message}</p> : null}
       <ul className="mt-4 space-y-3">
         {visible.map((user) => (
@@ -76,7 +87,10 @@ export function AdminUsers() {
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-semibold">{user.full_name || "No name"}</span>
               <span className="block truncate text-xs text-[#666]">{user.email}</span>
-              <span className="block text-xs text-[#666]">{user.is_admin ? "Admin" : "Member"}{user.group_names ? ` · ${user.group_names}` : ""}</span>
+              <span className="block text-xs text-[#666]">
+                {user.is_demo ? <span className="mr-1 font-bold tracking-wide text-[#1976F3]">DEMO</span> : null}
+                {user.is_admin ? "Admin" : "Member"}{user.group_names ? ` · ${user.group_names}` : ""}
+              </span>
             </span>
             <button type="button" onClick={() => { setSelected(user); setConfirm(""); }} className="text-sm font-semibold text-[#1976F3]">
               View
@@ -89,17 +103,21 @@ export function AdminUsers() {
           <div className="w-full max-w-md rounded-3xl bg-white p-6">
             <h3 className="text-xl font-semibold">{selected.full_name || "Account"}</h3>
             <p className="mt-2 text-sm">{selected.email}</p>
-            <p className="mt-1 text-sm text-[#555]">{selected.is_admin ? "Admin" : "Member"}</p>
+            <p className="mt-1 text-sm text-[#555]">{selected.is_demo ? "DEMO · " : ""}{selected.is_admin ? "Admin" : "Member"}</p>
             <p className="mt-1 text-sm text-[#555]">{selected.group_names || "No groups"}</p>
-            <p className="mt-3 text-sm leading-relaxed">Deleting removes this person&apos;s Read Talk Pray profile, applications, photos, and groups they lead. A shared Sending Church login is not deleted. The main administrator cannot be removed.</p>
-            <label className="mt-4 block text-sm font-medium">
-              Type DELETE
-              <input value={confirm} onChange={(event) => setConfirm(event.target.value)} className="mt-1 h-11 w-full rounded-2xl border border-[#e6e6e6] px-3" />
-            </label>
+            {selected.user_id.startsWith("demo:") ? <p className="mt-3 text-sm leading-relaxed">This is a seeded demo record. It is not a login, cannot be an admin, and cannot see attendee contacts.</p> : <p className="mt-3 text-sm leading-relaxed">Deleting removes this person&apos;s Read Talk Pray profile, applications, photos, and groups they lead. A shared Sending Church login is not deleted. The main administrator cannot be removed.</p>}
+            {selected.user_id.startsWith("demo:") ? null : (
+              <label className="mt-4 block text-sm font-medium">
+                Type DELETE
+                <input value={confirm} onChange={(event) => setConfirm(event.target.value)} className="mt-1 h-11 w-full rounded-2xl border border-[#e6e6e6] px-3" />
+              </label>
+            )}
             <div className="mt-4 flex gap-2">
-              <button type="button" disabled={confirm !== "DELETE"} onClick={() => void remove(selected)} className="inline-flex h-11 items-center rounded-full bg-[#e10600] px-4 text-sm font-semibold text-white disabled:opacity-50">
-                Delete user
-              </button>
+              {selected.user_id.startsWith("demo:") ? null : (
+                <button type="button" disabled={confirm !== "DELETE"} onClick={() => void remove(selected)} className="inline-flex h-11 items-center rounded-full bg-[#e10600] px-4 text-sm font-semibold text-white disabled:opacity-50">
+                  Delete user
+                </button>
+              )}
               <button type="button" onClick={() => setSelected(null)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm">
                 Close
               </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useRef, useState, type ReactNode } from "react";
+import { FormEvent, useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Calendar, Check, MapPin, Phone, User, Users } from "lucide-react";
 import { LocationPreview } from "@/components/groups/LocationPreview";
 import { isWebsitePhone } from "@/lib/leads/website";
@@ -31,10 +31,16 @@ export function JoinGroupForm({
 }) {
   const [firstName, setFirstName] = useState("");
   const [mobile, setMobile] = useState("");
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<{ firstName?: string; mobile?: string; form?: string }>({});
   const [done, setDone] = useState<"new" | "duplicate" | "demo" | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const lock = useRef(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (hideJoin || preview || done) return;
+    if (window.matchMedia("(pointer: coarse)").matches) return;
+    nameRef.current?.focus({ preventScroll: true });
+  }, [hideJoin, preview, done]);
   const home = group.location_type === "home";
   const when = meetingWhen(group) || "Time to be announced";
   const place = home ? `${group.public_location} · approximate` : group.public_location;
@@ -44,22 +50,21 @@ export function JoinGroupForm({
     if (preview || lock.current || done) return;
     const name = firstName.trim();
     const phone = mobile.trim();
-    if (!name || !phone) {
-      setError("First name and mobile number are needed.");
-      return;
-    }
-    if (!isWebsitePhone(phone)) {
-      setError("Enter a valid mobile number.");
+    const next: { firstName?: string; mobile?: string } = {};
+    if (!name) next.firstName = "Enter your first name.";
+    if (!phone || !isWebsitePhone(phone)) next.mobile = "Enter a valid mobile number.";
+    if (next.firstName || next.mobile) {
+      setErrors(next);
       return;
     }
     if (group.is_demo) {
-      setError("");
+      setErrors({});
       setDone("demo");
       return;
     }
     lock.current = true;
     setSubmitting(true);
-    setError("");
+    setErrors({});
     try {
       const response = await fetch("/api/groups/join", {
         method: "POST",
@@ -74,14 +79,14 @@ export function JoinGroupForm({
         return;
       }
       if (!response.ok || !body.ok) {
-        setError("Something went wrong. Please try again.");
+        setErrors({ form: "Something went wrong. Please try again." });
         lock.current = false;
         setSubmitting(false);
         return;
       }
       setDone(body.duplicate ? "duplicate" : "new");
     } catch {
-      setError("Something went wrong. Please try again.");
+      setErrors({ form: "Something went wrong. Please try again." });
       lock.current = false;
       setSubmitting(false);
     }
@@ -111,7 +116,7 @@ export function JoinGroupForm({
           {statusLabel ? <p className="mt-3"><span className="inline-flex rounded-full bg-[#e8f8ee] px-3 py-1 text-xs font-semibold text-[#157a3a]">{statusLabel}</span></p> : null}
         </div>
         <div className="relative shrink-0">
-          <LeaderFace group={group} size={variant === "page" ? 56 : 72} />
+          <LeaderFace group={group} />
           {!hideJoin && (preview || group.is_demo) ? (
             <span className="absolute -top-1 -right-1 rounded-full bg-[#e7f0ff] px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-[#1976F3] uppercase">{preview ? "Preview" : "Demo"}</span>
           ) : null}
@@ -157,13 +162,19 @@ export function JoinGroupForm({
                   name="firstName"
                   autoComplete="given-name"
                   enterKeyHint="next"
+                  ref={nameRef}
                   placeholder="First Name"
                   value={firstName}
-                  onChange={(event) => setFirstName(event.target.value)}
+                  onChange={(event) => {
+                    setFirstName(event.target.value);
+                    setErrors((current) => ({ ...current, firstName: undefined, form: undefined }));
+                  }}
+                  aria-invalid={Boolean(errors.firstName)}
                   disabled={preview}
                   className={fieldClass}
                 />
               </span>
+              {errors.firstName ? <span className="mt-1 block text-sm text-[#c2410c]">{errors.firstName}</span> : null}
             </label>
             <label className="block">
               <span className="sr-only">Mobile Number</span>
@@ -178,21 +189,26 @@ export function JoinGroupForm({
                   enterKeyHint="done"
                   placeholder="Mobile Number"
                   value={mobile}
-                  onChange={(event) => setMobile(event.target.value)}
+                  onChange={(event) => {
+                    setMobile(event.target.value);
+                    setErrors((current) => ({ ...current, mobile: undefined, form: undefined }));
+                  }}
+                  aria-invalid={Boolean(errors.mobile)}
                   disabled={preview}
                   className={fieldClass}
                 />
               </span>
+              {errors.mobile ? <span className="mt-1 block text-sm text-[#c2410c]">{errors.mobile}</span> : null}
             </label>
-            {error ? <p role="alert" className="text-sm text-[#c2410c]">{error}</p> : null}
+            {errors.form ? <p role="alert" className="text-sm text-[#c2410c]">{errors.form}</p> : null}
             <button
               type={preview ? "button" : "submit"}
               disabled={preview || submitting}
               aria-busy={submitting}
-              className="inline-flex h-14 min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[#16A34A] text-base font-bold text-white disabled:opacity-70"
+              className="group inline-flex h-14 min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[#16A34A] text-base font-bold text-white disabled:opacity-70"
             >
               {submitting ? "Sending…" : "I’m Coming"}
-              {submitting ? null : <ArrowRight size={18} aria-hidden />}
+              {submitting ? null : <ArrowRight size={18} aria-hidden className="transition-transform duration-200 ease-out group-hover:translate-x-1.5 group-active:translate-x-1.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-active:translate-x-0" />}
             </button>
           </form>
       </div>
@@ -223,14 +239,14 @@ function Confirmation({
         </span>
       )}
       <h3 className="mt-4 text-3xl font-semibold tracking-tight text-[#142033]">
-        {demo ? "This is a preview." : done === "duplicate" ? "You’re already on the list." : "You’re on the list!"}
+        {demo ? "This is a preview." : done === "duplicate" ? "You’re already on the list." : "You’re coming!"}
       </h3>
       <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-[#52627a]">
         {demo
           ? "Nothing was saved, and no one was notified. Sample groups do not take reservations."
           : done === "duplicate"
             ? `${leaderName} already has your request for ${groupName}.`
-            : "Your group leader will follow up with meeting details."}
+            : "Your group leader will be in touch."}
       </p>
       {onFindAnother ? (
         <button
@@ -257,28 +273,27 @@ function Confirmation({
   );
 }
 
-function LeaderFace({ group, size }: { group: PublicGroup; size: number }) {
-  if (!group.co_leader_name) return <Face photo={group.leader_photo_url} name={group.leader_name} size={size} />;
-  const small = Math.round(size * 0.78);
+function LeaderFace({ group }: { group: PublicGroup }) {
+  if (!group.co_leader_name) return <Face photo={group.leader_photo_url} name={group.leader_name} className="h-[92px] w-[92px] text-3xl sm:h-[116px] sm:w-[116px]" />;
   return (
     <span className="flex items-center">
-      <Face photo={group.leader_photo_url} name={group.leader_name} size={small} />
-      <span className="-ml-2 rounded-full ring-2 ring-white">
-        <Face photo={group.co_leader_photo_url} name={group.co_leader_name} size={small} />
+      <Face photo={group.leader_photo_url} name={group.leader_name} className="h-[76px] w-[76px] text-2xl sm:h-[96px] sm:w-[96px]" />
+      <span className="-ml-3 rounded-full ring-2 ring-white">
+        <Face photo={group.co_leader_photo_url} name={group.co_leader_name} className="h-[76px] w-[76px] text-2xl sm:h-[96px] sm:w-[96px]" />
       </span>
     </span>
   );
 }
 
-function Face({ photo, name, size }: { photo?: string | null; name: string; size: number }) {
+function Face({ photo, name, className }: { photo?: string | null; name: string; className: string }) {
   if (photo) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={photo} alt="" width={size} height={size} className="shrink-0 rounded-full object-cover" style={{ width: size, height: size }} />
+      <img src={photo} alt="" className={`shrink-0 rounded-full object-cover ${className}`} />
     );
   }
   return (
-    <span className="grid shrink-0 place-items-center rounded-full bg-[var(--sending-blue)] font-semibold text-white" style={{ width: size, height: size }}>
+    <span className={`grid shrink-0 place-items-center rounded-full bg-[var(--sending-blue)] font-semibold text-white ${className}`}>
       {name.slice(0, 1).toUpperCase()}
     </span>
   );

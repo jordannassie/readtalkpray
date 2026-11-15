@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export function DemoToggle({ initial }: { initial: boolean }) {
+export function DemoToggle({ initial, onChange }: { initial: boolean; onChange?: (enabled: boolean) => void }) {
   const [enabled, setEnabled] = useState(initial);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -23,15 +23,16 @@ export function DemoToggle({ initial }: { initial: boolean }) {
       return;
     }
     setEnabled(next);
-    setMessage(next ? "Demo groups are on for every visitor." : "Demo groups are hidden. Real groups stay visible.");
+    onChange?.(next);
+    setMessage(next ? "Demo Mode is on." : "Demo Mode is off. Real groups and accounts stay visible.");
   }
 
   return (
     <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold">Show Demo Groups</h2>
-          <p className="mt-1 text-sm text-[#555]">Demo groups are labeled DEMO and cannot receive real contact details.</p>
+          <h2 className="text-lg font-semibold">Demo Mode</h2>
+          <p className="mt-1 text-sm text-[#555]">Show or hide demo groups and demo accounts across the platform.</p>
         </div>
         <button
           type="button"

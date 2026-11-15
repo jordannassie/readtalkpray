@@ -14,7 +14,21 @@ export async function GET() {
       { status: 503 },
     );
   }
-  return NextResponse.json({ ok: true, users: data ?? [] });
+  const users = (data ?? []) as Array<{ user_id: string; is_demo?: boolean }>;
+  const ids = users.map((user) => user.user_id);
+  const flagged = ids.length
+    ? await supabase.from("rtp_profiles").select("user_id, is_demo").in("user_id", ids)
+    : { data: null, error: null };
+  const demoIds = new Set<string>();
+  if (!flagged.error) {
+    for (const row of flagged.data ?? []) {
+      if (row.is_demo === true) demoIds.add(row.user_id);
+    }
+  }
+  return NextResponse.json({
+    ok: true,
+    users: users.map((user) => ({ ...user, is_demo: demoIds.has(user.user_id) })),
+  });
 }
 
 export async function POST(request: Request) {
@@ -27,7 +41,7 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
-  if (body.confirm !== "DELETE" || !body.userId) {
+  if (body.confirm !== "DELETE" || !body.userId || body.userId.startsWith("demo:")) {
     return NextResponse.json({ ok: false, error: "Type DELETE to confirm." }, { status: 400 });
   }
   const supabase = await createClient();

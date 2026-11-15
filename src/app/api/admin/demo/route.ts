@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { getSessionAdmin } from "@/lib/auth/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -21,5 +22,8 @@ export async function POST(request: Request) {
       { status: 503 },
     );
   }
+  revalidatePath("/");
+  revalidatePath("/app/groups");
+  revalidatePath("/app/admin");
   return NextResponse.json({ ok: true, enabled: body.enabled });
 }
