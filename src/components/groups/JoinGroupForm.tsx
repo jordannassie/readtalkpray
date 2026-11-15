@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Calendar, Check, MapPin, Phone, User, Users } from "lucide-react";
+import { LeaderFaces } from "@/components/groups/LeaderFaces";
 import { LocationPreview } from "@/components/groups/LocationPreview";
 import { isWebsitePhone } from "@/lib/leads/website";
 import { LiveStatus } from "@/components/groups/LiveStatus";
@@ -121,13 +122,13 @@ export function JoinGroupForm({
           {availability ? <p className="mt-3"><LiveStatus live={availability === "live"} /></p> : statusLabel ? <p className="mt-3"><span className="inline-flex rounded-full bg-[#e8f8ee] px-3 py-1 text-xs font-semibold text-[#157a3a]">{statusLabel}</span></p> : null}
         </div>
         <div className="relative shrink-0">
-          <LeaderFace group={group} compact={variant === "panel"} />
+          <LeaderFaces leaderName={group.leader_name} leaderPhoto={group.leader_photo_url} coLeaderName={group.co_leader_name} coLeaderPhoto={group.co_leader_photo_url} size={variant === "panel" ? "md" : "lg"} />
           {!hideJoin && (preview || group.is_demo) ? (
             <span className="absolute -top-1 -right-1 rounded-full bg-[#e7f0ff] px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-[#1976F3] uppercase">{preview ? "Preview" : "Demo"}</span>
           ) : null}
         </div>
       </div>
-      {compact ? null : <p className="mt-4 text-sm font-medium text-[#142033]">Led by {leaderLine(group)}</p>}
+      <p className="mt-3 text-sm font-medium text-[#142033]">Led by {leaderLine(group)}</p>
       {variant === "page" ? (
         <div className="mt-4 overflow-hidden rounded-2xl border border-[#eee]">
           <iframe
@@ -278,30 +279,3 @@ function Confirmation({
   );
 }
 
-function LeaderFace({ group, compact }: { group: PublicGroup; compact: boolean }) {
-  const single = compact ? "h-16 w-16 text-xl" : "h-[92px] w-[92px] text-3xl sm:h-[116px] sm:w-[116px]";
-  const pair = compact ? "h-12 w-12 text-base" : "h-[76px] w-[76px] text-2xl sm:h-[96px] sm:w-[96px]";
-  if (!group.co_leader_name) return <Face photo={group.leader_photo_url} name={group.leader_name} className={single} />;
-  return (
-    <span className="flex max-w-[92px] items-center sm:max-w-[148px]">
-      <Face photo={group.leader_photo_url} name={group.leader_name} className={pair} />
-      <span className="-ml-3 rounded-full ring-2 ring-white">
-        <Face photo={group.co_leader_photo_url} name={group.co_leader_name} className={pair} />
-      </span>
-    </span>
-  );
-}
-
-function Face({ photo, name, className }: { photo?: string | null; name: string; className: string }) {
-  if (photo) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={photo} alt="" className={`shrink-0 rounded-full object-cover ${className}`} />
-    );
-  }
-  return (
-    <span className={`grid shrink-0 place-items-center rounded-full bg-[var(--sending-blue)] font-semibold text-white ${className}`}>
-      {name.slice(0, 1).toUpperCase()}
-    </span>
-  );
-}

@@ -293,36 +293,7 @@ function GroupDesk({
             {approved && group ? <button type="button" onClick={() => void onShare({ id: group.id, slug: group.slug, name }).then((result) => setNotice(result === "copied" ? "Group link copied." : ""))} className="mt-2 inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Share Group</button> : null}
           </div>
         )}
-        <ul className="mt-3 space-y-3">
-          {people.map((person) => {
-            const recent = Date.now() - new Date(person.created_at).getTime() < 1000 * 60 * 60 * 24 * 3;
-            const sms = `sms:${person.phone}?&body=${encodeURIComponent(welcome)}`;
-            return (
-              <li key={person.id} className="rounded-2xl border border-[#e6ebf2] p-3">
-                <div className="flex items-start gap-3">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#e7f0ff] text-sm font-semibold text-[#1976F3]">{person.first_name.slice(0, 1).toUpperCase()}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2">
-                      <span className="truncate font-semibold">{person.first_name}</span>
-                      {recent ? <span className="rounded-full bg-[#e7f0ff] px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-[#1976F3]">NEW</span> : null}
-                    </span>
-                    <span className="mt-0.5 block text-xs text-[#667085]">{new Date(person.created_at).toLocaleDateString()}</span>
-                    <span className="mt-1 flex items-center gap-1 text-sm text-[#142033]">
-                      {formatPhone(person.phone)}
-                      <button type="button" aria-label="Copy phone number" onClick={() => void navigator.clipboard.writeText(person.phone).then(() => setCopiedId(person.id))} className="grid h-8 w-8 place-items-center text-[#1976F3]"><Copy size={14} /></button>
-                      {copiedId === person.id ? <span className="text-xs text-[#157a3a]">Copied</span> : null}
-                    </span>
-                  </span>
-                  {person.email ? <a href={`mailto:${person.email}`} aria-label="Email" className="grid h-11 w-11 place-items-center rounded-full border border-[#e6ebf2] text-[#1976F3]"><Mail size={16} /></a> : null}
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <a href={sms} className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#1976F3] text-sm font-semibold text-white"><MessageSquare size={16} /> Text</a>
-                  <a href={`tel:${person.phone}`} className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[#1976F3] text-sm font-semibold text-[#1976F3]"><Phone size={16} /> Call</a>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        {people.length > 0 ? <PeopleRows people={people} welcome={welcome} copiedId={copiedId} onCopy={(id, phone) => void navigator.clipboard.writeText(phone).then(() => setCopiedId(id))} /> : null}
       </div>
       {previewing && previewGroup ? <GroupPreview group={previewGroup} onClose={() => setPreviewing(false)} /> : null}
     </section>
@@ -351,6 +322,60 @@ function safePlace(application: OwnedApplication) {
     city: application.city,
     state: application.state ?? "",
   });
+}
+
+function PeopleRows({
+  people,
+  welcome,
+  copiedId,
+  onCopy,
+}: {
+  people: RequestRow[];
+  welcome: string;
+  copiedId: string;
+  onCopy: (id: string, phone: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [shown, setShown] = useState(25);
+  const needle = query.trim().toLowerCase();
+  const digits = needle.replace(/\D/g, "");
+  const filtered = people.filter((person) => {
+    if (!needle) return true;
+    return person.first_name.toLowerCase().includes(needle) || (digits.length > 0 && person.phone.replace(/\D/g, "").includes(digits));
+  });
+  const rows = filtered.slice(0, shown);
+  return (
+    <div className="mt-3">
+      <input value={query} onChange={(event) => { setQuery(event.target.value); setShown(25); }} placeholder="Search name or phone" aria-label="Search interested people" className="h-11 w-full rounded-2xl border border-[#e6ebf2] px-3 text-sm outline-none focus:border-[#1976F3]" />
+      <ul className="mt-2">
+        {rows.map((person) => {
+          const phone = formatPhone(person.phone);
+          const date = new Date(person.created_at).toLocaleDateString();
+          return (
+            <li key={person.id} className="flex min-h-14 items-center gap-2 border-b border-[#eef2f7] py-1 text-sm">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#e7f0ff] text-xs font-semibold text-[#1976F3]">{person.first_name.slice(0, 1).toUpperCase()}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-semibold">{person.first_name}</span>
+                <span className="block truncate text-xs text-[#667085] sm:hidden">{phone} · {date}</span>
+              </span>
+              <span className="hidden w-36 shrink-0 truncate text-[#142033] sm:block">{phone}</span>
+              <span className="hidden w-24 shrink-0 text-xs text-[#667085] md:block">{date}</span>
+              <span className="flex shrink-0 items-center">
+                <button type="button" title={copiedId === person.id ? "Copied" : "Copy number"} aria-label="Copy phone number" onClick={() => onCopy(person.id, person.phone)} className="grid h-10 w-10 place-items-center text-[#1976F3]"><Copy size={16} /></button>
+                <a href={`sms:${person.phone}?&body=${encodeURIComponent(welcome)}`} title="Text" aria-label={`Text ${person.first_name}`} className="grid h-10 w-10 place-items-center text-[#1976F3]"><MessageSquare size={16} /></a>
+                <a href={`tel:${person.phone}`} title="Call" aria-label={`Call ${person.first_name}`} className="grid h-10 w-10 place-items-center text-[#1976F3]"><Phone size={16} /></a>
+                {person.email ? <a href={`mailto:${person.email}`} title="Email" aria-label={`Email ${person.first_name}`} className="grid h-10 w-10 place-items-center text-[#1976F3]"><Mail size={16} /></a> : null}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      {filtered.length === 0 ? <p className="py-3 text-sm text-[#667085]">No contacts match that search.</p> : null}
+      {shown < filtered.length ? (
+        <button type="button" onClick={() => setShown((count) => count + 25)} className="mt-3 inline-flex h-11 items-center rounded-full border border-[#e6ebf2] px-4 text-sm font-semibold">Load more</button>
+      ) : null}
+    </div>
+  );
 }
 
 function formatPhone(value: string) {

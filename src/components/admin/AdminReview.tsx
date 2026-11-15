@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
+import { LeaderFaces } from "@/components/groups/LeaderFaces";
 import { LiveStatus, LiveToggle } from "@/components/groups/LiveStatus";
 import { cityState, meetingWhen, type PublicGroup } from "@/lib/groups/types";
 
@@ -190,12 +191,7 @@ export function AdminReview({
                   onClick={() => setOpenId(open ? "" : item.id)}
                   className="flex min-h-[76px] w-full items-center gap-3 px-3 py-2 text-left sm:h-[88px]"
                 >
-                  {item.leader_photo_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.leader_photo_url} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
-                  ) : (
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#e7f0ff] text-sm font-semibold text-[#1976F3]">{item.leader_name.slice(0, 1).toUpperCase()}</span>
-                  )}
+                  <LeaderFaces leaderName={item.leader_name} leaderPhoto={item.leader_photo_url} coLeaderName={item.co_leader_name} coLeaderPhoto={item.co_leader_photo_url} size="md" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-semibold">{item.group_name || "Group name not provided"}</span>
                     <span className="block truncate text-xs text-[#555]">{item.leader_name}{item.co_leader_name ? ` & ${item.co_leader_name}` : ""} · {place}</span>
@@ -297,7 +293,7 @@ export function AdminReview({
             return (
               <li key={group.id} className="rounded-2xl border border-[#e6ebf2] bg-white p-3 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <GroupFaces group={group} />
+                  <LeaderFaces leaderName={group.leader_name} leaderPhoto={group.leader_photo_url} coLeaderName={group.co_leader_name} coLeaderPhoto={group.co_leader_photo_url} size="md" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{group.name}</p>
                     <p className="truncate text-xs text-[#555]">{group.leader_name}{group.co_leader_name ? ` & ${group.co_leader_name}` : ""}</p>
@@ -411,28 +407,6 @@ function GroupDrawer({ group, onClose }: { group: Group; onClose: () => void }) 
       </aside>
     </div>
   );
-}
-
-function GroupFaces({ group }: { group: Group }) {
-  if (!group.co_leader_name) return <Face photo={group.leader_photo_url} name={group.leader_name} />;
-  return (
-    <span className="flex shrink-0 items-center">
-      <Face photo={group.leader_photo_url} name={group.leader_name} />
-      <span className="-ml-2 rounded-full ring-2 ring-white">
-        <Face photo={group.co_leader_photo_url} name={group.co_leader_name} />
-      </span>
-    </span>
-  );
-}
-
-function Face({ photo, name }: { photo?: string | null; name: string }) {
-  if (photo) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={photo} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
-    );
-  }
-  return <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#e7f0ff] text-sm font-semibold text-[#1976F3]">{name.slice(0, 1).toUpperCase()}</span>;
 }
 
 function listHref(filter: Filter, query: string, page: number) {

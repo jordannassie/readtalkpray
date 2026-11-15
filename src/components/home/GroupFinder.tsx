@@ -6,8 +6,9 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowRight, Calendar, ChevronLeft, MapPin } from "lucide-react";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
+import { LeaderFaces } from "@/components/groups/LeaderFaces";
 import { distanceKm } from "@/lib/groups/geo";
-import { cityState, meetingWhen, type PublicGroup } from "@/lib/groups/types";
+import { cityState, leaderLine, meetingWhen, type PublicGroup } from "@/lib/groups/types";
 
 const GroupsMap = dynamic(() => import("@/components/home/GroupsMap").then((mod) => mod.GroupsMap), {
   ssr: false,
@@ -164,7 +165,7 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
                       selectedId === group.id ? "border-[#1976F3] shadow-[0_0_0_1px_#1976F3]" : "border-[#e6ebf2]"
                     }`}
                   >
-                    <LeaderPhoto group={group} />
+                    <LeaderFaces leaderName={group.leader_name} leaderPhoto={group.leader_photo_url} coLeaderName={group.co_leader_name} coLeaderPhoto={group.co_leader_photo_url} size="sm" />
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center gap-1.5">
                         <span className="line-clamp-2 font-semibold leading-snug">{group.name}</span>
@@ -180,6 +181,7 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
                         <MapPin size={13} className="shrink-0 text-[#1976F3]" aria-hidden />
                         <span className="truncate">{cityState(group) || group.public_location}</span>
                       </span>
+                      <span className="mt-0.5 block truncate text-xs text-[#52627a]">Led by {leaderLine(group)}</span>
                     </span>
                     <button
                       type="button"
@@ -250,27 +252,3 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
   );
 }
 
-function LeaderPhoto({ group }: { group: PublicGroup }) {
-  if (!group.co_leader_name) return <FinderFace photo={group.leader_photo_url} name={group.leader_name} />;
-  return (
-    <span className="flex w-14 shrink-0 items-center">
-      <FinderFace photo={group.leader_photo_url} name={group.leader_name} small />
-      <span className="-ml-2 rounded-full ring-2 ring-white"><FinderFace photo={group.co_leader_photo_url} name={group.co_leader_name} small /></span>
-    </span>
-  );
-}
-
-function FinderFace({ photo, name, small = false }: { photo?: string | null; name: string; small?: boolean }) {
-  const size = small ? "h-7 w-7 text-xs" : "h-10 w-10 text-sm";
-  if (photo) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={photo} alt="" className={`${size} shrink-0 rounded-full object-cover`} />
-    );
-  }
-  return (
-    <span className={`grid ${size} shrink-0 place-items-center rounded-full bg-[#1976F3] font-semibold text-white`}>
-      {name.slice(0, 1).toUpperCase()}
-    </span>
-  );
-}

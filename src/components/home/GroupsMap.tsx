@@ -21,11 +21,15 @@ function photoSrc(url: string | null) {
   return null;
 }
 
+function pinFace(name: string, url: string | null) {
+  const src = photoSrc(url);
+  const initial = escapeHtml(name.slice(0, 1).toUpperCase() || "•");
+  return src ? `<img src="${escapeHtml(src)}" alt="" />` : `<span>${initial}</span>`;
+}
+
 function pinHtml(group: PublicGroup) {
-  const initial = escapeHtml(group.leader_name.slice(0, 1).toUpperCase() || "•");
-  const src = photoSrc(group.leader_photo_url);
-  const photo = src ? `<img src="${escapeHtml(src)}" alt="" />` : `<span>${initial}</span>`;
-  return `<div class="rtp-pin">${photo}</div>`;
+  if (!group.co_leader_name) return `<div class="rtp-pin">${pinFace(group.leader_name, group.leader_photo_url)}</div>`;
+  return `<div class="rtp-pin rtp-pin-pair">${pinFace(group.leader_name, group.leader_photo_url)}${pinFace(group.co_leader_name, group.co_leader_photo_url ?? null)}</div>`;
 }
 
 export function GroupsMap({

@@ -65,18 +65,22 @@ a {
   position: relative;
 }
 
-.rtp-pin-pair img {
+.rtp-pin-pair img,
+.rtp-pin-pair span {
   position: absolute;
   width: 34px;
   height: 34px;
+  margin: 0;
 }
 
-.rtp-pin-pair img:first-child {
+.rtp-pin-pair img:first-child,
+.rtp-pin-pair span:first-child {
   top: 10px;
   left: 0;
 }
 
-.rtp-pin-pair img:last-child {
+.rtp-pin-pair img:last-child,
+.rtp-pin-pair span:last-child {
   top: 10px;
   right: 0;
 }
