@@ -2,12 +2,14 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import { Copy, Mail, MessageSquare, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ProfilePhoto } from "@/components/account/ProfilePhoto";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { LiveStatus, LiveToggle } from "@/components/groups/LiveStatus";
 import { publicLocationLabel } from "@/lib/groups/geo";
-import { cityState, type CoLeaderInvite, type OwnedApplication, type PublicGroup } from "@/lib/groups/types";
+import { groupPublicPath } from "@/lib/groups/slug";
+import { cityState, meetingWhen, type CoLeaderInvite, type OwnedApplication, type PublicGroup } from "@/lib/groups/types";
 
 type Profile = { user_id: string; full_name: string | null; phone: string | null; photo_url: string | null };
 type Application = OwnedApplication;
@@ -25,6 +27,7 @@ type Group = {
   co_leader_name?: string | null;
   co_leader_photo_url?: string | null;
   groupme_url?: string | null;
+  slug?: string | null;
   city: string;
   state?: string | null;
   country?: string | null;
@@ -33,7 +36,7 @@ type Group = {
   longitude?: number | null;
   status: string;
 };
-type RequestRow = { id: string; group_id: string; first_name: string; phone: string; status: string; created_at: string };
+type RequestRow = { id: string; group_id: string; first_name: string; phone: string; email?: string | null; status: string; created_at: string };
 type Detail = { group_id: string; address: string | null };
 type LocationChange = { id: string; group_id: string; public_location: string; status: string; created_at: string };
 
@@ -56,7 +59,7 @@ export function AccountDashboard({
   details,
   locationChanges,
   invites = [],
-  selectedId = "",
+  selectedId: _selectedId = "",
   focus = "all",
 }: {
   profile: Profile;
@@ -95,17 +98,26 @@ export function AccountDashboard({
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ action: live ? "resume" : "pause", id }),
     });
-    setMessage(response.ok ? (live ? "Your group is live." : "Your group is paused.") : "That status did not change.");
+    setMessage(response.ok ? "" : "That status did not change.");
     if (response.ok) router.refresh();
   }
 
-  async function share(id: string) {
-    const url = `${window.location.origin}/groups/${id}`;
+  async function share(group: { id: string; slug?: string | null; name?: string }) {
+    const url = `${window.location.origin}${groupPublicPath(group)}`;
+    const text = group.name ? `Join ${group.name} on Read Talk Pray.` : "Join a Read Talk Pray group.";
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: group.name || "Read Talk Pray", text, url });
+        return "shared";
+      } catch {
+        return "";
+      }
+    }
     try {
       await navigator.clipboard.writeText(url);
-      setMessage("Group link copied.");
+      return "copied";
     } catch {
-      setMessage(url);
+      return url;
     }
   }
 
@@ -135,28 +147,7 @@ export function AccountDashboard({
               <p className="text-sm text-[#667085]">You do not have a group yet.</p>
             </section>
           ) : null}
-          {items.length > 1 ? (
-            <ul className="space-y-2">
-              {items.map((entry) => {
-                const active = (selectedId || items[0]?.key) === entry.key;
-                const label = entry.group?.name || entry.application?.group_name?.trim() || "My Bible Group";
-                const status = entry.group?.status || entry.application?.status || "";
-                const place = cityState({ city: entry.group?.city || entry.application?.city || "", state: entry.group?.state ?? entry.application?.state ?? null });
-                return (
-                  <li key={entry.key}>
-                    <Link href={`/app/group?id=${entry.key}`} className={`flex items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-3 text-sm ${active ? "border-[#1976F3]" : "border-[#e6ebf2]"}`}>
-                      <span className="min-w-0">
-                        <span className="block truncate font-semibold">{label}</span>
-                        <span className="block truncate text-[#667085]">{place}</span>
-                      </span>
-                      <span className="shrink-0">{status === "approved" || status === "paused" ? <LiveStatus live={status === "approved"} /> : <span className="rounded-full bg-[#fff7ed] px-2.5 py-1 text-[11px] font-semibold text-[#9a3412]">{STATUS_LABEL[status] ?? status}</span>}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : null}
-          {items.filter((entry) => entry.key === (selectedId || items[0]?.key)).map((entry) => (
+          {items.map((entry) => (
             <GroupDesk
               key={entry.key}
               email={email}
@@ -243,10 +234,12 @@ function GroupDesk({
   group: Group | null;
   people: RequestRow[];
   primary: boolean;
-  onShare: (id: string) => void;
+  onShare: (group: { id: string; slug?: string | null; name?: string }) => Promise<string>;
   onLive: (id: string, live: boolean) => void;
 }) {
   const [previewing, setPreviewing] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [copiedId, setCopiedId] = useState("");
   const photo = group?.leader_photo_url || application?.leader_photo_url || profile.photo_url || googlePhotoUrl;
   const leader = group?.leader_name || application?.leader_name || profile.full_name || email;
   const name = group?.name || application?.group_name?.trim() || "My Bible Group";
@@ -257,46 +250,82 @@ function GroupDesk({
   const approved = live || paused;
   const previewGroup = toPublicGroup({ application, group, photo, leader, name, place });
   const editHref = application ? `/app/start?application=${application.id}` : group ? `/app/start?group=${group.id}` : "/app/start";
+  const profileHref = group ? groupPublicPath(group) : "";
+  const welcome = `Hey! Thanks for your interest in ${name}. We'd love to have you join us! Our group meets ${meetingWhen({ meeting_day: group?.meeting_day ?? application?.meeting_day ?? null, meeting_time: group?.meeting_time ?? application?.meeting_time ?? null }) || "soon"}. Reply here if you have any questions.`;
 
   if (!group && !application) return null;
 
   return (
-    <div className="space-y-3">
+    <section className="overflow-hidden rounded-[28px] border border-[#e6ebf2] bg-white shadow-sm">
       {previewGroup ? (
-        <section className="rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
+        <div className="p-4">
           <JoinGroupForm group={previewGroup} variant="panel" hideJoin availability={live ? "live" : paused ? "paused" : undefined} statusLabel={live || paused ? undefined : STATUS_LABEL[status] ?? status} />
-        </section>
+        </div>
       ) : null}
-      {primary && group && (live || paused) ? <LiveToggle live={live} onChange={(next) => onLive(group.id, next)} /> : null}
-      <div className="flex flex-wrap gap-2">
+      {primary && group && (live || paused) ? (
+        <div className="flex items-center justify-between gap-3 border-t border-[#e6ebf2] px-4 py-3">
+          <LiveStatus live={live} label={live ? "Group is Live" : "Group is Paused"} />
+          <LiveToggle live={live} onChange={(next) => onLive(group.id, next)} />
+        </div>
+      ) : null}
+      <div className="flex flex-wrap gap-2 border-t border-[#e6ebf2] px-4 py-3">
         <Link href={editHref} className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Edit Group</Link>
         {approved && group ? (
-          <Link href={`/groups/${group.id}`} className="inline-flex h-11 items-center rounded-full border border-black/10 bg-white px-4 text-sm font-semibold">View Profile</Link>
+          <Link href={profileHref} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">View Profile</Link>
         ) : (
-          <button type="button" onClick={() => setPreviewing(true)} className="inline-flex h-11 items-center rounded-full border border-black/10 bg-white px-4 text-sm font-semibold">View Profile</button>
+          <button type="button" onClick={() => setPreviewing(true)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">View Profile</button>
         )}
         {approved && group ? (
-          <button type="button" onClick={() => void onShare(group.id)} className="inline-flex h-11 items-center rounded-full border border-black/10 bg-white px-4 text-sm font-semibold">Share Group</button>
+          <button type="button" onClick={() => void onShare({ id: group.id, slug: group.slug, name }).then((result) => setNotice(result === "copied" ? "Group link copied." : result && result !== "shared" ? result : ""))} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Share Group</button>
         ) : null}
       </div>
-      <section className="rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
-        <h3 className="font-semibold">Interested People <span className="font-medium text-[#157a3a]">({people.length})</span></h3>
-        {people.length === 0 ? <p className="mt-2 text-sm text-[#666]">No one has signed up yet. Share your group to invite people.</p> : null}
+      {notice ? <p className="px-4 pb-2 text-sm text-[#157a3a]">{notice}</p> : null}
+      <div className="border-t border-[#e6ebf2] px-4 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-semibold">Interested People</h3>
+          <span className="rounded-full bg-[#e8f8ee] px-2.5 py-1 text-xs font-semibold text-[#157a3a]">{people.length} {people.length === 1 ? "Person" : "People"}</span>
+        </div>
+        {people.length > 0 ? (
+          <button type="button" onClick={() => void navigator.clipboard.writeText(welcome).then(() => setNotice("Welcome message copied."))} className="mt-2 text-sm font-semibold text-[#1976F3]">Copy Welcome Message</button>
+        ) : (
+          <div className="mt-3">
+            <p className="text-sm text-[#666]">No one has signed up yet. Share your group to invite people.</p>
+            {approved && group ? <button type="button" onClick={() => void onShare({ id: group.id, slug: group.slug, name }).then((result) => setNotice(result === "copied" ? "Group link copied." : ""))} className="mt-2 inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Share Group</button> : null}
+          </div>
+        )}
         <ul className="mt-3 space-y-3">
-          {people.map((person) => (
-            <li key={person.id} className="flex items-center justify-between gap-3 text-sm">
-              <span className="min-w-0">
-                <span className="block truncate font-medium">{person.first_name}</span>
-                <span className="block text-[#52627a]">{person.phone}</span>
-                <span className="block text-xs text-[#667085]">{new Date(person.created_at).toLocaleDateString()}</span>
-              </span>
-              <a href={`sms:${person.phone}`} className="inline-flex h-11 shrink-0 items-center rounded-full bg-[#1976F3] px-4 font-semibold text-white">Text</a>
-            </li>
-          ))}
+          {people.map((person) => {
+            const recent = Date.now() - new Date(person.created_at).getTime() < 1000 * 60 * 60 * 24 * 3;
+            const sms = `sms:${person.phone}?&body=${encodeURIComponent(welcome)}`;
+            return (
+              <li key={person.id} className="rounded-2xl border border-[#e6ebf2] p-3">
+                <div className="flex items-start gap-3">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#e7f0ff] text-sm font-semibold text-[#1976F3]">{person.first_name.slice(0, 1).toUpperCase()}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="truncate font-semibold">{person.first_name}</span>
+                      {recent ? <span className="rounded-full bg-[#e7f0ff] px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-[#1976F3]">NEW</span> : null}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-[#667085]">{new Date(person.created_at).toLocaleDateString()}</span>
+                    <span className="mt-1 flex items-center gap-1 text-sm text-[#142033]">
+                      {formatPhone(person.phone)}
+                      <button type="button" aria-label="Copy phone number" onClick={() => void navigator.clipboard.writeText(person.phone).then(() => setCopiedId(person.id))} className="grid h-8 w-8 place-items-center text-[#1976F3]"><Copy size={14} /></button>
+                      {copiedId === person.id ? <span className="text-xs text-[#157a3a]">Copied</span> : null}
+                    </span>
+                  </span>
+                  {person.email ? <a href={`mailto:${person.email}`} aria-label="Email" className="grid h-11 w-11 place-items-center rounded-full border border-[#e6ebf2] text-[#1976F3]"><Mail size={16} /></a> : null}
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <a href={sms} className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#1976F3] text-sm font-semibold text-white"><MessageSquare size={16} /> Text</a>
+                  <a href={`tel:${person.phone}`} className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[#1976F3] text-sm font-semibold text-[#1976F3]"><Phone size={16} /> Call</a>
+                </div>
+              </li>
+            );
+          })}
         </ul>
-      </section>
+      </div>
       {previewing && previewGroup ? <GroupPreview group={previewGroup} onClose={() => setPreviewing(false)} /> : null}
-    </div>
+    </section>
   );
 }
 
@@ -322,6 +351,13 @@ function safePlace(application: OwnedApplication) {
     city: application.city,
     state: application.state ?? "",
   });
+}
+
+function formatPhone(value: string) {
+  const digits = value.replace(/\D/g, "");
+  const local = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+  if (local.length !== 10) return value;
+  return `(${local.slice(0, 3)}) ${local.slice(3, 6)}-${local.slice(6)}`;
 }
 
 function toPublicGroup({

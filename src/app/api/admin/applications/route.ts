@@ -4,6 +4,7 @@ import { checklistComplete } from "@/lib/auth/review";
 import { approximateCoordinates, publicLocationLabel } from "@/lib/groups/geo";
 import { isIanaTimeZone } from "@/lib/groups/sunday";
 import { geocodePlace } from "@/lib/groups/geo";
+import { nextGroupSlug } from "@/lib/groups/slug";
 import { cleanText, isUuid, safePhotoUrl } from "@/lib/groups/text";
 import { createClient } from "@/lib/supabase/server";
 
@@ -244,6 +245,7 @@ export async function POST(request: Request) {
     co_leader_name: cleanText(String((data as { co_leader_name?: unknown }).co_leader_name ?? ""), 120) || null,
     co_leader_photo_url: safePhotoUrl(typeof (data as { co_leader_photo_url?: unknown }).co_leader_photo_url === "string" ? (data as { co_leader_photo_url: string }).co_leader_photo_url : null),
     status: "approved",
+    slug: await unusedSlug(supabase, flags.group_name?.trim() || `${application.city} Bible Study`),
   };
   let group: { id: string } | null = null;
   let groupError: { message: string } | null = null;
@@ -264,6 +266,11 @@ export async function POST(request: Request) {
     }
     if (/co_leader/i.test(groupError.message)) {
       const { co_leader_name: _name, co_leader_photo_url: _photo, ...rest } = groupPayload;
+      groupPayload = rest;
+      continue;
+    }
+    if (/slug/i.test(groupError.message) && "slug" in groupPayload) {
+      const { slug: _slug, ...rest } = groupPayload;
       groupPayload = rest;
       continue;
     }
@@ -313,6 +320,13 @@ export async function POST(request: Request) {
   await logReview("approve", "Contacted the applicant and verified the leader and meeting location.");
 
   return NextResponse.json({ ok: true, groupId: group.id });
+}
+
+async function unusedSlug(supabase: Awaited<ReturnType<typeof import("@/lib/supabase/server").createClient>>, name: string) {
+  const base = nextGroupSlug(name, []);
+  const { data, error } = await supabase.from("rtp_groups").select("slug").ilike("slug", `${base}%`).limit(50);
+  if (error) return null;
+  return nextGroupSlug(name, (data ?? []).map((row) => String(row.slug ?? "")).filter(Boolean));
 }
 
 async function publishCoLeader(

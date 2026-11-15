@@ -1,8 +1,8 @@
-export function LiveStatus({ live }: { live: boolean }) {
+export function LiveStatus({ live, label }: { live: boolean; label?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 text-sm font-semibold ${live ? "text-[#157a3a]" : "text-[#667085]"}`}>
       <span className={`h-2.5 w-2.5 rounded-full ${live ? "animate-pulse bg-[#16A34A] motion-reduce:animate-none" : "bg-[#98a2b3]"}`} />
-      {live ? "Live" : "Paused"}
+      {label ?? (live ? "Live" : "Paused")}
     </span>
   );
 }

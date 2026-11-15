@@ -21,6 +21,7 @@ export type PublicGroup = {
   co_leader_name?: string | null;
   co_leader_photo_url?: string | null;
   groupme_url?: string | null;
+  slug?: string | null;
   is_demo?: boolean;
 };
 
