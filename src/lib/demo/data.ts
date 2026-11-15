@@ -4,7 +4,7 @@ export const HERO_IMAGE =
 export const GRAIN_BACKGROUND = HERO_IMAGE;
 
 export const HERO_VIDEO =
-  "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/video/720bible.mov";
+  "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/video/READ.mov";
 
 export const DEMO_USER = {
   name: "Jordan",
