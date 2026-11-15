@@ -17,6 +17,26 @@ import { LOCATION_TYPES, type OwnedApplication } from "@/lib/groups/types";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
+type PublishedGroup = {
+  id: string;
+  name: string;
+  description: string | null;
+  public_location: string;
+  meeting_day: string | null;
+  meeting_time: string | null;
+  leader_name: string;
+  leader_photo_url?: string | null;
+  co_leader_name?: string | null;
+  co_leader_photo_url?: string | null;
+  city: string;
+  state?: string | null;
+  country?: string | null;
+  location_type?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  status: string;
+};
+
 type FoundPlace = {
   placeId?: string;
   name: string;
@@ -57,6 +77,7 @@ export function StartGroupForm({
   googlePhotoUrl = null,
   phone = null,
   application,
+  published = null,
 }: {
   email: string;
   name?: string;
@@ -65,41 +86,43 @@ export function StartGroupForm({
   googlePhotoUrl?: string | null;
   phone?: string | null;
   application?: OwnedApplication | null;
+  published?: PublishedGroup | null;
 }) {
   const router = useRouter();
-  const editing = application?.status === "pending" || application?.status === "changes_requested";
-  const savedPoint = editing ? savedPlace(application) : null;
+  const editingApplication = application?.status === "pending" || application?.status === "changes_requested";
+  const editing = Boolean(published || editingApplication);
+  const savedPoint = published ? savedGroupPlace(published) : editing ? savedPlace(application) : null;
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [leaderPhotoUrl, setLeaderPhotoUrl] = useState(editing ? application?.leader_photo_url || photoUrl : photoUrl);
-  const [leaderName, setLeaderName] = useState(editing ? application?.leader_name || name : name);
-  const [groupName, setGroupName] = useState(editing ? application?.group_name ?? "" : "");
+  const [leaderPhotoUrl, setLeaderPhotoUrl] = useState(published?.leader_photo_url || (editing ? application?.leader_photo_url || photoUrl : photoUrl));
+  const [leaderName, setLeaderName] = useState(published?.leader_name || (editing ? application?.leader_name || name : name));
+  const [groupName, setGroupName] = useState(published?.name || (editing ? application?.group_name ?? "" : ""));
   const [mobile, setMobile] = useState(editing ? application?.phone || phone || "" : phone || "");
-  const [city, setCity] = useState(editing ? application?.city ?? "" : "");
-  const [stateName, setStateName] = useState(editing ? application?.state ?? "" : "");
-  const [country, setCountry] = useState(editing ? application?.country ?? "" : "");
-  const [locationType, setLocationType] = useState(editing && application?.location_type ? application.location_type : "public_venue");
-  const [meetingLocation, setMeetingLocation] = useState(editing ? application?.meeting_location ?? "" : "");
+  const [city, setCity] = useState(published?.city || (editing ? application?.city ?? "" : ""));
+  const [stateName, setStateName] = useState(published?.state || (editing ? application?.state ?? "" : ""));
+  const [country, setCountry] = useState(published?.country || (editing ? application?.country ?? "" : ""));
+  const [locationType, setLocationType] = useState((published?.location_type || (editing ? application?.location_type : "")) || "public_venue");
+  const [meetingLocation, setMeetingLocation] = useState(published?.public_location || (editing ? application?.meeting_location ?? "" : ""));
   const [suggestions, setSuggestions] = useState<FoundPlace[]>([]);
   const [searchNote, setSearchNote] = useState("");
   const searchTimer = useRef<number | null>(null);
   const searchSeq = useRef(0);
   const [preview, setPreview] = useState<FoundPlace | null>(savedPoint);
   const [selectedPlace, setSelectedPlace] = useState<FoundPlace | null>(savedPoint);
-  const [description, setDescription] = useState(editing ? application?.description ?? "" : "");
+  const [description, setDescription] = useState(published?.description || (editing ? application?.description ?? "" : ""));
   const nameEdited = useRef(editing);
   const [timeZone, setTimeZone] = useState(editing && application?.timezone && isIanaTimeZone(application.timezone) ? application.timezone : LAUNCH_TIME_ZONE);
-  const [meetingDay, setMeetingDay] = useState(editing && MEETING_DAYS.includes(application?.meeting_day as (typeof MEETING_DAYS)[number]) ? application?.meeting_day ?? "Sunday" : "Sunday");
-  const [meetingTime, setMeetingTime] = useState(clockValue(editing ? application?.meeting_time : null));
+  const [meetingDay, setMeetingDay] = useState(MEETING_DAYS.includes((published?.meeting_day || application?.meeting_day) as (typeof MEETING_DAYS)[number]) ? (published?.meeting_day || application?.meeting_day || "Sunday") : "Sunday");
+  const [meetingTime, setMeetingTime] = useState(clockValue(published?.meeting_time || (editing ? application?.meeting_time : null)));
   const [duration, setDuration] = useState(editing && MEETING_DURATIONS.includes(application?.duration as (typeof MEETING_DURATIONS)[number]) ? application?.duration ?? "1 hour" : "1 hour");
   const zoneTouched = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const lock = useRef(false);
   const [savedId, setSavedId] = useState(editing ? application?.id ?? "" : "");
-  const [coLeaderOn, setCoLeaderOn] = useState(Boolean(editing && application?.co_leader_name));
-  const [coLeaderName, setCoLeaderName] = useState(editing ? application?.co_leader_name ?? "" : "");
-  const [coLeaderPhoto, setCoLeaderPhoto] = useState(editing ? application?.co_leader_photo_url ?? "" : "");
+  const [coLeaderOn, setCoLeaderOn] = useState(Boolean(published?.co_leader_name || (editing && application?.co_leader_name)));
+  const [coLeaderName, setCoLeaderName] = useState(published?.co_leader_name || (editing ? application?.co_leader_name ?? "" : ""));
+  const [coLeaderPhoto, setCoLeaderPhoto] = useState(published?.co_leader_photo_url || (editing ? application?.co_leader_photo_url ?? "" : ""));
   const [coLeaderPhotoError, setCoLeaderPhotoError] = useState("");
 
   useEffect(() => {
@@ -222,6 +245,63 @@ export function StartGroupForm({
     setSubmitting(true);
     setError("");
     try {
+      if (published) {
+        const nextPublic = locationType === "home"
+          ? publicLocationLabel({ locationType, meetingLocation: "", city: city.trim(), state: stateName.trim() })
+          : meetingLocation.trim();
+        const locationChanged = nextPublic !== published.public_location || city.trim() !== published.city || stateName.trim() !== (published.state ?? "");
+        const update = await fetch("/api/leader", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            action: "update",
+            id: published.id,
+            name: groupName.trim(),
+            leaderName: leaderName.trim(),
+            description: description.trim(),
+            meetingDay,
+            meetingTime: displayMeetingTime(meetingTime),
+            leaderPhotoUrl,
+          }),
+        });
+        if (!update.ok) {
+          setError("This group was not saved. It is still the same group.");
+          lock.current = false;
+          setSubmitting(false);
+          return;
+        }
+        const coLeaderSave = await fetch("/api/leader", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            action: "co-leader",
+            id: published.id,
+            coLeaderName: coLeaderOn ? coLeaderName.trim() : "",
+            coLeaderPhotoUrl: coLeaderOn ? coLeaderPhoto : null,
+          }),
+        });
+        if (!coLeaderSave.ok) {
+          const body = (await coLeaderSave.json()) as { error?: string };
+          setError(body.error || "The group was saved, but the co-leader was not.");
+          lock.current = false;
+          setSubmitting(false);
+          return;
+        }
+        if (locationChanged) {
+          await fetch("/api/leader", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ action: "location", id: published.id, publicLocation: nextPublic }),
+          });
+          setError("Saved. The current public location stays visible until an admin approves the new one.");
+          lock.current = false;
+          setSubmitting(false);
+          return;
+        }
+        router.push("/app/group");
+        router.refresh();
+        return;
+      }
       const response = await fetch("/api/groups/apply", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -275,7 +355,7 @@ export function StartGroupForm({
     }
   }
 
-  if (application?.status === "approved" || application?.status === "suspended") {
+  if (!published && (application?.status === "approved" || application?.status === "suspended")) {
     return (
       <div className="rounded-[28px] bg-white p-8 shadow-sm">
         <p className="text-lg font-medium">Your application is already on file. Open your dashboard to see the status.</p>
@@ -496,7 +576,7 @@ export function StartGroupForm({
       <p className="text-sm leading-relaxed">By selecting Submit Group, I agree to the Statement of Faith and Leader Commitments, and I consent to the privacy disclosure above.</p>
       {error ? <p role="alert" className="text-sm text-[#c2410c]">{error}</p> : null}
       <button type="submit" disabled={submitting} className="inline-flex h-[52px] w-full items-center justify-center rounded-full bg-[var(--sending-blue)] font-semibold text-white disabled:opacity-70">
-        {submitting ? "Sending…" : "Submit Group"}
+        {submitting ? "Sending…" : published ? "Save Group" : "Submit Group"}
       </button>
     </form>
     <div className="mt-4 min-w-0 lg:sticky lg:top-20 lg:mt-0">
@@ -628,6 +708,20 @@ function CoLeaderPhoto({
       </div>
     </div>
   );
+}
+
+function savedGroupPlace(group: PublishedGroup): FoundPlace | null {
+  if (group.latitude == null || group.longitude == null || !Number.isFinite(Number(group.latitude)) || !Number.isFinite(Number(group.longitude))) return null;
+  return {
+    name: group.public_location,
+    address: group.public_location,
+    latitude: Number(group.latitude),
+    longitude: Number(group.longitude),
+    label: group.public_location,
+    city: group.city,
+    state: group.state ?? "",
+    country: group.country ?? "",
+  };
 }
 
 function savedPlace(application: OwnedApplication | null | undefined): FoundPlace | null {

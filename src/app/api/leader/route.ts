@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     action?: string;
     id?: string;
     name?: string;
+    leaderName?: string;
     description?: string;
     meetingDay?: string;
     meetingTime?: string;
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
   if (body.action === "update" && body.id && isUuid(body.id)) {
     const patch: Record<string, string | null> = {};
     if (typeof body.name === "string") patch.name = cleanText(body.name, 120);
+    if (typeof body.leaderName === "string") patch.leader_name = cleanText(body.leaderName, 120);
     if (typeof body.description === "string") patch.description = cleanText(body.description, 600);
     if (typeof body.meetingDay === "string") patch.meeting_day = cleanText(body.meetingDay, 40);
     if (typeof body.meetingTime === "string") patch.meeting_time = cleanText(body.meetingTime, 40);

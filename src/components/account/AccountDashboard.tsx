@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ProfilePhoto } from "@/components/account/ProfilePhoto";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { publicLocationLabel } from "@/lib/groups/geo";
-import type { CoLeaderInvite, OwnedApplication, PublicGroup } from "@/lib/groups/types";
+import { cityState, type CoLeaderInvite, type OwnedApplication, type PublicGroup } from "@/lib/groups/types";
 
 type Profile = { user_id: string; full_name: string | null; phone: string | null; photo_url: string | null };
 type Application = OwnedApplication;
@@ -88,65 +88,6 @@ export function AccountDashboard({
     if (response.ok) router.refresh();
   }
 
-  async function saveGroup(event: FormEvent<HTMLFormElement>, id: string) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/leader", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        action: "update",
-        id,
-        name: form.get("name"),
-        description: form.get("description"),
-        meetingDay: form.get("meetingDay"),
-        meetingTime: form.get("meetingTime"),
-      }),
-    });
-    setMessage(response.ok ? "Group saved." : "That group update did not save.");
-    if (response.ok) router.refresh();
-  }
-
-  async function setStatus(id: string, action: "pause" | "resume") {
-    const response = await fetch("/api/leader", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action, id }),
-    });
-    setMessage(response.ok ? (action === "pause" ? "Group paused." : "Group is active again.") : "That status did not change.");
-    if (response.ok) router.refresh();
-  }
-
-  async function requestLocation(event: FormEvent<HTMLFormElement>, id: string) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/leader", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        action: "location",
-        id,
-        publicLocation: form.get("publicLocation"),
-        privateAddress: form.get("privateAddress"),
-      }),
-    });
-    setMessage(response.ok ? "Location change sent for review. The public location stays the same until an admin approves it." : "That location change did not save.");
-    if (response.ok) router.refresh();
-  }
-
-  async function saveGroupMe(event: FormEvent<HTMLFormElement>, id: string) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/leader", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action: "groupme", id, groupmeUrl: form.get("groupmeUrl") }),
-    });
-    const body = (await response.json()) as { error?: string };
-    setMessage(response.ok ? "GroupMe link saved." : body.error || "That GroupMe link did not save.");
-    if (response.ok) router.refresh();
-  }
-
   async function share(id: string) {
     const url = `${window.location.origin}/groups/${id}`;
     try {
@@ -183,28 +124,38 @@ export function AccountDashboard({
               <p className="text-sm text-[#667085]">You do not have a group yet.</p>
             </section>
           ) : null}
-          {items.map((entry) => (
-            <div key={entry.key} className="space-y-3">
-              <EntryCard entry={entry} photoUrl={profile.photo_url || googlePhotoUrl} />
-              {(selectedId || (items.length === 1 ? items[0]?.key : "")) === entry.key ? (
-                <GroupDesk
-                  email={email}
-                  profile={profile}
-                  googlePhotoUrl={googlePhotoUrl}
-                  application={entry.application}
-                  group={entry.group}
-                  primary={entry.primary}
-                  people={entry.group ? requests.filter((item) => item.group_id === entry.group?.id) : []}
-                  detail={entry.group ? details.find((item) => item.group_id === entry.group?.id) ?? null : null}
-                  pendingLocation={entry.group ? locationChanges.find((item) => item.group_id === entry.group?.id && item.status === "pending") ?? null : null}
-                  onSaveGroup={saveGroup}
-                  onStatus={setStatus}
-                  onLocation={requestLocation}
-                  onShare={share}
-                  onGroupMe={saveGroupMe}
-                />
-              ) : null}
-            </div>
+          {items.length > 1 ? (
+            <ul className="space-y-2">
+              {items.map((entry) => {
+                const active = (selectedId || items[0]?.key) === entry.key;
+                const label = entry.group?.name || entry.application?.group_name?.trim() || "My Bible Group";
+                const status = entry.group?.status || entry.application?.status || "";
+                const place = cityState({ city: entry.group?.city || entry.application?.city || "", state: entry.group?.state ?? entry.application?.state ?? null });
+                return (
+                  <li key={entry.key}>
+                    <Link href={`/app/group?id=${entry.key}`} className={`flex items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-3 text-sm ${active ? "border-[#1976F3]" : "border-[#e6ebf2]"}`}>
+                      <span className="min-w-0">
+                        <span className="block truncate font-semibold">{label}</span>
+                        <span className="block truncate text-[#667085]">{place}</span>
+                      </span>
+                      <span className="shrink-0 rounded-full bg-[#e8f8ee] px-2.5 py-1 text-[11px] font-semibold text-[#157a3a]">{STATUS_LABEL[status] ?? status}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+          {items.filter((entry) => entry.key === (selectedId || items[0]?.key)).map((entry) => (
+            <GroupDesk
+              key={entry.key}
+              email={email}
+              profile={profile}
+              googlePhotoUrl={googlePhotoUrl}
+              application={entry.application}
+              group={entry.group}
+              people={entry.group ? requests.filter((item) => item.group_id === entry.group?.id) : []}
+              onShare={share}
+            />
           ))}
         </div>
       ) : null}
@@ -267,32 +218,17 @@ function GroupDesk({
   googlePhotoUrl,
   application,
   group,
-  primary,
   people,
-  detail,
-  pendingLocation,
-  onSaveGroup,
-  onStatus,
-  onLocation,
   onShare,
-  onGroupMe,
 }: {
   email: string;
   profile: Profile;
   googlePhotoUrl: string | null;
   application: Application | null;
   group: Group | null;
-  primary: boolean;
   people: RequestRow[];
-  detail: Detail | null;
-  pendingLocation: LocationChange | null;
-  onSaveGroup: (event: FormEvent<HTMLFormElement>, id: string) => void;
-  onStatus: (id: string, action: "pause" | "resume") => void;
-  onLocation: (event: FormEvent<HTMLFormElement>, id: string) => void;
   onShare: (id: string) => void;
-  onGroupMe: (event: FormEvent<HTMLFormElement>, id: string) => void;
 }) {
-  const [editing, setEditing] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const photo = group?.leader_photo_url || application?.leader_photo_url || profile.photo_url || googlePhotoUrl;
   const leader = group?.leader_name || application?.leader_name || profile.full_name || email;
@@ -301,78 +237,44 @@ function GroupDesk({
   const place = group?.public_location || (application ? safePlace(application) : "");
   const approved = status === "approved";
   const previewGroup = toPublicGroup({ application, group, photo, leader, name, place });
+  const editHref = application ? `/app/start?application=${application.id}` : group ? `/app/start?group=${group.id}` : "/app/start";
 
   if (!group && !application) return null;
 
   return (
-    <div className="space-y-3 rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
+    <div className="space-y-3">
+      {previewGroup ? (
+        <section className="rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
+          <JoinGroupForm group={previewGroup} variant="panel" hideJoin statusLabel={STATUS_LABEL[status] ?? status} />
+        </section>
+      ) : null}
       <div className="flex flex-wrap gap-2">
-        {group ? (
-          <button type="button" onClick={() => setEditing((value) => !value)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Edit Group</button>
-        ) : (
-          <Link href={application ? `/app/start?application=${application.id}` : "/app/start"} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Edit Group</Link>
-        )}
-        <button type="button" onClick={() => setPreviewing(true)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Preview Group</button>
+        <Link href={editHref} className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Edit Group</Link>
         {approved && group ? (
-          <button type="button" onClick={() => void onShare(group.id)} className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Share Group</button>
+          <Link href={`/groups/${group.id}`} className="inline-flex h-11 items-center rounded-full border border-black/10 bg-white px-4 text-sm font-semibold">View Profile</Link>
+        ) : (
+          <button type="button" onClick={() => setPreviewing(true)} className="inline-flex h-11 items-center rounded-full border border-black/10 bg-white px-4 text-sm font-semibold">View Profile</button>
+        )}
+        {approved && group ? (
+          <button type="button" onClick={() => void onShare(group.id)} className="inline-flex h-11 items-center rounded-full border border-black/10 bg-white px-4 text-sm font-semibold">Share Group</button>
         ) : null}
       </div>
-      <p className="text-sm leading-relaxed text-[#157a3a]">{statusCopy(status, application?.review_message ?? null, approved && group ? `/groups/${group.id}` : "")}</p>
-      {group?.status === "approved" ? (
-        <button type="button" onClick={() => void onStatus(group.id, "pause")} className="ml-3 inline-flex h-11 items-center text-sm font-semibold text-[#52627a]">Pause group</button>
-      ) : null}
-      {group?.status === "paused" ? (
-        <button type="button" onClick={() => void onStatus(group.id, "resume")} className="inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Resume group</button>
-      ) : null}
-      {editing && group ? (
-        <div className="mt-4 space-y-4 border-t border-black/5 pt-4">
-          <form className="space-y-3" onSubmit={(event) => onSaveGroup(event, group.id)}>
-            <label className="block text-sm font-medium">Group name<input name="name" defaultValue={group.name} className="mt-1 h-11 w-full rounded-2xl border border-[#e6e6e6] px-3" /></label>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="block text-sm font-medium">Day<input name="meetingDay" defaultValue={group.meeting_day ?? ""} className="mt-1 h-11 w-full rounded-2xl border border-[#e6e6e6] px-3" /></label>
-              <label className="block text-sm font-medium">Time<input name="meetingTime" defaultValue={group.meeting_time ?? ""} className="mt-1 h-11 w-full rounded-2xl border border-[#e6e6e6] px-3" /></label>
-            </div>
-            <label className="block text-sm font-medium">Description<textarea name="description" defaultValue={group.description ?? ""} rows={3} className="mt-1 w-full rounded-2xl border border-[#e6e6e6] px-3 py-2" /></label>
-            <button type="submit" className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Save group</button>
-          </form>
-          {primary ? (
-            <form className="space-y-3" onSubmit={(event) => onGroupMe(event, group.id)}>
-              <h3 className="font-semibold">GroupMe</h3>
-              <p className="text-sm text-[#666]">Optional. Paste the GroupMe invitation link for this group.</p>
-              <input name="groupmeUrl" defaultValue={group.groupme_url ?? ""} placeholder="https://groupme.com/join_group/..." className="h-11 w-full rounded-2xl border border-[#e6e6e6] px-3 text-sm" />
-              <button type="submit" className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Save GroupMe link</button>
-            </form>
-          ) : null}
-          <form className="space-y-3" onSubmit={(event) => onLocation(event, group.id)}>
-            <h3 className="font-semibold">Public location</h3>
-            <p className="text-sm text-[#666]">The current public location stays visible until an admin approves a change. A home address is not published.</p>
-            <p className="text-sm">Current public location: {group.public_location}</p>
-            {detail?.address ? <p className="text-sm text-[#444]">Private address on file: {detail.address}</p> : null}
-            {pendingLocation ? <p className="text-sm text-[#9a3412]">Pending review: {pendingLocation.public_location}</p> : null}
-            <label className="block text-sm font-medium">Proposed public location<input name="publicLocation" required className="mt-1 h-11 w-full rounded-2xl border border-[#e6e6e6] px-3" /></label>
-            <label className="block text-sm font-medium">Private address, if it changed<input name="privateAddress" className="mt-1 h-11 w-full rounded-2xl border border-[#e6e6e6] px-3" /></label>
-            <button type="submit" className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm">Submit location change</button>
-          </form>
-        </div>
-      ) : null}
-      {approved ? (
-        <div className="mt-4 border-t border-black/5 pt-4">
-          <h3 className="font-semibold">Interested People <span className="font-medium text-[#157a3a]">({people.length})</span></h3>
-          {people.length === 0 ? <p className="mt-2 text-sm text-[#666]">No one has asked to join yet.</p> : null}
-          <ul className="mt-3 space-y-3">
-            {people.map((person) => (
-              <li key={person.id} className="flex items-center justify-between gap-3 text-sm">
-                <span className="min-w-0">
-                  <span className="block truncate font-medium">{person.first_name}</span>
-                  <span className="block text-[#52627a]">{person.phone}</span>
-                  <span className="block text-xs text-[#667085]">{new Date(person.created_at).toLocaleDateString()}</span>
-                </span>
-                <a href={`sms:${person.phone}`} className="inline-flex h-11 shrink-0 items-center rounded-full bg-[#1976F3] px-4 font-semibold text-white">Text</a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      <section className="rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
+        <h3 className="font-semibold">Interested People <span className="font-medium text-[#157a3a]">({people.length})</span></h3>
+        {people.length === 0 ? <p className="mt-2 text-sm text-[#666]">No one has signed up yet. Share your group to invite people.</p> : null}
+        <ul className="mt-3 space-y-3">
+          {people.map((person) => (
+            <li key={person.id} className="flex items-center justify-between gap-3 text-sm">
+              <span className="min-w-0">
+                <span className="block truncate font-medium">{person.first_name}</span>
+                <span className="block text-[#52627a]">{person.phone}</span>
+                <span className="block text-xs text-[#667085]">{new Date(person.created_at).toLocaleDateString()}</span>
+              </span>
+              <a href={`sms:${person.phone}`} className="inline-flex h-11 shrink-0 items-center rounded-full bg-[#1976F3] px-4 font-semibold text-white">Text</a>
+            </li>
+          ))}
+        </ul>
+      </section>
       {previewing && previewGroup ? <GroupPreview group={previewGroup} onClose={() => setPreviewing(false)} /> : null}
     </div>
   );
@@ -390,15 +292,6 @@ function GroupPreview({ group, onClose }: { group: PublicGroup; onClose: () => v
       </div>
     </div>
   );
-}
-
-function statusCopy(status: string, message: string | null, publicPath: string) {
-  if (status === "pending") return "Your application has been received. Our team will contact you before your group appears publicly.";
-  if (status === "changes_requested") return message || "A reviewer asked for changes.";
-  if (status === "approved") return publicPath ? `Your group is approved and visible on the map. ${publicPath}` : "Your group is approved and visible on the map.";
-  if (status === "suspended" || status === "paused") return "This group is hidden from the public map.";
-  if (status === "rejected") return message || "This application was not approved.";
-  return "";
 }
 
 function safePlace(application: OwnedApplication) {
