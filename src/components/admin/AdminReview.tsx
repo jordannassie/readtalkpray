@@ -1,10 +1,10 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Eye } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { REVIEW_CHECKS } from "@/lib/auth/review";
+import { cityState, meetingWhen } from "@/lib/groups/types";
 
 type Application = {
   id: string;
@@ -33,21 +33,29 @@ type Application = {
 };
 
 type JoinRequest = { id: string; first_name: string; phone: string; email: string | null; status: string; address_shared: boolean; group_id: string };
-type Group = { id: string; name: string; city: string; status: string; public_location: string; leader_name: string };
+type Group = {
+  id: string;
+  name: string;
+  city: string;
+  state?: string | null;
+  status: string;
+  public_location: string;
+  address?: string | null;
+  location_type?: string | null;
+  meeting_day?: string | null;
+  meeting_time?: string | null;
+  description?: string | null;
+  leader_name: string;
+  leader_photo_url?: string | null;
+  co_leader_name?: string | null;
+  co_leader_photo_url?: string | null;
+  leader_email?: string | null;
+  leader_phone?: string | null;
+};
 type Review = { id: string; application_id: string; action: string; note: string | null; message: string | null; created_at: string };
 type LocationChange = { id: string; group_id: string; public_location: string; private_address: string | null; status: string };
 type Filter = "pending" | "approved" | "suspended" | "all";
-type Checks = Record<(typeof REVIEW_CHECKS)[number], boolean>;
 
-const CHECK_LABELS: Record<(typeof REVIEW_CHECKS)[number], string> = {
-  contacted: "Contacted the applicant personally",
-  phoneConversation: "Completed a phone conversation",
-  faithCommitments: "Confirmed the statement of faith and leader commitments",
-  locationReviewed: "Reviewed the meeting location",
-  locationApproved: "Approved the meeting location",
-};
-
-const emptyChecks = Object.fromEntries(REVIEW_CHECKS.map((key) => [key, false])) as Checks;
 const FILTERS: Array<[Filter, string]> = [
   ["pending", "Pending"],
   ["approved", "Approved"],
@@ -67,6 +75,7 @@ export function AdminReview({
   page,
   pageCount,
   total,
+  groupTotal,
 }: {
   applications: Application[];
   requests: JoinRequest[];
@@ -79,12 +88,14 @@ export function AdminReview({
   page: number;
   pageCount: number;
   total: number;
+  groupTotal: number;
 }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
   const [openId, setOpenId] = useState("");
-  const [checks, setChecks] = useState<Record<string, Checks>>({});
+  const [verified, setVerified] = useState<Record<string, boolean>>({});
+  const [managedId, setManagedId] = useState("");
 
   async function send(id: string, payload: Record<string, unknown>) {
     setBusy(id);
@@ -141,7 +152,7 @@ export function AdminReview({
           {applications.map((item) => {
             const open = openId === item.id;
             const history = reviews.filter((review) => review.application_id === item.id);
-            const itemChecks = checks[item.id] ?? emptyChecks;
+            const confirmed = verified[item.id] === true;
             const place = [item.city, item.state].filter(Boolean).join(", ");
             return (
               <li key={item.id} className="overflow-hidden rounded-2xl bg-white shadow-sm">
@@ -191,22 +202,21 @@ export function AdminReview({
                       <li>Leader commitments: {item.commitments_agreed ? "Agreed" : "Not agreed"}</li>
                       <li>Privacy disclosure: {item.privacy_agreed ? "Agreed" : "Not agreed"}</li>
                     </ul>
-                    <fieldset className="space-y-2">
-                      <legend className="font-semibold">Approval checklist</legend>
-                      {REVIEW_CHECKS.map((key) => (
-                        <label key={key} className="flex min-h-11 items-center gap-2">
+                    {item.status === "pending" || item.status === "changes_requested" ? (
+                      <div className="space-y-2">
+                        <label className="flex min-h-11 items-start gap-2">
                           <input
                             type="checkbox"
-                            className="h-5 w-5"
-                            checked={itemChecks[key]}
-                            onChange={(event) => setChecks((current) => ({ ...current, [item.id]: { ...itemChecks, [key]: event.target.checked } }))}
+                            className="mt-0.5 h-5 w-5 shrink-0"
+                            checked={confirmed}
+                            onChange={(event) => setVerified((current) => ({ ...current, [item.id]: event.target.checked }))}
                           />
-                          {CHECK_LABELS[key]}
+                          <span>I have personally contacted the applicant and verified the leader and meeting location.</span>
                         </label>
-                      ))}
-                    </fieldset>
+                        <button type="button" disabled={!confirmed || busy === item.id} onClick={() => void send(item.id, { decision: "approve", checklist: { verified: true } })} className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white disabled:opacity-40">Approve Group</button>
+                      </div>
+                    ) : null}
                     <div className="flex flex-wrap gap-2">
-                      <button type="button" disabled={busy === item.id} onClick={() => void send(item.id, { decision: "approve", checklist: itemChecks })} className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Approve</button>
                       {(item.status === "pending" || item.status === "changes_requested" || item.status === "approved") ? (
                         <button type="button" disabled={busy === item.id} onClick={() => void send(item.id, { action: "suspend" })} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm">Suspend</button>
                       ) : null}
@@ -249,15 +259,54 @@ export function AdminReview({
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold">Groups</h2>
-        <ul className="mt-4 divide-y divide-black/5 overflow-hidden rounded-3xl bg-white">
-          {groups.map((group) => (
-            <li key={group.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
-              <span>{group.name} · {group.city} · {group.public_location}</span>
-              <span className="text-[#666]">{group.status} · {group.leader_name}</span>
-            </li>
-          ))}
+        <h2 className="text-xl font-semibold">Approved groups</h2>
+        {groups.length === 0 ? <p className="mt-3 text-sm text-[#666]">No groups match this view.</p> : null}
+        <ul className="mt-3 space-y-2">
+          {groups.map((group) => {
+            const open = managedId === group.id;
+            const place = cityState({ city: group.city, state: group.state ?? null });
+            const when = meetingWhen({ meeting_day: group.meeting_day ?? null, meeting_time: group.meeting_time ?? null });
+            return (
+              <li key={group.id} className="rounded-2xl border border-[#e6ebf2] bg-white p-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <GroupFaces group={group} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{group.name}</p>
+                    <p className="truncate text-xs text-[#555]">{group.leader_name}{group.co_leader_name ? ` & ${group.co_leader_name}` : ""}</p>
+                    <p className="truncate text-xs text-[#667085]">{[place, when].filter(Boolean).join(" · ")}</p>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${pillClass(group.status)}`}>{pillLabel(group.status)}</span>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  {group.status === "approved" ? (
+                    <Link href={`/groups/${group.id}`} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1976F3] px-3 text-sm font-semibold text-white">
+                      <Eye size={15} aria-hidden />
+                      View Group
+                    </Link>
+                  ) : null}
+                  <button type="button" onClick={() => setManagedId(open ? "" : group.id)} className="inline-flex h-10 items-center rounded-full border border-[#e6ebf2] px-3 text-sm font-semibold">
+                    {open ? "Close" : "Manage"}
+                  </button>
+                </div>
+                {open ? (
+                  <div className="mt-3 space-y-1 border-t border-[#e6ebf2] pt-3 text-sm text-[#444]">
+                    <p>{group.description || "No description."}</p>
+                    <p>Leader: {group.leader_name}{group.leader_email ? ` · ${group.leader_email}` : ""}{group.leader_phone ? ` · ${group.leader_phone}` : ""}</p>
+                    <p>Co-leader: {group.co_leader_name || "None"}</p>
+                    <p>Location: {group.location_type === "home" ? `${place} area` : group.public_location}</p>
+                    {group.location_type === "home" && group.address ? <p>Private address: {group.address}</p> : null}
+                    <div className="pt-2">
+                      <button type="button" disabled={busy === group.id} onClick={() => void send(group.id, { action: "group", decision: group.status === "suspended" ? "reactivate" : "suspend" })} className="inline-flex h-10 items-center rounded-full border border-black/10 px-3 text-sm">
+                        {group.status === "suspended" ? "Reactivate" : "Suspend group"}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
+        <p className="mt-3 text-sm text-[#666]">{groupTotal} group{groupTotal === 1 ? "" : "s"} · page {page} of {Math.max(1, Math.ceil(groupTotal / 20))}</p>
       </section>
 
       <section>
@@ -291,6 +340,28 @@ export function AdminReview({
       </section>
     </div>
   );
+}
+
+function GroupFaces({ group }: { group: Group }) {
+  if (!group.co_leader_name) return <Face photo={group.leader_photo_url} name={group.leader_name} />;
+  return (
+    <span className="flex shrink-0 items-center">
+      <Face photo={group.leader_photo_url} name={group.leader_name} />
+      <span className="-ml-2 rounded-full ring-2 ring-white">
+        <Face photo={group.co_leader_photo_url} name={group.co_leader_name} />
+      </span>
+    </span>
+  );
+}
+
+function Face({ photo, name }: { photo?: string | null; name: string }) {
+  if (photo) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={photo} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
+    );
+  }
+  return <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#e7f0ff] text-sm font-semibold text-[#1976F3]">{name.slice(0, 1).toUpperCase()}</span>;
 }
 
 function listHref(filter: Filter, query: string, page: number) {

@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Calendar, Check, MapPin, Phone, User, Users } from "lucide-react";
 import { LocationPreview } from "@/components/groups/LocationPreview";
 import { isWebsitePhone } from "@/lib/leads/website";
-import { groupMeUrl, leaderLine, meetingWhen, type PublicGroup } from "@/lib/groups/types";
+import { cityState, groupMeUrl, leaderLine, meetingWhen, venueName, type PublicGroup } from "@/lib/groups/types";
 
 const fieldClass =
   "h-12 w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] pr-4 pl-11 text-base text-[#111] outline-none placeholder:text-[#8a8a8a] focus:border-[#16A34A] focus:bg-white";
@@ -43,7 +43,8 @@ export function JoinGroupForm({
   }, [hideJoin, preview, done]);
   const home = group.location_type === "home";
   const when = meetingWhen(group) || "Time to be announced";
-  const place = home ? `${group.public_location} · approximate` : group.public_location;
+  const place = home ? `${cityState(group) || group.city} area` : cityState(group) || group.public_location;
+  const venue = venueName(group);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -104,7 +105,7 @@ export function JoinGroupForm({
     <div className={variant === "page" ? "w-full rounded-[28px] bg-white p-6 text-[#111] shadow-[0_18px_50px_rgba(0,0,0,0.28)] sm:p-8" : "text-[#111]"}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className={`${variant === "page" ? "text-2xl" : "text-[22px]"} font-semibold tracking-tight`}>{group.name}</h2>
+          <h2 className={`${variant === "page" ? "text-2xl" : "line-clamp-2 text-[22px]"} font-semibold tracking-tight`}>{group.name}</h2>
           <p className="mt-2 flex items-center gap-2 text-[15px] font-semibold text-[#142033]">
             <Calendar size={16} className="shrink-0 text-[#1976F3]" aria-hidden />
             {when}
@@ -113,10 +114,11 @@ export function JoinGroupForm({
             <MapPin size={16} className="mt-0.5 shrink-0 text-[#1976F3]" aria-hidden />
             <span>{place}</span>
           </p>
+          {venue ? <p className="mt-1 pl-6 text-sm text-[#52627a]">{venue}</p> : null}
           {statusLabel ? <p className="mt-3"><span className="inline-flex rounded-full bg-[#e8f8ee] px-3 py-1 text-xs font-semibold text-[#157a3a]">{statusLabel}</span></p> : null}
         </div>
         <div className="relative shrink-0">
-          <LeaderFace group={group} />
+          <LeaderFace group={group} compact={variant === "panel"} />
           {!hideJoin && (preview || group.is_demo) ? (
             <span className="absolute -top-1 -right-1 rounded-full bg-[#e7f0ff] px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-[#1976F3] uppercase">{preview ? "Preview" : "Demo"}</span>
           ) : null}
@@ -135,8 +137,8 @@ export function JoinGroupForm({
       {!compact && home ? (
         <p className="mt-2 text-sm leading-relaxed text-[#52627a]">The exact address is shared after the leader confirms you are coming.</p>
       ) : null}
-      {!compact && !home && group.address ? <p className="mt-2 text-sm text-[#333]">{group.address}</p> : null}
-      {!compact && group.description ? <p className="mt-3 text-sm leading-relaxed text-[#52627a]">{group.description}</p> : null}
+      {!compact && variant === "page" && !home && group.address && group.address !== venue ? <p className="mt-2 text-sm text-[#333]">{group.address}</p> : null}
+      {!compact && group.description ? <p className={`mt-3 text-sm leading-relaxed text-[#52627a] ${variant === "panel" ? "line-clamp-2" : ""}`}>{group.description}</p> : null}
       {!hideJoin && groupMeUrl(group.groupme_url) ? (
         <a href={groupMeUrl(group.groupme_url) ?? undefined} className="mt-4 inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Join GroupMe</a>
       ) : null}
@@ -273,13 +275,15 @@ function Confirmation({
   );
 }
 
-function LeaderFace({ group }: { group: PublicGroup }) {
-  if (!group.co_leader_name) return <Face photo={group.leader_photo_url} name={group.leader_name} className="h-[92px] w-[92px] text-3xl sm:h-[116px] sm:w-[116px]" />;
+function LeaderFace({ group, compact }: { group: PublicGroup; compact: boolean }) {
+  const single = compact ? "h-16 w-16 text-xl" : "h-[92px] w-[92px] text-3xl sm:h-[116px] sm:w-[116px]";
+  const pair = compact ? "h-12 w-12 text-base" : "h-[76px] w-[76px] text-2xl sm:h-[96px] sm:w-[96px]";
+  if (!group.co_leader_name) return <Face photo={group.leader_photo_url} name={group.leader_name} className={single} />;
   return (
-    <span className="flex items-center">
-      <Face photo={group.leader_photo_url} name={group.leader_name} className="h-[76px] w-[76px] text-2xl sm:h-[96px] sm:w-[96px]" />
+    <span className="flex max-w-[92px] items-center sm:max-w-[148px]">
+      <Face photo={group.leader_photo_url} name={group.leader_name} className={pair} />
       <span className="-ml-3 rounded-full ring-2 ring-white">
-        <Face photo={group.co_leader_photo_url} name={group.co_leader_name} className="h-[76px] w-[76px] text-2xl sm:h-[96px] sm:w-[96px]" />
+        <Face photo={group.co_leader_photo_url} name={group.co_leader_name} className={pair} />
       </span>
     </span>
   );

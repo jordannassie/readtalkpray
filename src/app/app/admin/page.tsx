@@ -43,6 +43,20 @@ export default async function AppAdminPage({
     );
   }
   const from = (page - 1) * PAGE_SIZE;
+  const groupStatus = filter === "suspended" ? "suspended" : filter === "all" ? null : "approved";
+  let groupsQuery = supabase
+    .from("rtp_groups")
+    .select("id, name, city, state, status, public_location, address, location_type, meeting_day, meeting_time, description, leader_name, leader_photo_url, co_leader_name, co_leader_photo_url", { count: "exact" })
+    .order("city");
+  if (groupStatus) groupsQuery = groupsQuery.eq("status", groupStatus);
+  if (query) {
+    const pattern = `"%${query.replace(/"/g, "")}%"`;
+    const { data: emailMatches } = await supabase.from("rtp_group_applications").select("group_id").ilike("email", `%${query}%`).limit(50);
+    const emailIds = (emailMatches ?? []).map((item) => item.group_id).filter((id): id is string => Boolean(id));
+    const clauses = ["name", "leader_name", "city"].map((column) => `${column}.ilike.${pattern}`);
+    if (emailIds.length) clauses.push(`id.in.(${emailIds.join(",")})`);
+    groupsQuery = groupsQuery.or(clauses.join(","));
+  }
   const [
     { data: applications, count: applicationCount },
     { count: pendingCount },
@@ -51,7 +65,7 @@ export default async function AppAdminPage({
     { count: leaderCount },
     { count: interestedCount },
     { data: requests },
-    { data: groups },
+    { data: groups, count: groupCount },
     { data: locationChanges },
   ] = await Promise.all([
     applicationsQuery.range(from, from + PAGE_SIZE - 1),
@@ -61,9 +75,14 @@ export default async function AppAdminPage({
     supabase.from("rtp_groups").select("id", { count: "exact", head: true }).eq("status", "approved").not("leader_name", "is", null),
     supabase.from("rtp_join_requests").select("id", { count: "exact", head: true }),
     supabase.from("rtp_join_requests").select("id, first_name, phone, email, status, address_shared, group_id").order("created_at", { ascending: false }).limit(PAGE_SIZE),
-    supabase.from("rtp_groups").select("id, name, city, status, public_location, leader_name").order("city").limit(PAGE_SIZE),
+    groupsQuery.range(from, from + PAGE_SIZE - 1),
     supabase.from("rtp_location_changes").select("id, group_id, public_location, private_address, status").eq("status", "pending").limit(PAGE_SIZE),
   ]);
+  const groupIds = (groups ?? []).map((item) => item.id);
+  const { data: contacts } = groupIds.length
+    ? await supabase.from("rtp_group_private").select("group_id, leader_email, leader_phone").in("group_id", groupIds)
+    : { data: [] };
+  const contactByGroup = new Map((contacts ?? []).map((item) => [item.group_id, item]));
   const ids = (applications ?? []).map((item) => item.id);
   const { data: reviews } = ids.length
     ? await supabase.from("rtp_application_reviews").select("id, application_id, action, note, message, created_at").in("application_id", ids).order("created_at", { ascending: false })
@@ -79,7 +98,12 @@ export default async function AppAdminPage({
       <AdminReview
         applications={applications ?? []}
         requests={requests ?? []}
-        groups={groups ?? []}
+        groups={(groups ?? []).map((group) => ({
+          ...group,
+          leader_email: contactByGroup.get(group.id)?.leader_email ?? null,
+          leader_phone: contactByGroup.get(group.id)?.leader_phone ?? null,
+        }))}
+        groupTotal={groupCount ?? 0}
         reviews={reviews ?? []}
         locationChanges={locationChanges ?? []}
         counts={{

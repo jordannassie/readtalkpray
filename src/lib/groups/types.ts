@@ -42,6 +42,20 @@ export type GroupApplicationInput = {
   leaderPhotoUrl: string | null;
 };
 
+export function cityState(group: Pick<PublicGroup, "city" | "state">) {
+  return [group.city, group.state].filter(Boolean).join(", ");
+}
+
+export function venueName(group: Pick<PublicGroup, "location_type" | "public_location" | "city" | "state">) {
+  if (group.location_type === "home") return null;
+  const raw = group.public_location.trim();
+  const place = cityState(group);
+  if (!raw || raw.toLowerCase() === place.toLowerCase()) return null;
+  const first = raw.split(",")[0]?.trim() ?? "";
+  if (!first || /^\d/.test(first) || first.toLowerCase() === group.city.toLowerCase()) return null;
+  return first.length > 48 ? `${first.slice(0, 45)}…` : first;
+}
+
 export function placeLabel(group: Pick<PublicGroup, "city" | "state" | "country">) {
   return [group.city, group.state, group.country].filter(Boolean).join(", ");
 }

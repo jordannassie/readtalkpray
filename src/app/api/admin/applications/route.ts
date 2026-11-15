@@ -61,6 +61,15 @@ export async function POST(request: Request) {
     });
   }
 
+  if (body.action === "group") {
+    if (body.decision !== "suspend" && body.decision !== "reactivate") return NextResponse.json({ ok: false }, { status: 400 });
+    const status = body.decision === "suspend" ? "suspended" : "approved";
+    const { error } = await supabase.from("rtp_groups").update({ status }).eq("id", body.id);
+    if (error) return NextResponse.json({ ok: false }, { status: 500 });
+    await supabase.from("rtp_group_applications").update({ status }).eq("group_id", body.id);
+    return NextResponse.json({ ok: true });
+  }
+
   if (body.action === "note") {
     const note = cleanText(String(body.note ?? ""), 2000);
     if (!note) return NextResponse.json({ ok: false, error: "Write a note first." }, { status: 400 });
@@ -301,7 +310,7 @@ export async function POST(request: Request) {
     .update({ status: "approved", group_id: group.id })
     .eq("id", application.id);
   if (applicationError) return NextResponse.json({ ok: false }, { status: 500 });
-  await logReview("approve", null);
+  await logReview("approve", "Contacted the applicant and verified the leader and meeting location.");
 
   return NextResponse.json({ ok: true, groupId: group.id });
 }

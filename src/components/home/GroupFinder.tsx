@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
 import { ArrowRight, Calendar, ChevronLeft, MapPin } from "lucide-react";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { distanceKm } from "@/lib/groups/geo";
-import { meetingWhen, type PublicGroup } from "@/lib/groups/types";
+import { cityState, meetingWhen, type PublicGroup } from "@/lib/groups/types";
 
 const GroupsMap = dynamic(() => import("@/components/home/GroupsMap").then((mod) => mod.GroupsMap), {
   ssr: false,
@@ -167,7 +167,7 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
                     <LeaderPhoto group={group} />
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center gap-1.5">
-                        <span className="font-semibold leading-snug">{group.name}</span>
+                        <span className="line-clamp-2 font-semibold leading-snug">{group.name}</span>
                         {group.is_demo ? (
                           <span className="shrink-0 rounded-full bg-[#e7f0ff] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[#1976F3] uppercase">Demo</span>
                         ) : null}
@@ -178,7 +178,7 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
                       </span>
                       <span className="mt-0.5 flex items-center gap-1 text-sm text-[#5d6b82]">
                         <MapPin size={13} className="shrink-0 text-[#1976F3]" aria-hidden />
-                        <span className="leading-snug">{group.public_location}</span>
+                        <span className="truncate">{cityState(group) || group.public_location}</span>
                       </span>
                     </span>
                     <button
@@ -253,9 +253,9 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
 function LeaderPhoto({ group }: { group: PublicGroup }) {
   if (!group.co_leader_name) return <FinderFace photo={group.leader_photo_url} name={group.leader_name} />;
   return (
-    <span className="relative h-10 w-14 shrink-0">
-      <span className="absolute top-0 left-0"><FinderFace photo={group.leader_photo_url} name={group.leader_name} small /></span>
-      <span className="absolute right-0 bottom-0 rounded-full ring-2 ring-white"><FinderFace photo={group.co_leader_photo_url} name={group.co_leader_name} small /></span>
+    <span className="flex w-14 shrink-0 items-center">
+      <FinderFace photo={group.leader_photo_url} name={group.leader_name} small />
+      <span className="-ml-2 rounded-full ring-2 ring-white"><FinderFace photo={group.co_leader_photo_url} name={group.co_leader_name} small /></span>
     </span>
   );
 }

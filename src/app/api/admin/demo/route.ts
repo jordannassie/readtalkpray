@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   const { error } = await supabase.from("rtp_settings").upsert({ key: "show_demo_groups", enabled: body.enabled });
   if (error) {
     return NextResponse.json(
-      { ok: false, error: "The demo setting is not in the database yet. Run the rtp_settings section of supabase/rtp.sql." },
+      { ok: false, error: "Demo Mode is not installed yet. Paste supabase/demo-mode.sql into the Read Talk Pray database." },
       { status: 503 },
     );
   }
