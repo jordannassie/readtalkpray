@@ -22,6 +22,7 @@ export function JoinGroupForm({
   statusLabel,
   availability,
   footer,
+  faces,
 }: {
   group: PublicGroup;
   variant?: "page" | "panel";
@@ -32,6 +33,7 @@ export function JoinGroupForm({
   statusLabel?: string;
   availability?: "live" | "paused";
   footer?: ReactNode;
+  faces?: "sm" | "md" | "lg" | "profile";
 }) {
   const [firstName, setFirstName] = useState("");
   const [mobile, setMobile] = useState("");
@@ -122,7 +124,7 @@ export function JoinGroupForm({
           {availability ? <p className="mt-3"><LiveStatus live={availability === "live"} /></p> : statusLabel ? <p className="mt-3"><span className="inline-flex rounded-full bg-[#e8f8ee] px-3 py-1 text-xs font-semibold text-[#157a3a]">{statusLabel}</span></p> : null}
         </div>
         <div className="relative shrink-0">
-          <LeaderFaces leaderName={group.leader_name} leaderPhoto={group.leader_photo_url} coLeaderName={group.co_leader_name} coLeaderPhoto={group.co_leader_photo_url} size={variant === "panel" ? "md" : "lg"} />
+          <LeaderFaces leaderName={group.leader_name} leaderPhoto={group.leader_photo_url} coLeaderName={group.co_leader_name} coLeaderPhoto={group.co_leader_photo_url} size={faces ?? (variant === "panel" ? "md" : "lg")} />
           {!hideJoin && (preview || group.is_demo) ? (
             <span className="absolute -top-1 -right-1 rounded-full bg-[#e7f0ff] px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-[#1976F3] uppercase">{preview ? "Preview" : "Demo"}</span>
           ) : null}

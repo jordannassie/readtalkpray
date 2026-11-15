@@ -84,12 +84,13 @@ export function GroupsMap({
       if (cancelled || mapRef.current !== map) return;
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = groups.map((group) => {
+        const pair = Boolean(group.co_leader_name);
         const marker = L.marker([group.latitude, group.longitude], {
           icon: L.divIcon({
             className: "rtp-pin-icon",
             html: pinHtml(group),
-            iconSize: [52, 52],
-            iconAnchor: [26, 26],
+            iconSize: pair ? [76, 46] : [52, 52],
+            iconAnchor: pair ? [38, 23] : [26, 26],
           }),
           keyboard: true,
           title: group.name,

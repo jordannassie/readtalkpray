@@ -259,7 +259,7 @@ function GroupDesk({
     <section className="overflow-hidden rounded-[28px] border border-[#e6ebf2] bg-white shadow-sm">
       {previewGroup ? (
         <div className="p-4">
-          <JoinGroupForm group={previewGroup} variant="panel" hideJoin availability={live ? "live" : paused ? "paused" : undefined} statusLabel={live || paused ? undefined : STATUS_LABEL[status] ?? status} />
+          <JoinGroupForm group={previewGroup} variant="panel" faces="profile" hideJoin availability={live ? "live" : paused ? "paused" : undefined} statusLabel={live || paused ? undefined : STATUS_LABEL[status] ?? status} />
         </div>
       ) : null}
       {primary && group && (live || paused) ? (

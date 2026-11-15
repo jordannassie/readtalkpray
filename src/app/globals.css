@@ -33,6 +33,7 @@ a {
   border: 0 !important;
   outline: none !important;
   box-shadow: none !important;
+  overflow: visible !important;
 }
 
 #groups-map {
@@ -63,30 +64,41 @@ a {
 
 .rtp-pin-pair {
   position: relative;
+  width: 76px;
+  height: 46px;
+  filter: drop-shadow(0 6px 10px rgba(20, 40, 80, 0.22));
 }
 
 .rtp-pin-pair img,
 .rtp-pin-pair span {
   position: absolute;
-  width: 34px;
-  height: 34px;
+  top: 3px;
+  display: block;
+  width: 40px;
+  height: 40px;
   margin: 0;
+  overflow: hidden;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: none;
+  object-fit: cover;
 }
 
 .rtp-pin-pair img:first-child,
 .rtp-pin-pair span:first-child {
-  top: 10px;
   left: 0;
+  z-index: 1;
 }
 
 .rtp-pin-pair img:last-child,
 .rtp-pin-pair span:last-child {
-  top: 10px;
-  right: 0;
+  left: 32px;
+  z-index: 2;
 }
 
-.rtp-pin img,
-.rtp-pin span {
+.rtp-pin:not(.rtp-pin-pair) img,
+.rtp-pin:not(.rtp-pin-pair) span {
   display: grid;
   width: 52px;
   height: 52px;

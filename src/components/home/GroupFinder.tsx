@@ -205,7 +205,7 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
 
             <aside id="group-panel" className="order-3 hidden min-w-0 overflow-auto rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm lg:block lg:max-h-[680px]">
               {selected ? (
-                <JoinGroupForm key={`${selected.id}-${formEpoch}`} group={selected} variant="panel" onFindAnother={findAnother} />
+                <JoinGroupForm key={`${selected.id}-${formEpoch}`} group={selected} variant="panel" faces="profile" onFindAnother={findAnother} />
               ) : (
                 <div className="grid h-full min-h-48 place-items-center px-4 text-center">
                   <div>
@@ -243,7 +243,7 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
             </button>
           </div>
           <div className="flex-1 overflow-y-auto px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-            <JoinGroupForm key={`${selected.id}-${formEpoch}`} group={selected} variant="panel" onFindAnother={findAnother} />
+            <JoinGroupForm key={`${selected.id}-${formEpoch}`} group={selected} variant="panel" faces="profile" onFindAnother={findAnother} />
           </div>
         </div>,
         document.body,

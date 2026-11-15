@@ -17,7 +17,7 @@ export function GroupLanding({ group }: { group: PublicGroup }) {
             <GroupLandingMap group={group} />
           </div>
           <div className="order-1 rounded-[28px] border border-[#e6ebf2] bg-white p-6 shadow-sm sm:p-8 lg:order-2">
-            <JoinGroupForm group={group} variant="panel" />
+            <JoinGroupForm group={group} variant="panel" faces="profile" />
           </div>
         </div>
         <p className="mt-4 text-sm text-[#6d7b90]">{cityState(group) ? `Meeting near ${cityState(group)}.` : "A neighborhood Bible group."}</p>

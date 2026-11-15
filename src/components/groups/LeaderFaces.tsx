@@ -1,15 +1,17 @@
-type Size = "sm" | "md" | "lg";
+type Size = "sm" | "md" | "lg" | "profile";
 
 const singleSize: Record<Size, string> = {
   sm: "h-10 w-10 text-sm",
   md: "h-11 w-11 text-sm",
   lg: "h-[92px] w-[92px] text-3xl sm:h-[116px] sm:w-[116px]",
+  profile: "h-16 w-16 text-xl sm:h-20 sm:w-20",
 };
 
 const pairSize: Record<Size, string> = {
   sm: "h-7 w-7 text-xs",
   md: "h-9 w-9 text-sm",
   lg: "h-[76px] w-[76px] text-2xl sm:h-[96px] sm:w-[96px]",
+  profile: "h-16 w-16 text-xl sm:h-20 sm:w-20",
 };
 
 export function LeaderFaces({
@@ -25,11 +27,20 @@ export function LeaderFaces({
   coLeaderPhoto?: string | null;
   size?: Size;
 }) {
-  if (!coLeaderName) return <Face photo={leaderPhoto} name={leaderName} className={singleSize[size]} />;
+  const ring = size === "profile" ? "rounded-full ring-[3px] ring-white" : "";
+  if (!coLeaderName) {
+    return (
+      <span className={ring}>
+        <Face photo={leaderPhoto} name={leaderName} className={singleSize[size]} />
+      </span>
+    );
+  }
   return (
-    <span className={`flex shrink-0 items-center ${size === "lg" ? "max-w-[148px]" : size === "sm" ? "w-14" : ""}`}>
-      <Face photo={leaderPhoto} name={leaderName} className={pairSize[size]} />
-      <span className="-ml-2 rounded-full ring-2 ring-white">
+    <span className={`flex shrink-0 items-center ${size === "sm" ? "w-14" : ""}`}>
+      <span className={`relative z-[1] ${ring}`}>
+        <Face photo={leaderPhoto} name={leaderName} className={pairSize[size]} />
+      </span>
+      <span className={`relative z-[2] -ml-3 rounded-full ring-white ${size === "profile" ? "ring-[3px]" : "ring-2"}`}>
         <Face photo={coLeaderPhoto} name={coLeaderName} className={pairSize[size]} />
       </span>
     </span>
