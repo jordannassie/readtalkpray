@@ -212,6 +212,7 @@ function EntryCard({ entry, photoUrl, compact = false }: { entry: Entry; photoUr
         variant="panel"
         hideJoin
         compact={compact}
+        faces="profile"
         statusLabel={STATUS_LABEL[status] ?? status}
         footer={<Link href={`/app/group?id=${entry.key}`} className="inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Manage Group</Link>}
       />

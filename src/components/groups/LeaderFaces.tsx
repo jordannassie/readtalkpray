@@ -27,7 +27,7 @@ export function LeaderFaces({
   coLeaderPhoto?: string | null;
   size?: Size;
 }) {
-  const ring = size === "profile" ? "rounded-full ring-[3px] ring-white" : "";
+  const ring = size === "profile" ? "rounded-full ring-2 ring-white" : "";
   if (!coLeaderName) {
     return (
       <span className={ring}>
@@ -40,7 +40,7 @@ export function LeaderFaces({
       <span className={`relative z-[1] ${ring}`}>
         <Face photo={leaderPhoto} name={leaderName} className={pairSize[size]} />
       </span>
-      <span className={`relative z-[2] -ml-3 rounded-full ring-white ${size === "profile" ? "ring-[3px]" : "ring-2"}`}>
+      <span className="relative z-[2] -ml-3 rounded-full ring-2 ring-white">
         <Face photo={coLeaderPhoto} name={coLeaderName} className={pairSize[size]} />
       </span>
     </span>
