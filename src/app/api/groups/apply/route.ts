@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { storedLeadName } from "@/lib/leads/csv";
-import { cleanLeadPhone } from "@/lib/leads/phone";
+import { normalizePhone } from "@/lib/phone";
 import { startLeadRows } from "@/lib/leads/start";
 import { LEADS_TABLE } from "@/lib/leads/table";
 import { RTP_UPSERT_OPTIONS } from "@/lib/leads/types";
-import { isWebsitePhone } from "@/lib/leads/website";
 import { geocodePlace } from "@/lib/groups/geo";
 import { cleanText, isUuid, ownApplicationPhotoUrl, safePhotoUrl } from "@/lib/groups/text";
 import { MEETING_DAYS, MEETING_DURATIONS, displayMeetingTime } from "@/lib/groups/schedule";
@@ -43,7 +42,7 @@ export async function POST(request: Request) {
   const timezone = isIanaTimeZone(requestedZone) ? requestedZone : LAUNCH_TIME_ZONE;
   const description = cleanText(String(record.description ?? ""), 600);
   const locationType = String(record.locationType ?? "") as LocationType;
-  const phone = cleanLeadPhone(String(record.mobile ?? ""));
+  const phone = normalizePhone(String(record.mobile ?? ""));
   const leaderPhotoUrl = safePhotoUrl(typeof record.leaderPhotoUrl === "string" ? record.leaderPhotoUrl : null);
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
@@ -67,7 +66,7 @@ export async function POST(request: Request) {
     }),
   };
   if (!LOCATION_TYPES.includes(locationType)) fields.locationType = "Choose a location type.";
-  if (!phone.ok || !isWebsitePhone(phone.phone)) fields.mobile = "Enter a valid mobile number.";
+  if (!phone) fields.mobile = "Enter a valid mobile number.";
   if (!MEETING_DAYS.includes(meetingDay as (typeof MEETING_DAYS)[number]) || !meetingTime) {
     fields.meetingTime = "Choose a meeting day and time.";
   }
@@ -78,7 +77,7 @@ export async function POST(request: Request) {
   if (Object.keys(fields).length > 0) {
     return NextResponse.json({ ok: false, error: Object.values(fields)[0], fields }, { status: 400 });
   }
-  if (!phone.ok) {
+  if (!phone) {
     return NextResponse.json({ ok: false, error: "Enter a valid mobile number.", fields: { mobile: "Enter a valid mobile number." } }, { status: 400 });
   }
 
@@ -91,7 +90,7 @@ export async function POST(request: Request) {
     leader_name: leaderName,
     group_name: groupName,
     email: user.email,
-    phone: phone.phone,
+    phone: phone.e164,
     city,
     state: state || null,
     country,
@@ -165,7 +164,7 @@ export async function POST(request: Request) {
         : safeDbMessage(error?.message ?? ""),
     }, { status: duplicate ? 409 : 500 });
   }
-  const lead = startLeadRows([{ name: leaderName, mobile: phone.phone, location: cityPlace }])[0];
+  const lead = startLeadRows([{ name: leaderName, mobile: phone.e164, location: cityPlace }])[0];
   if (lead) {
     await supabase.from(LEADS_TABLE).upsert(
       [{

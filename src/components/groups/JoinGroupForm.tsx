@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowRight, Calendar, Check, MapPin, Phone, User, Users } from "lucide-react";
+import { ArrowRight, Calendar, Check, MapPin, User, Users } from "lucide-react";
+import { PhoneInput } from "@/components/phone/PhoneInput";
 import { LeaderFaces } from "@/components/groups/LeaderFaces";
 import { LocationPreview } from "@/components/groups/LocationPreview";
-import { isWebsitePhone } from "@/lib/leads/website";
+import { normalizePhone } from "@/lib/phone";
 import { LiveStatus } from "@/components/groups/LiveStatus";
 import { cityState, groupMeUrl, leaderLine, meetingWhen, venueName, type PublicGroup } from "@/lib/groups/types";
 
@@ -59,7 +60,7 @@ export function JoinGroupForm({
     const phone = mobile.trim();
     const next: { firstName?: string; mobile?: string } = {};
     if (!name) next.firstName = "Enter your first name.";
-    if (!phone || !isWebsitePhone(phone)) next.mobile = "Enter a valid mobile number.";
+    if (!normalizePhone(phone)) next.mobile = "Enter a valid mobile number.";
     if (next.firstName || next.mobile) {
       setErrors(next);
       return;
@@ -186,26 +187,19 @@ export function JoinGroupForm({
             </label>
             <label className="block">
               <span className="sr-only">Mobile Number</span>
-              <span className="relative block">
-                <Phone aria-hidden size={18} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-[#b5b5b5]" />
-                <input
-                  required
-                  type="tel"
-                  inputMode="tel"
-                  name="mobile"
-                  autoComplete="tel"
-                  enterKeyHint="done"
-                  placeholder="Mobile Number"
-                  value={mobile}
-                  onChange={(event) => {
-                    setMobile(event.target.value);
-                    setErrors((current) => ({ ...current, mobile: undefined, form: undefined }));
-                  }}
-                  aria-invalid={Boolean(errors.mobile)}
-                  disabled={preview}
-                  className={fieldClass}
-                />
-              </span>
+              <PhoneInput
+                name="mobile"
+                required
+                placeholder="Mobile Number"
+                value={mobile}
+                onChange={(value) => {
+                  setMobile(value);
+                  setErrors((current) => ({ ...current, mobile: undefined, form: undefined }));
+                }}
+                invalid={Boolean(errors.mobile)}
+                disabled={preview}
+                className={fieldClass}
+              />
               {errors.mobile ? <span className="mt-1 block text-sm text-[#c2410c]">{errors.mobile}</span> : null}
             </label>
             {errors.form ? <p role="alert" className="text-sm text-[#c2410c]">{errors.form}</p> : null}

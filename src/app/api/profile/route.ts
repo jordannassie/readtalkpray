@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cleanLeadPhone } from "@/lib/leads/phone";
+import { normalizePhone } from "@/lib/phone";
 import { cleanText, ownProfilePhotoUrl } from "@/lib/groups/text";
 import { createClient } from "@/lib/supabase/server";
 
@@ -15,8 +15,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
   const fullName = cleanText(String(body.fullName ?? ""), 120);
-  const phone = cleanLeadPhone(String(body.phone ?? ""));
-  if (body.phone && !phone.ok) {
+  const rawPhone = String(body.phone ?? "").trim();
+  const phone = rawPhone ? normalizePhone(rawPhone) : null;
+  if (rawPhone && !phone) {
     return NextResponse.json({ ok: false, error: "Enter a valid phone number." }, { status: 400 });
   }
   let photoUrl: string | null = null;
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
   const { error } = await supabase.from("rtp_profiles").upsert({
     user_id: data.user.id,
     full_name: fullName || null,
-    phone: phone.ok ? phone.phone : null,
+    phone: phone?.e164 ?? null,
     photo_url: photoUrl,
   });
   if (error) return NextResponse.json({ ok: false }, { status: 500 });

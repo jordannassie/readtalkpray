@@ -8,6 +8,7 @@ import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { LeaderFaces } from "@/components/groups/LeaderFaces";
 import { LiveStatus, LiveToggle } from "@/components/groups/LiveStatus";
 import { cityState, meetingWhen, type PublicGroup } from "@/lib/groups/types";
+import { dialPhone, displayPhone } from "@/lib/phone";
 
 type Application = {
   id: string;
@@ -204,7 +205,7 @@ export function AdminReview({
                 {open ? (
                   <div className="space-y-3 border-t border-black/5 px-3 py-4 text-sm">
                     <p>Primary leader: {item.leader_name}</p>
-                    <p>{item.email} · <a className="inline-flex min-h-11 items-center font-semibold text-[#1976F3]" href={`tel:${item.phone}`}>{item.phone}</a></p>
+                    <p>{item.email} · <a className="inline-flex min-h-11 items-center font-semibold text-[#1976F3]" href={`tel:${dialPhone(item.phone)}`}>{displayPhone(item.phone)}</a></p>
                     {item.co_leader_name ? (
                       <p className="flex items-center gap-2 text-[#157a3a]">
                         {item.co_leader_photo_url ? (
@@ -315,7 +316,7 @@ export function AdminReview({
                 {open ? (
                   <div className="mt-3 space-y-1 border-t border-[#e6ebf2] pt-3 text-sm text-[#444]">
                     <p>{group.description || "No description."}</p>
-                    <p>Leader: {group.leader_name}{group.leader_email ? ` · ${group.leader_email}` : ""}{group.leader_phone ? ` · ${group.leader_phone}` : ""}</p>
+                    <p>Leader: {group.leader_name}{group.leader_email ? ` · ${group.leader_email}` : ""}{group.leader_phone ? ` · ${displayPhone(group.leader_phone)}` : ""}</p>
                     <p>Co-leader: {group.co_leader_name || "None"}</p>
                     <p>Location: {group.location_type === "home" ? `${place} area` : group.public_location}</p>
                     {group.location_type === "home" && group.address ? <p>Private address: {group.address}</p> : null}
@@ -361,7 +362,7 @@ export function AdminReview({
         <ul className="mt-4 divide-y divide-black/5 overflow-hidden rounded-3xl bg-white">
           {requests.map((item) => (
             <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
-              <span>{item.first_name} · <a href={`tel:${item.phone}`}>{item.phone}</a>{item.email ? ` · ${item.email}` : ""}</span>
+              <span>{item.first_name} · <a href={`tel:${dialPhone(item.phone)}`}>{displayPhone(item.phone)}</a>{item.email ? ` · ${item.email}` : ""}</span>
               <span className="text-[#666]">{item.status}{item.address_shared ? " · address shared" : ""}</span>
             </li>
           ))}

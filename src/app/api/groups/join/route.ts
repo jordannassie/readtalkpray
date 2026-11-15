@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { parseEmail, cleanLeadPhone } from "@/lib/leads/phone";
+import { parseEmail } from "@/lib/leads/phone";
+import { normalizePhone } from "@/lib/phone";
 import { LEADS_TABLE } from "@/lib/leads/table";
 import { RTP_UPSERT_OPTIONS } from "@/lib/leads/types";
 import { storedLeadName } from "@/lib/leads/csv";
-import { isWebsitePhone, websiteLeadRows } from "@/lib/leads/website";
+import { websiteLeadRows } from "@/lib/leads/website";
 import { isUuid, cleanText } from "@/lib/groups/text";
 import { createClient } from "@/lib/supabase/server";
 
@@ -26,9 +27,9 @@ export async function POST(request: Request) {
   }
 
   const firstName = cleanText(record.firstName, 80);
-  const phone = cleanLeadPhone(record.mobile);
+  const phone = normalizePhone(record.mobile);
   const email = typeof record.email === "string" ? parseEmail(record.email).email : null;
-  if (!firstName || !phone.ok || !isWebsitePhone(phone.phone)) {
+  if (!firstName || !phone) {
     return NextResponse.json({ ok: false, error: "Enter your first name and a valid mobile number." }, { status: 400 });
   }
 
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
   const { error } = await supabase.from("rtp_join_requests").insert({
     group_id: group.id,
     first_name: firstName,
-    phone: phone.phone,
+    phone: phone.e164,
     email,
   });
 
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 
-  const lead = websiteLeadRows([{ firstName, mobile: phone.phone }])[0];
+  const lead = websiteLeadRows([{ firstName, mobile: phone.e164 }])[0];
   if (lead) {
     const location = [group.city, group.state, group.country].filter(Boolean).join(", ");
     await supabase.from(LEADS_TABLE).upsert(

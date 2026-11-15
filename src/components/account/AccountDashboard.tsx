@@ -9,6 +9,8 @@ import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { LiveStatus, LiveToggle } from "@/components/groups/LiveStatus";
 import { publicLocationLabel } from "@/lib/groups/geo";
 import { groupPublicPath } from "@/lib/groups/slug";
+import { PhoneInput } from "@/components/phone/PhoneInput";
+import { dialPhone, displayPhone } from "@/lib/phone";
 import { cityState, meetingWhen, type CoLeaderInvite, type OwnedApplication, type PublicGroup } from "@/lib/groups/types";
 
 type Profile = { user_id: string; full_name: string | null; phone: string | null; photo_url: string | null };
@@ -77,6 +79,7 @@ export function AccountDashboard({
 }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
+  const [accountPhone, setAccountPhone] = useState(displayPhone(profile.phone));
   const items = groupEntries(applications, groups, invites, profile.user_id);
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
@@ -85,7 +88,7 @@ export function AccountDashboard({
     const response = await fetch("/api/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fullName: form.get("fullName"), phone: form.get("phone"), photoUrl: profile.photo_url }),
+      body: JSON.stringify({ fullName: form.get("fullName"), phone: accountPhone, photoUrl: profile.photo_url }),
     });
     const body = (await response.json()) as { error?: string };
     setMessage(response.ok ? "Account saved." : body.error || "Account changes did not save.");
@@ -179,7 +182,7 @@ export function AccountDashboard({
         <form className="mt-4 space-y-3" onSubmit={(event) => void saveProfile(event)}>
           <label className="block text-sm font-medium">Full name<input name="fullName" defaultValue={profile.full_name ?? ""} className="mt-1 h-11 w-full rounded-2xl border border-[#e6e6e6] px-3" /></label>
           <label className="block text-sm font-medium">Email<input value={email} readOnly className="mt-1 h-11 w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] px-3" /></label>
-          <label className="block text-sm font-medium">Phone<input name="phone" defaultValue={profile.phone ?? ""} autoComplete="tel" className="mt-1 h-11 w-full rounded-2xl border border-[#e6e6e6] px-3" /></label>
+          <label className="block text-sm font-medium">Phone<div className="mt-1"><PhoneInput value={accountPhone} onChange={setAccountPhone} className="h-11 w-full rounded-2xl border border-[#e6e6e6] pr-3" /></div></label>
           <button type="submit" className="inline-flex h-12 items-center justify-center rounded-full bg-[#1976F3] px-5 text-sm font-semibold text-white">Save account</button>
         </form>
       </section> : null}
@@ -349,7 +352,8 @@ function PeopleRows({
       <input value={query} onChange={(event) => { setQuery(event.target.value); setShown(25); }} placeholder="Search name or phone" aria-label="Search interested people" className="h-11 w-full rounded-2xl border border-[#e6ebf2] px-3 text-sm outline-none focus:border-[#1976F3]" />
       <ul className="mt-2">
         {rows.map((person) => {
-          const phone = formatPhone(person.phone);
+          const phone = displayPhone(person.phone);
+          const dial = dialPhone(person.phone);
           const date = new Date(person.created_at).toLocaleDateString();
           return (
             <li key={person.id} className="flex min-h-14 items-center gap-2 border-b border-[#eef2f7] py-1 text-sm">
@@ -361,9 +365,9 @@ function PeopleRows({
               <span className="hidden w-36 shrink-0 truncate text-[#142033] sm:block">{phone}</span>
               <span className="hidden w-24 shrink-0 text-xs text-[#667085] md:block">{date}</span>
               <span className="flex shrink-0 items-center">
-                <button type="button" title={copiedId === person.id ? "Copied" : "Copy number"} aria-label="Copy phone number" onClick={() => onCopy(person.id, person.phone)} className="grid h-10 w-10 place-items-center text-[#1976F3]"><Copy size={16} /></button>
-                <a href={`sms:${person.phone}?&body=${encodeURIComponent(welcome)}`} title="Text" aria-label={`Text ${person.first_name}`} className="grid h-10 w-10 place-items-center text-[#1976F3]"><MessageSquare size={16} /></a>
-                <a href={`tel:${person.phone}`} title="Call" aria-label={`Call ${person.first_name}`} className="grid h-10 w-10 place-items-center text-[#1976F3]"><Phone size={16} /></a>
+                <button type="button" title={copiedId === person.id ? "Copied" : "Copy number"} aria-label="Copy phone number" onClick={() => onCopy(person.id, dial)} className="grid h-10 w-10 place-items-center text-[#1976F3]"><Copy size={16} /></button>
+                <a href={`sms:${dial}?&body=${encodeURIComponent(welcome)}`} title="Text" aria-label={`Text ${person.first_name}`} className="grid h-10 w-10 place-items-center text-[#1976F3]"><MessageSquare size={16} /></a>
+                <a href={`tel:${dial}`} title="Call" aria-label={`Call ${person.first_name}`} className="grid h-10 w-10 place-items-center text-[#1976F3]"><Phone size={16} /></a>
                 {person.email ? <a href={`mailto:${person.email}`} title="Email" aria-label={`Email ${person.first_name}`} className="grid h-10 w-10 place-items-center text-[#1976F3]"><Mail size={16} /></a> : null}
               </span>
             </li>
@@ -376,13 +380,6 @@ function PeopleRows({
       ) : null}
     </div>
   );
-}
-
-function formatPhone(value: string) {
-  const digits = value.replace(/\D/g, "");
-  const local = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
-  if (local.length !== 10) return value;
-  return `(${local.slice(0, 3)}) ${local.slice(3, 6)}-${local.slice(6)}`;
 }
 
 function toPublicGroup({

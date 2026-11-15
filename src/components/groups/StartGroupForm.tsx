@@ -9,7 +9,8 @@ import { publicLocationLabel } from "@/lib/groups/geo";
 import { displayMeetingTime } from "@/lib/groups/schedule";
 import type { PublicGroup } from "@/lib/groups/types";
 import { BELIEFS } from "@/components/home/Beliefs";
-import { isWebsitePhone } from "@/lib/leads/website";
+import { PhoneInput } from "@/components/phone/PhoneInput";
+import { displayPhone, normalizePhone } from "@/lib/phone";
 import { APPLICATION_PRIVACY, LEADER_COMMITMENTS, LEADER_COMMITMENT_SCRIPTURE } from "@/lib/groups/commitments";
 import { MEETING_DAYS, MEETING_DURATIONS } from "@/lib/groups/schedule";
 import { LAUNCH_TIME_ZONE, isIanaTimeZone } from "@/lib/groups/sunday";
@@ -98,7 +99,7 @@ export function StartGroupForm({
   const [leaderPhotoUrl, setLeaderPhotoUrl] = useState(published?.leader_photo_url || (editing ? application?.leader_photo_url || photoUrl : photoUrl));
   const [leaderName, setLeaderName] = useState(published?.leader_name || (editing ? application?.leader_name || name : name));
   const [groupName, setGroupName] = useState(published?.name || (editing ? application?.group_name ?? "" : ""));
-  const [mobile, setMobile] = useState(editing ? application?.phone || phone || "" : phone || "");
+  const [mobile, setMobile] = useState(displayPhone(editing ? application?.phone || phone || "" : phone || ""));
   const [city, setCity] = useState(published?.city || (editing ? application?.city ?? "" : ""));
   const [stateName, setStateName] = useState(published?.state || (editing ? application?.state ?? "" : ""));
   const [country, setCountry] = useState(published?.country || (editing ? application?.country ?? "" : ""));
@@ -234,7 +235,7 @@ export function StartGroupForm({
     if (!selectedPlace || !Number.isFinite(selectedPlace.latitude) || !Number.isFinite(selectedPlace.longitude)) {
       nextErrors.meetingLocation = "Choose a location from the suggestions.";
     }
-    if (!isWebsitePhone(mobile)) nextErrors.mobile = "Enter a valid mobile number.";
+    if (!normalizePhone(mobile)) nextErrors.mobile = "Enter a valid mobile number.";
     if (coLeaderOn && !coLeaderName.trim()) nextErrors.coLeaderName = "Enter the co-leader's name.";
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -453,7 +454,11 @@ export function StartGroupForm({
         <input name="email" type="email" readOnly value={email} className={fieldClass} />
         {fieldErrors.email ? <span className="mt-1 block text-sm font-normal text-[#c2410c]">{fieldErrors.email}</span> : null}
       </label>
-      <Field label="Mobile number" name="mobile" type="tel" required autoComplete="tel" value={mobile} error={fieldErrors.mobile} onChange={(value) => { setMobile(value); clearField("mobile"); }} />
+      <label className="block text-sm font-medium">
+        Mobile number
+        <div className="mt-2"><PhoneInput name="mobile" required value={mobile} invalid={Boolean(fieldErrors.mobile)} onChange={(value) => { setMobile(value); clearField("mobile"); }} className="h-[52px] w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] pr-4 text-sm outline-none focus:border-[var(--sending-blue)] focus:bg-white" /></div>
+        {fieldErrors.mobile ? <span className="mt-1 block text-sm font-normal text-[#c2410c]">{fieldErrors.mobile}</span> : null}
+      </label>
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label="City" name="city" required value={city} error={fieldErrors.city} onChange={(value) => { setCity(value); clearField("city"); }} onBlur={() => void suggestZone()} />
         <Field label="State" name="state" value={stateName} onChange={setStateName} />
