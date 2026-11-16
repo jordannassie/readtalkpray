@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function AppGroupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string }>;
+  searchParams: Promise<{ id?: string; request?: string }>;
 }) {
   const account = await loadAccount();
   if (!account.configured || !account.user) return null;
@@ -15,6 +15,7 @@ export default async function AppGroupPage({
   return (
     <AccountDashboard
       focus="group"
+      highlightRequestId={params.request ?? ""}
       profile={account.profile}
       email={account.user.email ?? ""}
       googlePhotoUrl={googleAvatar(account.user)}

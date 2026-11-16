@@ -29,6 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       name={account.profile.full_name}
       email={account.user.email ?? ""}
       photoUrl={account.profile.photo_url || googleAvatar(account.user)}
+      userId={account.user.id}
       isAdmin={account.admin}
       hasGroup={ownsGroup(account.applications, account.groups)}
     >

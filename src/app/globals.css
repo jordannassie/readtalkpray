@@ -183,8 +183,22 @@ a {
   animation: rtp-banner-flow 16s ease-in-out infinite;
 }
 
+@keyframes rtp-bell-ring {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(16deg); }
+  40% { transform: rotate(-14deg); }
+  60% { transform: rotate(8deg); }
+  80% { transform: rotate(-4deg); }
+}
+
+.rtp-bell-ring {
+  transform-origin: top center;
+  animation: rtp-bell-ring 0.7s ease-in-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .rtp-banner-flow { animation: none; }
+  .rtp-banner-flow,
+  .rtp-bell-ring { animation: none; }
 }
 
 .rtp-demo {

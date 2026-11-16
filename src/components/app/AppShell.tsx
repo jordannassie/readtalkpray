@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Home, LogOut, MapPin, UserRound, Users } from "lucide-react";
+import { NotificationBell } from "@/components/app/NotificationBell";
 import { BLACK_LOGO } from "@/components/brand/logos";
 import { createClient } from "@/lib/supabase/client";
 
@@ -19,6 +20,7 @@ export function AppShell({
   name,
   email,
   photoUrl,
+  userId,
   isAdmin,
   hasGroup,
 }: {
@@ -26,6 +28,7 @@ export function AppShell({
   name: string | null;
   email: string;
   photoUrl: string | null;
+  userId: string;
   isAdmin: boolean;
   hasGroup: boolean;
 }) {
@@ -58,6 +61,8 @@ export function AppShell({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={BLACK_LOGO} alt="Read Talk Pray" width={1254} height={1254} className="h-11 w-auto object-contain sm:h-12" />
           </Link>
+          <div className="flex items-center gap-1">
+          <NotificationBell userId={userId} />
           <div className="relative" ref={menuRef}>
             <button
               type="button"
@@ -101,6 +106,7 @@ export function AppShell({
                 </button>
               </div>
             ) : null}
+          </div>
           </div>
         </div>
       </header>

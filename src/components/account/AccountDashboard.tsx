@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { Copy, Mail, MessageSquare, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -62,6 +62,7 @@ export function AccountDashboard({
   locationChanges,
   invites = [],
   selectedId: _selectedId = "",
+  highlightRequestId = "",
   focus = "all",
 }: {
   profile: Profile;
@@ -75,6 +76,7 @@ export function AccountDashboard({
   locationChanges: LocationChange[];
   invites?: CoLeaderInvite[];
   selectedId?: string;
+  highlightRequestId?: string;
   focus?: "all" | "home" | "group" | "me";
 }) {
   const router = useRouter();
@@ -162,6 +164,7 @@ export function AccountDashboard({
               primary={entry.primary}
               onShare={share}
               onLive={setLive}
+              highlightRequestId={highlightRequestId}
             />
           ))}
         </div>
@@ -230,6 +233,7 @@ function GroupDesk({
   primary,
   onShare,
   onLive,
+  highlightRequestId = "",
 }: {
   email: string;
   profile: Profile;
@@ -240,6 +244,7 @@ function GroupDesk({
   primary: boolean;
   onShare: (group: { id: string; slug?: string | null; name?: string }) => Promise<string>;
   onLive: (id: string, live: boolean) => void;
+  highlightRequestId?: string;
 }) {
   const [previewing, setPreviewing] = useState(false);
   const [notice, setNotice] = useState("");
@@ -297,7 +302,7 @@ function GroupDesk({
             {approved && group ? <button type="button" onClick={() => void onShare({ id: group.id, slug: group.slug, name }).then((result) => setNotice(result === "copied" ? "Group link copied." : ""))} className="mt-2 inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Share Group</button> : null}
           </div>
         )}
-        {people.length > 0 ? <PeopleRows people={people} welcome={welcome} copiedId={copiedId} onCopy={(id, phone) => void navigator.clipboard.writeText(phone).then(() => setCopiedId(id))} /> : null}
+        {people.length > 0 ? <PeopleRows people={people} welcome={welcome} copiedId={copiedId} highlightId={highlightRequestId} onCopy={(id, phone) => void navigator.clipboard.writeText(phone).then(() => setCopiedId(id))} /> : null}
       </div>
       {previewing && previewGroup ? <GroupPreview group={previewGroup} onClose={() => setPreviewing(false)} /> : null}
     </section>
@@ -332,11 +337,13 @@ function PeopleRows({
   people,
   welcome,
   copiedId,
+  highlightId = "",
   onCopy,
 }: {
   people: RequestRow[];
   welcome: string;
   copiedId: string;
+  highlightId?: string;
   onCopy: (id: string, phone: string) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -348,6 +355,13 @@ function PeopleRows({
     return person.first_name.toLowerCase().includes(needle) || (digits.length > 0 && person.phone.replace(/\D/g, "").includes(digits));
   });
   const rows = filtered.slice(0, shown);
+  useEffect(() => {
+    if (!highlightId) return;
+    const index = people.findIndex((person) => person.id === highlightId);
+    if (index >= shown) setShown(index + 1);
+    const row = document.getElementById(`interest-${highlightId}`);
+    row?.scrollIntoView({ block: "center" });
+  }, [highlightId, people, shown]);
   return (
     <div className="mt-3">
       <input value={query} onChange={(event) => { setQuery(event.target.value); setShown(25); }} placeholder="Search name or phone" aria-label="Search interested people" className="h-11 w-full rounded-2xl border border-[#e6ebf2] px-3 text-sm outline-none focus:border-[#1976F3]" />
@@ -357,7 +371,7 @@ function PeopleRows({
           const dial = dialPhone(person.phone);
           const date = new Date(person.created_at).toLocaleDateString();
           return (
-            <li key={person.id} className="flex min-h-14 items-center gap-2 border-b border-[#eef2f7] py-1 text-sm">
+            <li id={`interest-${person.id}`} key={person.id} className={`flex min-h-14 items-center gap-2 border-b border-[#eef2f7] py-1 text-sm ${person.id === highlightId ? "rounded-xl bg-[#e7f0ff] px-2" : ""}`}>
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#e7f0ff] text-xs font-semibold text-[#1976F3]">{person.first_name.slice(0, 1).toUpperCase()}</span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-semibold">{person.first_name}</span>
