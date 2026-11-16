@@ -32,14 +32,23 @@ const STEPS = [
 export function BibleGroupGuide() {
   return (
     <section className="mt-8">
-      <div className="grid items-center gap-5 rounded-[28px] border border-[#e6ebf2] bg-white p-4 sm:grid-cols-[220px_minmax(0,1fr)] sm:p-6">
+      <video
+        src={HERO_VIDEO}
+        poster={HERO_VIDEO_POSTER}
+        controls
+        playsInline
+        preload="metadata"
+        className="mx-auto aspect-video w-full max-w-[680px]"
+        aria-label="How to run a Read Talk Pray group"
+      />
+      <div className="mt-6 grid items-center gap-5 rounded-[28px] border border-[#e6ebf2] bg-white p-4 sm:grid-cols-[280px_minmax(0,1fr)] sm:p-6">
         <Image
           src={GROUP_GUIDE_IMAGE}
           alt="How to Start a Bible Group guide"
           width={1254}
           height={1254}
-          sizes="(max-width: 640px) 240px, 220px"
-          className="mx-auto h-auto w-full max-w-[240px]"
+          sizes="(max-width: 640px) 280px, 280px"
+          className="mx-auto h-auto w-full max-w-[280px]"
         />
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">How to Run a Bible Group</h2>
@@ -54,9 +63,6 @@ export function BibleGroupGuide() {
             Download Free Guide
           </a>
         </div>
-      </div>
-      <div className="mx-auto mt-4 w-full max-w-[600px] overflow-hidden rounded-3xl bg-black shadow-sm">
-        <video src={HERO_VIDEO} poster={HERO_VIDEO_POSTER} controls playsInline preload="metadata" className="aspect-video w-full" aria-label="How to run a Read Talk Pray group" />
       </div>
       <ol className="mt-4 space-y-2">
         {STEPS.map((step, index) => (
