@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { BookOpen, Check, MessageCircle } from "lucide-react";
 import { Beliefs } from "@/components/home/Beliefs";
 import { BuyBible } from "@/components/home/BuyBible";
@@ -6,7 +5,7 @@ import { GroupFinder } from "@/components/home/GroupFinder";
 import { HeroVideo } from "@/components/home/HeroVideo";
 import { Multiply } from "@/components/home/Multiply";
 import { WorldGlobe } from "@/components/home/WorldGlobe";
-import { HERO_IMAGE, HOME_COLLAGE } from "@/lib/demo/data";
+import { HERO_IMAGE } from "@/lib/demo/data";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { demoGroups } from "@/lib/groups/demo";
@@ -80,18 +79,6 @@ export default async function HomePage() {
 
       <GroupFinder groups={groups} />
 
-      <section aria-label="Read, talk, and pray" className="bg-white px-5 py-12 sm:py-16">
-        <div className="mx-auto max-w-[1280px] overflow-hidden rounded-[28px]">
-          <Image
-            src={HOME_COLLAGE}
-            alt="People reading the Bible, talking together, and praying. A group holds a Read Talk Pray flag."
-            width={1672}
-            height={941}
-            className="h-auto w-full"
-            sizes="(min-width: 1280px) 1280px, 100vw"
-          />
-        </div>
-      </section>
       <BuyBible />
       <Multiply />
       <WorldGlobe places={places} />
