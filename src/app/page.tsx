@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { BookOpen, Check, MessageCircle } from "lucide-react";
 import { Beliefs } from "@/components/home/Beliefs";
+import { BuyBible } from "@/components/home/BuyBible";
 import { GroupFinder } from "@/components/home/GroupFinder";
 import { HeroVideo } from "@/components/home/HeroVideo";
 import { Multiply } from "@/components/home/Multiply";
@@ -91,6 +92,7 @@ export default async function HomePage() {
           />
         </div>
       </section>
+      <BuyBible />
       <Multiply />
       <WorldGlobe places={places} />
       <Beliefs />
