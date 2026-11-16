@@ -1,6 +1,5 @@
 import { BookOpen, Check, MessageCircle } from "lucide-react";
 import { Beliefs } from "@/components/home/Beliefs";
-import { BuyBible } from "@/components/home/BuyBible";
 import { GroupFinder } from "@/components/home/GroupFinder";
 import { HeroVideo } from "@/components/home/HeroVideo";
 import { Multiply } from "@/components/home/Multiply";
@@ -80,7 +79,6 @@ export default async function HomePage() {
 
       <GroupFinder groups={groups} />
 
-      <BuyBible />
       <StartGuide />
       <Multiply />
       <WorldGlobe places={places} />

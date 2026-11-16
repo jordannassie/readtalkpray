@@ -1,5 +1,6 @@
+import Image from "next/image";
 import { Download } from "lucide-react";
-import { GROUP_GUIDE_PDF, HERO_VIDEO, HERO_VIDEO_POSTER } from "@/lib/demo/data";
+import { GROUP_GUIDE_IMAGE, GROUP_GUIDE_PDF, HERO_VIDEO, HERO_VIDEO_POSTER } from "@/lib/demo/data";
 
 const STEPS = [
   {
@@ -28,17 +29,32 @@ const STEPS = [
   },
 ];
 
-const OUTLINE = [
-  { label: "READ", time: "30 minutes", body: "Open with prayer. Read Scripture aloud together." },
-  { label: "TALK", time: "20 minutes", body: "Pause and discuss what the passage means and how to apply it." },
-  { label: "PRAY", time: "10 minutes", body: "Pray for each other and take a next step." },
-];
-
 export function BibleGroupGuide() {
   return (
     <section className="mt-8">
-      <h2 className="text-2xl font-semibold tracking-tight">How to Run a Bible Group</h2>
-      <p className="mt-2 text-sm leading-relaxed text-[#555]">It&apos;s simple. Invite people, meet together, and Read. Talk. Pray.</p>
+      <div className="grid items-center gap-5 rounded-[28px] border border-[#e6ebf2] bg-white p-4 sm:grid-cols-[220px_minmax(0,1fr)] sm:p-6">
+        <Image
+          src={GROUP_GUIDE_IMAGE}
+          alt="How to Start a Bible Group guide"
+          width={1254}
+          height={1254}
+          sizes="(max-width: 640px) 240px, 220px"
+          className="mx-auto h-auto w-full max-w-[240px]"
+        />
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">How to Run a Bible Group</h2>
+          <p className="mt-2 text-sm leading-relaxed text-[#555]">It&apos;s simple. Invite people, meet together, and Read. Talk. Pray.</p>
+          <a
+            href={GROUP_GUIDE_PDF}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#1976F3] px-6 text-base font-semibold text-white sm:w-auto"
+          >
+            <Download size={20} aria-hidden />
+            Download Free Guide
+          </a>
+        </div>
+      </div>
       <div className="mx-auto mt-4 w-full max-w-[600px] overflow-hidden rounded-3xl bg-black shadow-sm">
         <video src={HERO_VIDEO} poster={HERO_VIDEO_POSTER} controls playsInline preload="metadata" className="aspect-video w-full" aria-label="How to run a Read Talk Pray group" />
       </div>
@@ -53,23 +69,6 @@ export function BibleGroupGuide() {
           </li>
         ))}
       </ol>
-      <div className="mt-3 grid gap-2 sm:grid-cols-3">
-        {OUTLINE.map((item) => (
-          <div key={item.label} className="rounded-2xl border border-[#e6ebf2] bg-white px-3 py-3">
-            <p className="text-sm font-semibold text-[#142033]">{item.label} — {item.time}</p>
-            <p className="mt-1 text-xs leading-snug text-[#52627a]">{item.body}</p>
-          </div>
-        ))}
-      </div>
-      <a
-        href={GROUP_GUIDE_PDF}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-4 inline-flex h-11 items-center gap-2 rounded-full border border-[#1976F3] px-4 text-sm font-semibold text-[#1976F3]"
-      >
-        <Download size={16} aria-hidden />
-        Download the Free Bible Group Guide
-      </a>
     </section>
   );
 }
