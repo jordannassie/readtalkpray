@@ -6,6 +6,9 @@ export const GRAIN_BACKGROUND = HERO_IMAGE;
 export const HERO_VIDEO =
   "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/video/READ.mov";
 
+export const HOME_COLLAGE =
+  "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/background/7a4c6085-76e7-4667-9caa-1ac07bf29999.png";
+
 export const DEMO_USER = {
   name: "Jordan",
   church: "Frisco, TX",
