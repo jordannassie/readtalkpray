@@ -4,6 +4,7 @@ import { BuyBible } from "@/components/home/BuyBible";
 import { GroupFinder } from "@/components/home/GroupFinder";
 import { HeroVideo } from "@/components/home/HeroVideo";
 import { Multiply } from "@/components/home/Multiply";
+import { StartGuide } from "@/components/home/StartGuide";
 import { WorldGlobe } from "@/components/home/WorldGlobe";
 import { HERO_IMAGE } from "@/lib/demo/data";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -80,6 +81,7 @@ export default async function HomePage() {
       <GroupFinder groups={groups} />
 
       <BuyBible />
+      <StartGuide />
       <Multiply />
       <WorldGlobe places={places} />
       <Beliefs />

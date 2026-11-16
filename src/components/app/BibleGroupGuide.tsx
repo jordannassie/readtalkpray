@@ -1,27 +1,37 @@
-import { BookOpen, MapPin, MessageSquare, Users } from "lucide-react";
-import { HERO_VIDEO, HERO_VIDEO_POSTER } from "@/lib/demo/data";
+import { Download } from "lucide-react";
+import { GROUP_GUIDE_PDF, HERO_VIDEO, HERO_VIDEO_POSTER } from "@/lib/demo/data";
 
 const STEPS = [
   {
-    title: "Invite People",
-    body: "Invite people by text, or start a GroupMe group so everyone can stay connected and communicate.",
-    icon: MessageSquare,
+    title: "PRAY FOR PEOPLE",
+    body: "Ask God to show you three to eight people to invite. Pray for open hearts and genuine friendship.",
   },
   {
-    title: "Pick a Time & Place",
-    body: "Choose a welcoming location and meeting time. Arrive early to greet everyone.",
-    icon: MapPin,
+    title: "CHOOSE A TIME + PLACE",
+    body: "Choose a consistent day and time. Meet for about one hour at a home or quiet public place. Arrive early.",
   },
   {
-    title: "Read. Talk. Pray. — About 1 Hour",
-    body: "Open with a prayer asking God to speak through His Word. Read through the Bible chapter by chapter, taking turns reading aloud. Pause after each paragraph to talk about what you read and what it means.",
-    icon: BookOpen,
+    title: "INVITE PERSONALLY",
+    body: "Send a short text, invite a friend, or share your group link. Everyone is welcome.",
   },
   {
-    title: "Pray Together",
-    body: "End by praying for one another and for the group. Encourage everyone to invite someone next time.",
-    icon: Users,
+    title: "START WITH A GOSPEL",
+    body: "Begin with John or Mark. Read through the Bible together, chapter by chapter, pausing to discuss what it means.",
   },
+  {
+    title: "STAY CONNECTED",
+    body: "Use a group text or optional GroupMe group to communicate between meetings.",
+  },
+  {
+    title: "HELP OTHERS BEGIN",
+    body: "Encourage others to invite friends and eventually start another group. Keep the rhythm: Read. Talk. Pray.",
+  },
+];
+
+const OUTLINE = [
+  { label: "READ", time: "30 minutes", body: "Open with prayer. Read Scripture aloud together." },
+  { label: "TALK", time: "20 minutes", body: "Pause and discuss what the passage means and how to apply it." },
+  { label: "PRAY", time: "10 minutes", body: "Pray for each other and take a next step." },
 ];
 
 export function BibleGroupGuide() {
@@ -29,27 +39,37 @@ export function BibleGroupGuide() {
     <section className="mt-8">
       <h2 className="text-2xl font-semibold tracking-tight">How to Run a Bible Group</h2>
       <p className="mt-2 text-sm leading-relaxed text-[#555]">It&apos;s simple. Invite people, meet together, and Read. Talk. Pray.</p>
-      <div className="mt-4 overflow-hidden rounded-3xl bg-black shadow-sm">
+      <div className="mx-auto mt-4 w-full max-w-[600px] overflow-hidden rounded-3xl bg-black shadow-sm">
         <video src={HERO_VIDEO} poster={HERO_VIDEO_POSTER} controls playsInline preload="metadata" className="aspect-video w-full" aria-label="How to run a Read Talk Pray group" />
       </div>
-      <ol className="mt-4 space-y-3">
-        {STEPS.map((step, index) => {
-          const Icon = step.icon;
-          return (
-            <li key={step.title} className="rounded-3xl bg-white p-5 shadow-sm">
-              <div className="flex items-start gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#e7f0ff] text-[#1976F3]">
-                  <Icon size={18} aria-hidden />
-                </span>
-                <div>
-                  <h3 className="font-semibold">{index + 1}. {step.title}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-[#444]">{step.body}</p>
-                </div>
-              </div>
-            </li>
-          );
-        })}
+      <ol className="mt-4 space-y-2">
+        {STEPS.map((step, index) => (
+          <li key={step.title} className="flex items-start gap-3 rounded-2xl border border-[#e6ebf2] bg-white px-3 py-3">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#1976F3] text-sm font-semibold text-white">{index + 1}</span>
+            <span>
+              <span className="block text-sm font-semibold">{step.title}</span>
+              <span className="mt-0.5 block text-sm leading-snug text-[#52627a]">{step.body}</span>
+            </span>
+          </li>
+        ))}
       </ol>
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        {OUTLINE.map((item) => (
+          <div key={item.label} className="rounded-2xl border border-[#e6ebf2] bg-white px-3 py-3">
+            <p className="text-sm font-semibold text-[#142033]">{item.label} — {item.time}</p>
+            <p className="mt-1 text-xs leading-snug text-[#52627a]">{item.body}</p>
+          </div>
+        ))}
+      </div>
+      <a
+        href={GROUP_GUIDE_PDF}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-4 inline-flex h-11 items-center gap-2 rounded-full border border-[#1976F3] px-4 text-sm font-semibold text-[#1976F3]"
+      >
+        <Download size={16} aria-hidden />
+        Download the Free Bible Group Guide
+      </a>
     </section>
   );
 }

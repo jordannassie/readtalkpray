@@ -7,14 +7,20 @@ import { ChevronDown, ChevronLeft, ChevronRight, Volume2, VolumeX } from "lucide
 import { bibleHref, chapterFile, chapterNeighbors, type WebVerse } from "@/lib/bible/chapter";
 import { BOOKS, type BookMeta } from "@/lib/bible/books";
 
-const SIZES = ["S", "M", "L", "XL"] as const;
+const SIZES = ["S", "M", "L", "XL", "XXL", "XXXL"] as const;
 type Size = (typeof SIZES)[number];
 const SIZE_CLASS: Record<Size, string> = {
   S: "text-[17px]",
   M: "text-[19px]",
   L: "text-[21px]",
   XL: "text-[23px]",
+  XXL: "text-[28px]",
+  XXXL: "text-[34px]",
 };
+
+function isSize(value: string | null): value is Size {
+  return SIZES.some((item) => item === value);
+}
 
 const cache = new Map<string, WebVerse[]>();
 
@@ -41,7 +47,7 @@ export function BibleReader({ book, chapter }: { book: BookMeta; chapter: number
   useEffect(() => {
     setCanSpeak("speechSynthesis" in window);
     const saved = window.localStorage.getItem("rtp-bible-size");
-    if (saved === "S" || saved === "M" || saved === "L" || saved === "XL") setSize(saved);
+    if (isSize(saved)) setSize(saved);
   }, []);
 
   useEffect(() => {

@@ -6,6 +6,12 @@ export const HERO_VIDEO = "/video/read.mp4";
 
 export const HERO_VIDEO_POSTER = "/video/read-poster.jpg";
 
+export const GROUP_GUIDE_IMAGE =
+  "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/bible/book.png";
+
+export const GROUP_GUIDE_PDF =
+  "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/bible/Read_Talk_Pray_Start_a_Bible_Group_Guide.pdf";
+
 export const DEMO_USER = {
   name: "Jordan",
   church: "Frisco, TX",
