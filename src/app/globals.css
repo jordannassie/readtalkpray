@@ -173,6 +173,20 @@ a {
   cursor: pointer;
 }
 
+@keyframes rtp-banner-flow {
+  0%,
+  100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-18px, 10px, 0); }
+}
+
+.rtp-banner-flow {
+  animation: rtp-banner-flow 16s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rtp-banner-flow { animation: none; }
+}
+
 .rtp-demo {
   display: inline-block;
   margin-bottom: 6px;

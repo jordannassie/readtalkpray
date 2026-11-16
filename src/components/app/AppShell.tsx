@@ -32,6 +32,7 @@ export function AppShell({
   const pathname = usePathname();
   const map = pathname.startsWith("/app/groups");
   const wide = pathname.startsWith("/app/start");
+  const home = pathname === "/app";
   const initial = (name || email || "You").slice(0, 1).toUpperCase();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -103,7 +104,7 @@ export function AppShell({
           </div>
         </div>
       </header>
-      <main className={map ? "w-full pb-24" : wide ? "mx-auto w-full max-w-[1280px] px-4 pb-28 pt-5 sm:px-6" : "mx-auto w-full max-w-lg px-4 pb-28 pt-5 lg:max-w-3xl"}>{children}</main>
+      <main className={map ? "w-full pb-24" : home ? "mx-auto w-full max-w-[1120px] px-4 pb-28 pt-5 sm:px-6" : wide ? "mx-auto w-full max-w-[1280px] px-4 pb-28 pt-5 sm:px-6" : "mx-auto w-full max-w-lg px-4 pb-28 pt-5 lg:max-w-3xl"}>{children}</main>
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white pb-[env(safe-area-inset-bottom)]" aria-label="App">
         <div className={`mx-auto grid h-16 grid-cols-4 ${wide ? "max-w-[1280px]" : "max-w-lg lg:max-w-5xl"}`}>
           {TABS.map((tab) => {

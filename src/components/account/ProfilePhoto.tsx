@@ -17,6 +17,8 @@ export function ProfilePhoto({
   fullName,
   phone,
   size = 140,
+  framed = false,
+  responsive = false,
   onSaved,
 }: {
   userId: string;
@@ -27,6 +29,8 @@ export function ProfilePhoto({
   fullName: string | null;
   phone: string | null;
   size?: number;
+  framed?: boolean;
+  responsive?: boolean;
   onSaved?: (url: string) => void;
 }) {
   const router = useRouter();
@@ -85,8 +89,8 @@ export function ProfilePhoto({
 
   return (
     <div className="flex flex-col items-center">
-      <div className="relative" style={{ width: size, height: size }}>
-        <div className="grid h-full w-full place-items-center overflow-hidden rounded-full bg-[#e7f0ff] text-3xl font-semibold text-[#1976F3]">
+      <div className={responsive ? "relative h-[116px] w-[116px] sm:h-[148px] sm:w-[148px]" : "relative"} style={responsive ? undefined : { width: size, height: size }}>
+        <div className={`grid h-full w-full place-items-center overflow-hidden rounded-full bg-[#e7f0ff] text-3xl font-semibold text-[#1976F3] ${framed ? "ring-4 ring-white" : ""}`}>
           {src ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={src} alt="" className="h-full w-full object-cover" />
@@ -98,7 +102,7 @@ export function ProfilePhoto({
           type="button"
           aria-label="Change profile photo"
           onClick={() => inputRef.current?.click()}
-          className="absolute -right-1 -bottom-1 grid h-10 w-10 place-items-center rounded-full bg-[#1976F3] text-white shadow-md"
+          className={`absolute -right-1 -bottom-1 grid h-10 w-10 place-items-center rounded-full bg-[#1976F3] text-white shadow-md transition duration-200 hover:scale-105 active:scale-95 motion-reduce:transform-none ${framed ? "ring-2 ring-white" : ""}`}
         >
           <Camera size={18} aria-hidden />
         </button>
