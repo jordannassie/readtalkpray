@@ -1,10 +1,10 @@
-export const HERO_IMAGE =
-  "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/background/smallblue%20grain.png";
+export const HERO_IMAGE = "/hero/grain.webp";
 
 export const GRAIN_BACKGROUND = HERO_IMAGE;
 
-export const HERO_VIDEO =
-  "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/video/READ.mov";
+export const HERO_VIDEO = "/video/read.mp4";
+
+export const HERO_VIDEO_POSTER = "/video/read-poster.jpg";
 
 export const DEMO_USER = {
   name: "Jordan",

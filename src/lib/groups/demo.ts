@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import type { PublicGroup } from "./types";
 
@@ -156,7 +156,7 @@ const DEMO_GROUPS: PublicGroup[] = [
 export async function demoGroupsEnabled() {
   if (isSupabaseConfigured()) {
     try {
-      const supabase = await createClient();
+      const supabase = createPublicClient();
       const { data, error } = await supabase.from("rtp_settings").select("enabled").eq("key", "show_demo_groups").maybeSingle();
       if (!error && data && typeof data.enabled === "boolean") return data.enabled;
     } catch {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { HERO_VIDEO } from "@/lib/demo/data";
+import { HERO_VIDEO, HERO_VIDEO_POSTER } from "@/lib/demo/data";
 
 function SpeakerOffIcon() {
   return (
@@ -85,12 +85,13 @@ export function HeroVideo() {
       <video
         ref={videoRef}
         src={HERO_VIDEO}
+        poster={HERO_VIDEO_POSTER}
         className="h-full w-full bg-black object-cover"
         autoPlay
         loop
         muted
         playsInline
-        preload="auto"
+        preload="metadata"
         aria-label="Read Talk Pray video"
       />
       {needsPlay ? (

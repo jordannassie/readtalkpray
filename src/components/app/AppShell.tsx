@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Home, LogOut, MapPin, UserRound, Users } from "lucide-react";
+import { BookOpen, Home, LogOut, MapPin, UserRound, Users } from "lucide-react";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { BLACK_LOGO } from "@/components/brand/logos";
 import { createClient } from "@/lib/supabase/client";
 
 const TABS = [
-  { href: "/app", label: "Home", icon: Home },
-  { href: "/app/groups", label: "Groups", icon: MapPin },
-  { href: "/app/group", label: "My Group", icon: Users },
-  { href: "/app/me", label: "Me", icon: UserRound },
+  { href: "/app", label: "Home", icon: Home, center: false },
+  { href: "/app/groups", label: "Groups", icon: MapPin, center: false },
+  { href: "/app/bible", label: "Bible", icon: BookOpen, center: true },
+  { href: "/app/group", label: "My Group", icon: Users, center: false },
+  { href: "/app/me", label: "Me", icon: UserRound, center: false },
 ];
 
 export function AppShell({
@@ -36,6 +37,7 @@ export function AppShell({
   const map = pathname.startsWith("/app/groups");
   const wide = pathname.startsWith("/app/start");
   const home = pathname === "/app";
+  const bible = pathname.startsWith("/app/bible");
   const initial = (name || email || "You").slice(0, 1).toUpperCase();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -54,7 +56,7 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f7fb] text-[#1c1c1c]">
+    <div className={`min-h-screen text-[#1c1c1c] ${bible ? "bg-white" : "bg-[#f4f7fb]"}`}>
       <header className="sticky top-0 z-30 border-b border-black/5 bg-white">
         <div className={`relative mx-auto flex h-16 items-center justify-end px-4 sm:px-6 ${wide ? "max-w-[1280px]" : "max-w-lg lg:max-w-5xl"}`}>
           <Link href="/app" aria-label="Read Talk Pray" className="absolute left-1/2 -translate-x-1/2">
@@ -96,6 +98,7 @@ export function AppShell({
                 </div>
                 <div className="my-1 border-t border-black/5" />
                 <MenuLink href="/app" onClick={() => setOpen(false)}>Home</MenuLink>
+                <MenuLink href="/app/bible" onClick={() => setOpen(false)}>Bible</MenuLink>
                 <MenuLink href="/app/groups" onClick={() => setOpen(false)}>Find a Group</MenuLink>
                 {hasGroup ? <MenuLink href="/app/group" onClick={() => setOpen(false)}>My Group</MenuLink> : <MenuLink href="/app/start" onClick={() => setOpen(false)}>Start a Group</MenuLink>}
                 <MenuLink href="/app/me" onClick={() => setOpen(false)}>Account Settings</MenuLink>
@@ -110,12 +113,22 @@ export function AppShell({
           </div>
         </div>
       </header>
-      <main className={map ? "w-full pb-24" : home ? "mx-auto w-full max-w-[1120px] px-4 pb-28 pt-5 sm:px-6" : wide ? "mx-auto w-full max-w-[1280px] px-4 pb-28 pt-5 sm:px-6" : "mx-auto w-full max-w-lg px-4 pb-28 pt-5 lg:max-w-3xl"}>{children}</main>
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white pb-[env(safe-area-inset-bottom)]" aria-label="App">
-        <div className={`mx-auto grid h-16 grid-cols-4 ${wide ? "max-w-[1280px]" : "max-w-lg lg:max-w-5xl"}`}>
+      <main className={map ? "w-full pb-24" : bible ? "mx-auto w-full max-w-2xl px-4 pt-4 pb-32 sm:px-6" : home ? "mx-auto w-full max-w-[1120px] px-4 pb-28 pt-5 sm:px-6" : wide ? "mx-auto w-full max-w-[1280px] px-4 pb-28 pt-5 sm:px-6" : "mx-auto w-full max-w-lg px-4 pb-28 pt-5 lg:max-w-3xl"}>{children}</main>
+      <nav className="fixed inset-x-0 bottom-0 z-40 overflow-visible border-t border-black/10 bg-white pb-[env(safe-area-inset-bottom)]" aria-label="App">
+        <div className={`mx-auto grid h-16 grid-cols-5 ${wide ? "max-w-[1280px]" : "max-w-lg lg:max-w-5xl"}`}>
           {TABS.map((tab) => {
             const active = tab.href === "/app" ? pathname === "/app" : pathname.startsWith(tab.href);
             const Icon = tab.icon;
+            if (tab.center) {
+              return (
+                <Link key={tab.href} href={tab.href} className={`relative flex flex-col items-center justify-end pb-1.5 text-xs font-medium ${active ? "text-[#1976F3]" : "text-[#666]"}`}>
+                  <span className="absolute -top-5 grid h-14 w-14 place-items-center rounded-full bg-[#1976F3] text-white shadow-[0_8px_18px_rgba(25,118,243,0.35)]">
+                    <Icon size={26} strokeWidth={1.75} aria-hidden />
+                  </span>
+                  <span className="mt-8">{tab.label}</span>
+                </Link>
+              );
+            }
             return (
               <Link key={tab.href} href={tab.href} className={`flex flex-col items-center justify-center gap-1 text-xs font-medium ${active ? "text-[#1976F3]" : "text-[#666]"}`}>
                 <Icon size={22} aria-hidden />

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createPublicClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { PUBLIC_GROUP_COLUMNS, type PublicGroup } from "./types";
 
@@ -6,7 +6,7 @@ const PUBLIC_GROUP_COLUMNS_WITH_CO_LEADER = `${PUBLIC_GROUP_COLUMNS}, co_leader_
 const PUBLIC_GROUP_COLUMNS_WITH_SLUG = `${PUBLIC_GROUP_COLUMNS_WITH_CO_LEADER}, slug`;
 
 async function selectApproved(filter: { id?: string; slug?: string }) {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const columns = [PUBLIC_GROUP_COLUMNS_WITH_SLUG, PUBLIC_GROUP_COLUMNS_WITH_CO_LEADER, PUBLIC_GROUP_COLUMNS];
   for (const columnList of columns) {
     let query = supabase.from("rtp_groups").select(columnList).eq("status", "approved");

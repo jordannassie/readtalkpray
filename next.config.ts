@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
       { source: "/app", headers: [{ key: "Cache-Control", value: "private, no-store" }] },
       { source: "/app/:path*", headers: [{ key: "Cache-Control", value: "private, no-store" }] },
       { source: "/sw.js", headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }] },
+      { source: "/video/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+      { source: "/hero/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+      { source: "/brand/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+      { source: "/bible/web/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
     ];
   },
   images: {

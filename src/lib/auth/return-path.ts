@@ -4,6 +4,7 @@ const APP_PATHS = new Set([
   "/app/start",
   "/app/group",
   "/app/me",
+  "/app/bible",
   "/app/admin",
   "/dashboard",
   "/start",
@@ -18,7 +19,10 @@ export function safeAppReturnPath(value: string | null) {
   if (!value) return null;
   if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\") || value.includes("://")) return null;
   const [path, query] = value.split("#")[0]?.split("?") ?? [];
-  if (!path || !APP_PATHS.has(path) || path.includes("..")) return null;
+  if (!path || path.includes("..")) return null;
+  const bibleChapter = path.match(/^\/app\/bible\/([a-z0-9]+(?:-[a-z0-9]+)*)\/([1-9]\d{0,2})$/);
+  if (bibleChapter) return path;
+  if (!APP_PATHS.has(path)) return null;
   if (!query) return path;
   const incoming = new URLSearchParams(query);
   const kept = new URLSearchParams();

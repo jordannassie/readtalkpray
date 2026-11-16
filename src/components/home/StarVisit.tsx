@@ -83,7 +83,7 @@ export function StarVisit() {
             loop
             muted
             playsInline
-            preload="auto"
+            preload="metadata"
             aria-label="Sending Church video"
           />
           <button

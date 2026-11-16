@@ -12,7 +12,7 @@ import { demoGroups } from "@/lib/groups/demo";
 import { listApprovedGroups } from "@/lib/groups/queries";
 import { placeLabel } from "@/lib/groups/types";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 const STEPS = [
   { title: "Read", body: "Read the Bible together.", icon: BookOpen },

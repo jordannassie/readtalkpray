@@ -6,6 +6,8 @@ export async function updateSession(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-rtp-path", `${request.nextUrl.pathname}${request.nextUrl.search}`);
   let supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
+  const signedIn = request.cookies.getAll().some((cookie) => cookie.name.startsWith("sb-") && cookie.name.includes("auth-token"));
+  if (!signedIn) return supabaseResponse;
 
   const supabase = createServerClient(getSupabaseUrl(), getSupabaseAnonKey(), {
     cookies: {

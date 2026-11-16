@@ -1,5 +1,5 @@
 import { BookOpen, MapPin, MessageSquare, Users } from "lucide-react";
-import { HERO_VIDEO } from "@/lib/demo/data";
+import { HERO_VIDEO, HERO_VIDEO_POSTER } from "@/lib/demo/data";
 
 const STEPS = [
   {
@@ -30,7 +30,7 @@ export function BibleGroupGuide() {
       <h2 className="text-2xl font-semibold tracking-tight">How to Run a Bible Group</h2>
       <p className="mt-2 text-sm leading-relaxed text-[#555]">It&apos;s simple. Invite people, meet together, and Read. Talk. Pray.</p>
       <div className="mt-4 overflow-hidden rounded-3xl bg-black shadow-sm">
-        <video src={HERO_VIDEO} controls playsInline preload="metadata" className="aspect-video w-full" aria-label="How to run a Read Talk Pray group" />
+        <video src={HERO_VIDEO} poster={HERO_VIDEO_POSTER} controls playsInline preload="metadata" className="aspect-video w-full" aria-label="How to run a Read Talk Pray group" />
       </div>
       <ol className="mt-4 space-y-3">
         {STEPS.map((step, index) => {

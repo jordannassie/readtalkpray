@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowRight, Calendar, ChevronLeft, MapPin } from "lucide-react";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
@@ -26,6 +26,8 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
   const [formEpoch, setFormEpoch] = useState(0);
   const [notice, setNotice] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const mapRef = useRef<HTMLDivElement>(null);
 
   const visible = useMemo(() => {
     const text = query.trim().toLowerCase();
@@ -60,6 +62,17 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || showMap) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry?.isIntersecting) return;
+      setShowMap(true);
+    }, { rootMargin: "240px" });
+    observer.observe(map);
+    return () => observer.disconnect();
+  }, [showMap]);
 
   useEffect(() => {
     if (!sheetOpen || !window.matchMedia("(max-width: 1023px)").matches) return;
@@ -199,8 +212,8 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
             </div>
             </div>
 
-            <div id="groups-map" className={`relative z-0 order-2 h-[220px] min-w-0 overflow-hidden rounded-[22px] border border-[#e6ebf2] bg-white shadow-sm isolate md:h-[320px] lg:order-2 lg:h-auto lg:min-h-[640px] ${sheetOpen ? "max-lg:hidden" : ""}`}>
-              <GroupsMap groups={visible} focus={place} selectedId={selectedId} onSelect={selectGroup} />
+            <div ref={mapRef} id="groups-map" className={`relative z-0 order-2 h-[220px] min-w-0 overflow-hidden rounded-[22px] border border-[#e6ebf2] bg-white shadow-sm isolate md:h-[320px] lg:order-2 lg:h-auto lg:min-h-[640px] ${sheetOpen ? "max-lg:hidden" : ""}`}>
+              {showMap ? <GroupsMap groups={visible} focus={place} selectedId={selectedId} onSelect={selectGroup} /> : <div className="h-full min-h-[220px] animate-pulse bg-[#e7eef8] md:min-h-[320px]" />}
             </div>
 
             <aside id="group-panel" className="order-3 hidden min-w-0 overflow-auto rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm lg:block lg:max-h-[680px]">
