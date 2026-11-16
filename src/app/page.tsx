@@ -79,9 +79,6 @@ export default async function HomePage() {
 
       <GroupFinder groups={groups} />
 
-      <Multiply />
-      <WorldGlobe places={places} />
-      <Beliefs />
       <section aria-label="Read, talk, and pray" className="bg-white px-5 py-12 sm:py-16">
         <div className="mx-auto max-w-[1280px] overflow-hidden rounded-[28px]">
           <Image
@@ -94,6 +91,9 @@ export default async function HomePage() {
           />
         </div>
       </section>
+      <Multiply />
+      <WorldGlobe places={places} />
+      <Beliefs />
       <SiteFooter />
     </div>
   );
