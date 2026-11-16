@@ -6,7 +6,7 @@ import { Copy, Mail, MessageSquare, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ProfilePhoto } from "@/components/account/ProfilePhoto";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
-import { LiveStatus, LiveToggle } from "@/components/groups/LiveStatus";
+import { GroupStatusToggle } from "@/components/groups/LiveStatus";
 import { publicLocationLabel } from "@/lib/groups/geo";
 import { groupPublicPath } from "@/lib/groups/slug";
 import { PhoneInput } from "@/components/phone/PhoneInput";
@@ -97,16 +97,6 @@ export function AccountDashboard({
     if (response.ok) router.refresh();
   }
 
-  async function setLive(id: string, live: boolean) {
-    const response = await fetch("/api/leader", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action: live ? "resume" : "pause", id }),
-    });
-    setMessage(response.ok ? "" : "That status did not change.");
-    if (response.ok) router.refresh();
-  }
-
   async function share(group: { id: string; slug?: string | null; name?: string }) {
     const url = `${window.location.origin}${groupPublicPath(group)}`;
     const text = group.name ? `Join ${group.name} on Read Talk Pray.` : "Join a Read Talk Pray group.";
@@ -163,7 +153,6 @@ export function AccountDashboard({
               people={entry.group ? requests.filter((item) => item.group_id === entry.group?.id) : []}
               primary={entry.primary}
               onShare={share}
-              onLive={setLive}
               highlightRequestId={highlightRequestId}
             />
           ))}
@@ -196,6 +185,7 @@ export function AccountDashboard({
 function EntryCard({ entry, photoUrl, compact = false }: { entry: Entry; photoUrl: string | null; compact?: boolean }) {
   const { application, group } = entry;
   const status = group?.status || application?.status || "none";
+  const canToggle = Boolean(group && (status === "approved" || status === "paused"));
   const name = group?.name || application?.group_name?.trim() || "My Bible Group";
   const place = group?.public_location || (application ? safePlace(application) : "");
   const leader = group?.leader_name || application?.leader_name || "Group leader";
@@ -216,9 +206,14 @@ function EntryCard({ entry, photoUrl, compact = false }: { entry: Entry; photoUr
         hideJoin
         compact={compact}
         faces="profile"
-        statusLabel={STATUS_LABEL[status] ?? status}
-        footer={<Link href={`/app/group?id=${entry.key}`} className="inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Manage Group</Link>}
+        statusLabel={canToggle ? undefined : STATUS_LABEL[status] ?? status}
       />
+      {canToggle && group ? (
+        <div className="mt-4 border-t border-[#e6ebf2] pt-4">
+          <GroupStatusToggle groupId={group.id} serverLive={group.status === "approved"} />
+        </div>
+      ) : null}
+      <Link href={`/app/group?id=${entry.key}`} className="mt-4 inline-flex h-11 items-center text-sm font-semibold text-[#1976F3]">Manage Group</Link>
     </section>
   );
 }
@@ -232,7 +227,6 @@ function GroupDesk({
   people,
   primary,
   onShare,
-  onLive,
   highlightRequestId = "",
 }: {
   email: string;
@@ -243,7 +237,6 @@ function GroupDesk({
   people: RequestRow[];
   primary: boolean;
   onShare: (group: { id: string; slug?: string | null; name?: string }) => Promise<string>;
-  onLive: (id: string, live: boolean) => void;
   highlightRequestId?: string;
 }) {
   const [previewing, setPreviewing] = useState(false);
@@ -272,9 +265,8 @@ function GroupDesk({
         </div>
       ) : null}
       {primary && group && (live || paused) ? (
-        <div className="flex items-center justify-between gap-3 border-t border-[#e6ebf2] px-4 py-3">
-          <LiveStatus live={live} label={live ? "Group is Live" : "Group is Paused"} />
-          <LiveToggle live={live} onChange={(next) => onLive(group.id, next)} />
+        <div className="border-t border-[#e6ebf2] px-4 py-3">
+          <GroupStatusToggle groupId={group.id} serverLive={live} />
         </div>
       ) : null}
       <div className="flex flex-wrap gap-2 border-t border-[#e6ebf2] px-4 py-3">

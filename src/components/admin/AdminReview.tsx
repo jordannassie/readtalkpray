@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { LeaderFaces } from "@/components/groups/LeaderFaces";
-import { LiveStatus, LiveToggle } from "@/components/groups/LiveStatus";
+import { GroupStatusToggle, SyncedLiveStatus } from "@/components/groups/LiveStatus";
 import { cityState, meetingWhen, type PublicGroup } from "@/lib/groups/types";
 import { dialPhone, displayPhone } from "@/lib/phone";
 
@@ -123,22 +123,6 @@ export function AdminReview({
     setBusy("");
     if (!response.ok) {
       setError(body.error || "That update did not save.");
-      return;
-    }
-    router.refresh();
-  }
-
-  async function setLive(id: string, live: boolean) {
-    setBusy(id);
-    setError("");
-    const response = await fetch("/api/leader", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action: live ? "resume" : "pause", id }),
-    });
-    setBusy("");
-    if (!response.ok) {
-      setError("That group could not change between Live and Paused.");
       return;
     }
     router.refresh();
@@ -300,7 +284,7 @@ export function AdminReview({
                     <p className="truncate text-xs text-[#555]">{group.leader_name}{group.co_leader_name ? ` & ${group.co_leader_name}` : ""}</p>
                     <p className="truncate text-xs text-[#667085]">{[place, when].filter(Boolean).join(" · ")}</p>
                   </div>
-                  {group.status === "approved" || group.status === "paused" ? <LiveStatus live={group.status === "approved"} /> : <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${pillClass(group.status)}`}>{pillLabel(group.status)}</span>}
+                  {group.status === "approved" || group.status === "paused" ? <SyncedLiveStatus groupId={group.id} serverLive={group.status === "approved"} /> : <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${pillClass(group.status)}`}>{pillLabel(group.status)}</span>}
                 </div>
                 <div className="mt-3 flex gap-2">
                   {group.status === "approved" || group.status === "paused" ? (
@@ -322,7 +306,7 @@ export function AdminReview({
                     {group.location_type === "home" && group.address ? <p>Private address: {group.address}</p> : null}
                     {group.status === "approved" || group.status === "paused" ? (
                       <div className="pt-2">
-                        <LiveToggle live={group.status === "approved"} busy={busy === group.id} onChange={(live) => void setLive(group.id, live)} />
+                        <GroupStatusToggle groupId={group.id} serverLive={group.status === "approved"} />
                       </div>
                     ) : null}
                     <div className="pt-2">
