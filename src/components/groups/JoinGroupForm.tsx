@@ -126,8 +126,8 @@ export function JoinGroupForm({
         </div>
         <div className="relative shrink-0">
           <LeaderFaces leaderName={group.leader_name} leaderPhoto={group.leader_photo_url} coLeaderName={group.co_leader_name} coLeaderPhoto={group.co_leader_photo_url} size={faces ?? (variant === "panel" ? "md" : "lg")} />
-          {!hideJoin && (preview || group.is_demo) ? (
-            <span className="absolute -top-1 -right-1 rounded-full bg-[#e7f0ff] px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-[#1976F3] uppercase">{preview ? "Preview" : "Demo"}</span>
+          {!hideJoin && group.is_demo ? (
+            <span className="absolute -top-1 -right-1 rounded-full bg-[#e7f0ff] px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-[#1976F3] uppercase">Demo</span>
           ) : null}
         </div>
       </div>

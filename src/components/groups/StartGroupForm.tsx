@@ -585,13 +585,7 @@ export function StartGroupForm({
       </button>
     </form>
     <div className="mt-4 min-w-0 lg:sticky lg:top-20 lg:mt-0">
-      <details className="rounded-[28px] bg-white p-4 shadow-sm lg:hidden">
-        <summary className="cursor-pointer text-base font-semibold">Preview Your Group</summary>
-        <GroupListingPreview group={previewGroup} />
-      </details>
-      <div className="hidden lg:block">
-        <GroupListingPreview group={previewGroup} />
-      </div>
+      <GroupListingPreview group={previewGroup} />
     </div>
     </div>
   );
@@ -603,7 +597,7 @@ function GroupListingPreview({ group }: { group: PublicGroup }) {
       <h2 className="text-2xl font-semibold tracking-tight">Preview Your Bible Group</h2>
       <p className="mt-1 text-sm text-[#667085]">This is how people will see your group once it&apos;s approved.</p>
       <div className="mt-4 w-full rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm">
-        <JoinGroupForm group={group} variant="panel" preview />
+        <JoinGroupForm group={group} variant="panel" preview faces="profile" />
       </div>
     </div>
   );
