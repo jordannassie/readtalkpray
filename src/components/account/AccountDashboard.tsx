@@ -2,7 +2,8 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { Copy, Mail, MessageSquare, Phone } from "lucide-react";
+import { Mail, MessageSquare, Phone } from "lucide-react";
+import { CopyButton, PressLink } from "@/components/app/CopyButton";
 import { useRouter } from "next/navigation";
 import { ProfilePhoto } from "@/components/account/ProfilePhoto";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
@@ -97,25 +98,6 @@ export function AccountDashboard({
     if (response.ok) router.refresh();
   }
 
-  async function share(group: { id: string; slug?: string | null; name?: string }) {
-    const url = `${window.location.origin}${groupPublicPath(group)}`;
-    const text = group.name ? `Join ${group.name} on Read Talk Pray.` : "Join a Read Talk Pray group.";
-    if (typeof navigator.share === "function") {
-      try {
-        await navigator.share({ title: group.name || "Read Talk Pray", text, url });
-        return "shared";
-      } catch {
-        return "";
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      return "copied";
-    } catch {
-      return url;
-    }
-  }
-
   return (
     <div className={focus === "home" ? "mt-5" : "mt-2 space-y-6"}>
       {message ? <p className="rounded-2xl bg-white px-4 py-3 text-sm">{message}</p> : null}
@@ -152,7 +134,6 @@ export function AccountDashboard({
               group={entry.group}
               people={entry.group ? requests.filter((item) => item.group_id === entry.group?.id) : []}
               primary={entry.primary}
-              onShare={share}
               highlightRequestId={highlightRequestId}
             />
           ))}
@@ -226,7 +207,6 @@ function GroupDesk({
   group,
   people,
   primary,
-  onShare,
   highlightRequestId = "",
 }: {
   email: string;
@@ -236,12 +216,9 @@ function GroupDesk({
   group: Group | null;
   people: RequestRow[];
   primary: boolean;
-  onShare: (group: { id: string; slug?: string | null; name?: string }) => Promise<string>;
   highlightRequestId?: string;
 }) {
   const [previewing, setPreviewing] = useState(false);
-  const [notice, setNotice] = useState("");
-  const [copiedId, setCopiedId] = useState("");
   const photo = group?.leader_photo_url || application?.leader_photo_url || profile.photo_url || googlePhotoUrl;
   const leader = group?.leader_name || application?.leader_name || profile.full_name || email;
   const name = group?.name || application?.group_name?.trim() || "My Bible Group";
@@ -277,24 +254,37 @@ function GroupDesk({
           <button type="button" onClick={() => setPreviewing(true)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">View Profile</button>
         )}
         {approved && group ? (
-          <button type="button" onClick={() => void onShare({ id: group.id, slug: group.slug, name }).then((result) => setNotice(result === "copied" ? "Group link copied." : result && result !== "shared" ? result : ""))} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">Share Group</button>
+          <CopyButton
+            value={() => `${window.location.origin}${profileHref}`}
+            idleLabel="Share Group"
+            successLabel="Link Copied!"
+            share={() => ({ title: name, text: `Join ${name} on Read Talk Pray.`, url: `${window.location.origin}${profileHref}` })}
+            className="border border-black/10 px-4 text-sm font-semibold"
+          />
         ) : null}
       </div>
-      {notice ? <p className="px-4 pb-2 text-sm text-[#157a3a]">{notice}</p> : null}
       <div className="border-t border-[#e6ebf2] px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="font-semibold">Interested People</h3>
           <span className="rounded-full bg-[#e8f8ee] px-2.5 py-1 text-xs font-semibold text-[#157a3a]">{people.length} {people.length === 1 ? "Person" : "People"}</span>
         </div>
         {people.length > 0 ? (
-          <button type="button" onClick={() => void navigator.clipboard.writeText(welcome).then(() => setNotice("Welcome message copied."))} className="mt-2 text-sm font-semibold text-[#1976F3]">Copy Welcome Message</button>
+          <CopyButton value={welcome} idleLabel="Copy Welcome Message" successLabel="Message Copied!" className="mt-2 px-0 text-sm font-semibold text-[#1976F3]" />
         ) : (
           <div className="mt-3">
             <p className="text-sm text-[#666]">No one has signed up yet. Share your group to invite people.</p>
-            {approved && group ? <button type="button" onClick={() => void onShare({ id: group.id, slug: group.slug, name }).then((result) => setNotice(result === "copied" ? "Group link copied." : ""))} className="mt-2 inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Share Group</button> : null}
+            {approved && group ? (
+              <CopyButton
+                value={() => `${window.location.origin}${profileHref}`}
+                idleLabel="Share Group"
+                successLabel="Link Copied!"
+                share={() => ({ title: name, text: `Join ${name} on Read Talk Pray.`, url: `${window.location.origin}${profileHref}` })}
+                className="mt-2 bg-[#1976F3] px-4 text-sm font-semibold text-white"
+              />
+            ) : null}
           </div>
         )}
-        {people.length > 0 ? <PeopleRows people={people} welcome={welcome} copiedId={copiedId} highlightId={highlightRequestId} onCopy={(id, phone) => void navigator.clipboard.writeText(phone).then(() => setCopiedId(id))} /> : null}
+        {people.length > 0 ? <PeopleRows people={people} welcome={welcome} highlightId={highlightRequestId} /> : null}
       </div>
       {previewing && previewGroup ? <GroupPreview group={previewGroup} onClose={() => setPreviewing(false)} /> : null}
     </section>
@@ -328,15 +318,11 @@ function safePlace(application: OwnedApplication) {
 function PeopleRows({
   people,
   welcome,
-  copiedId,
   highlightId = "",
-  onCopy,
 }: {
   people: RequestRow[];
   welcome: string;
-  copiedId: string;
   highlightId?: string;
-  onCopy: (id: string, phone: string) => void;
 }) {
   const [query, setQuery] = useState("");
   const [shown, setShown] = useState(25);
@@ -372,10 +358,10 @@ function PeopleRows({
               <span className="hidden w-36 shrink-0 truncate text-[#142033] sm:block">{phone}</span>
               <span className="hidden w-24 shrink-0 text-xs text-[#667085] md:block">{date}</span>
               <span className="flex shrink-0 items-center">
-                <button type="button" title={copiedId === person.id ? "Copied" : "Copy number"} aria-label="Copy phone number" onClick={() => onCopy(person.id, dial)} className="grid h-10 w-10 place-items-center text-[#1976F3]"><Copy size={16} /></button>
-                <a href={`sms:${dial}?&body=${encodeURIComponent(welcome)}`} title="Text" aria-label={`Text ${person.first_name}`} className="grid h-10 w-10 place-items-center text-[#1976F3]"><MessageSquare size={16} /></a>
-                <a href={`tel:${dial}`} title="Call" aria-label={`Call ${person.first_name}`} className="grid h-10 w-10 place-items-center text-[#1976F3]"><Phone size={16} /></a>
-                {person.email ? <a href={`mailto:${person.email}`} title="Email" aria-label={`Email ${person.first_name}`} className="grid h-10 w-10 place-items-center text-[#1976F3]"><Mail size={16} /></a> : null}
+                <CopyButton value={dial} idleLabel={`Copy ${person.first_name}'s phone number`} variant="icon" />
+                <PressLink href={`sms:${dial}?&body=${encodeURIComponent(welcome)}`} label={`Text ${person.first_name}`}><MessageSquare size={16} aria-hidden /></PressLink>
+                <PressLink href={`tel:${dial}`} label={`Call ${person.first_name}`}><Phone size={16} aria-hidden /></PressLink>
+                {person.email ? <PressLink href={`mailto:${person.email}`} label={`Email ${person.first_name}`}><Mail size={16} aria-hidden /></PressLink> : null}
               </span>
             </li>
           );

@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Download } from "lucide-react";
 import { GROUP_GUIDE_IMAGE, GROUP_GUIDE_PDF, HERO_VIDEO, HERO_VIDEO_POSTER } from "@/lib/demo/data";
 
-const STEPS = [
+const STEPS: { title: string; body: string; link?: { href: string; label: string } }[] = [
   {
     title: "PRAY FOR PEOPLE",
     body: "Ask God to show you three to eight people to invite. Pray for open hearts and genuine friendship.",
@@ -21,7 +21,8 @@ const STEPS = [
   },
   {
     title: "STAY CONNECTED",
-    body: "Use a group text or optional GroupMe group to communicate between meetings.",
+    body: "Keep everyone connected between meetings. Start a group chat using GroupMe to share updates, prayer requests, and meeting reminders.",
+    link: { href: "https://groupme.com/", label: "Start a GroupMe Chat" },
   },
   {
     title: "HELP OTHERS BEGIN",
@@ -71,6 +72,11 @@ export function BibleGroupGuide() {
             <span>
               <span className="block text-sm font-semibold">{step.title}</span>
               <span className="mt-0.5 block text-sm leading-snug text-[#52627a]">{step.body}</span>
+              {step.link ? (
+                <a href={step.link.href} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex text-sm font-semibold text-[#1976F3]">
+                  {step.link.label}
+                </a>
+              ) : null}
             </span>
           </li>
         ))}
