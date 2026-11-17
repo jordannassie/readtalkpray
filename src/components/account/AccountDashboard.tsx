@@ -9,7 +9,7 @@ import { ProfilePhoto } from "@/components/account/ProfilePhoto";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { GroupStatusToggle } from "@/components/groups/LiveStatus";
 import { publicLocationLabel } from "@/lib/groups/geo";
-import { groupMarketingUrl, groupPublicPath } from "@/lib/groups/slug";
+import { groupMarketingUrl } from "@/lib/groups/slug";
 import { PhoneInput } from "@/components/phone/PhoneInput";
 import { dialPhone, displayPhone } from "@/lib/phone";
 import { cityState, meetingWhen, type CoLeaderInvite, type OwnedApplication, type PublicGroup } from "@/lib/groups/types";
@@ -230,7 +230,6 @@ function GroupDesk({
   const approved = live || paused;
   const previewGroup = toPublicGroup({ application, group, photo, leader, name, place });
   const editHref = application ? `/app/start?application=${application.id}` : group ? `/app/start?group=${group.id}` : "/app/start";
-  const profileHref = group ? groupPublicPath(group) : "";
   const welcome = `Hey! Thanks for your interest in ${name}. We'd love to have you join us! Our group meets ${meetingWhen({ meeting_day: group?.meeting_day ?? application?.meeting_day ?? null, meeting_time: group?.meeting_time ?? application?.meeting_time ?? null }) || "soon"}. Reply here if you have any questions.`;
 
   if (!group && !application) return null;
@@ -250,7 +249,7 @@ function GroupDesk({
       <div className="flex flex-wrap gap-2 border-t border-[#e6ebf2] px-4 py-3">
         <Link href={editHref} className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Edit Group</Link>
         {approved && group ? (
-          <Link href={profileHref} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">View Profile</Link>
+          <a href={groupMarketingUrl(group)} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">View Profile</a>
         ) : (
           <button type="button" onClick={() => setPreviewing(true)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">View Profile</button>
         )}

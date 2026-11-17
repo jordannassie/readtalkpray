@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ExternalLink, Eye, X } from "lucide-react";
+import { ChevronDown, Eye, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -294,10 +294,10 @@ export function AdminReview({
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   {group.status === "approved" || group.status === "paused" ? (
-                    <button type="button" onClick={() => setViewing(group)} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1976F3] px-3 text-sm font-semibold text-white">
+                    <a href={groupMarketingUrl(group)} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1976F3] px-3 text-sm font-semibold text-white">
                       <Eye size={15} aria-hidden />
                       View Group
-                    </button>
+                    </a>
                   ) : null}
                   {group.status === "approved" ? <MarketingLink group={group} /> : null}
                   <button type="button" onClick={() => setManagedId(open ? "" : group.id)} className="inline-flex h-10 items-center rounded-full border border-[#e6ebf2] px-3 text-sm font-semibold">
@@ -407,9 +407,6 @@ function MarketingLink({ group }: { group: Group }) {
   return (
     <>
       <CopyButton value={url} idleLabel="Copy Marketing Link" successLabel="Copied!" variant="icon" className="border border-[#e6ebf2]" />
-      <a href={url} target="_blank" rel="noopener noreferrer" aria-label="Open marketing page" className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e6ebf2] text-[#1976F3]">
-        <ExternalLink size={15} aria-hidden />
-      </a>
     </>
   );
 }
