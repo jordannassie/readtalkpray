@@ -39,7 +39,7 @@ export function BibleReader({ book, chapter }: { book: BookMeta; chapter: number
   const router = useRouter();
   const [verses, setVerses] = useState<WebVerse[] | null>(null);
   const [error, setError] = useState("");
-  const [size, setSize] = useState<Size>("XL");
+  const [size, setSize] = useState<Size>("XXL");
   const [speaking, setSpeaking] = useState(false);
   const [canSpeak, setCanSpeak] = useState(false);
   const neighbors = chapterNeighbors(book, chapter);
