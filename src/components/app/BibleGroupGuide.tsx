@@ -33,12 +33,12 @@ export function BibleGroupGuide({ steps }: { steps: boolean[] }) {
               <a href={BLACK_LOGO_PNG} download="read-talk-pray-logo-black.png" className="flex flex-col items-center gap-1 rounded-2xl border border-[#e6ebf2] bg-white px-3 py-3 text-xs font-semibold text-[#142033]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={BLACK_LOGO} alt="" className="h-16 w-16 object-contain" />
-                Black PNG
+                <span className="inline-flex items-center gap-1"><Download size={13} aria-hidden />Black PNG</span>
               </a>
               <a href={WHITE_LOGO_PNG} download="read-talk-pray-logo-white.png" className="flex flex-col items-center gap-1 rounded-2xl bg-[#142033] px-3 py-3 text-xs font-semibold text-white">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={WHITE_LOGO} alt="" className="h-16 w-16 object-contain" />
-                White PNG
+                <span className="inline-flex items-center gap-1"><Download size={13} aria-hidden />White PNG</span>
               </a>
             </div>
           </div>
