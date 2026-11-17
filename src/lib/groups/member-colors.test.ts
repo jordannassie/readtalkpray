@@ -10,6 +10,8 @@ test("group colors stay stable and distinct", () => {
   assert.equal(new Set(south).size, 4);
   assert.equal(frisco.every((color) => color.startsWith("linear-gradient(135deg,")), true);
   assert.notDeepEqual(frisco, south);
+  const ids = ["demo-franklin", "demo-downtown", "demo-east", "demo-brentwood", "demo-thompsons", "demo-12-south", "demo-spring-hill", "demo-murfreesboro", "d5e19dcb-3c6b-4cce-8077-d3b32f82af86"];
+  assert.equal(new Set(ids.map((id) => groupMemberColors(id).join("|"))).size, ids.length);
 });
 
 test("member labels use singular and plural", () => {
