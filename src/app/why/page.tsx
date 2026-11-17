@@ -75,10 +75,10 @@ export default function WhyPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={STORY_IMAGE}
-                alt="Jordan Nassie, founder of Read Talk Pray"
+                alt="Jordan Nassie, co-founder of Read Talk Pray"
                 className="h-auto w-full rounded-3xl"
               />
-              <figcaption className="mt-3 text-sm font-semibold text-[#142033]">Jordan Nassie — Founder, Read Talk Pray</figcaption>
+              <figcaption className="mt-3 text-sm font-semibold text-[#142033]">Jordan Nassie — Co-founder, Read Talk Pray</figcaption>
             </figure>
             <div className="space-y-4 text-lg leading-relaxed text-[#334155]">
               <p>For years, I thought I was failing as a pastor.</p>
@@ -112,7 +112,7 @@ export default function WhyPage() {
               <p>And everyone has a place at the table.</p>
               <p className="pt-2 text-base font-semibold text-[#142033]">
                 Jordan Nassie
-                <span className="mt-1 block text-sm font-medium text-[#52627a]">Founder, Read Talk Pray</span>
+                <span className="mt-1 block text-sm font-medium text-[#52627a]">Co-founder, Read Talk Pray</span>
               </p>
             </div>
           </div>

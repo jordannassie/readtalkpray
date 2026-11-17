@@ -14,7 +14,7 @@ export const FRISCO_LOCATION: SendingLocation = {
   map_url: "https://maps.google.com/?q=11+Cowboys+Way,+Frisco,+TX+75034",
   leader_id: "jordan-nassie",
   leader_name: "Jordan Nassie",
-  leader_title: "Pastor & Founder",
+  leader_title: "Pastor & Co-founder",
   leader_photo_url:
     "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/images/Jordan/Jordan2.png",
   status: "active",
