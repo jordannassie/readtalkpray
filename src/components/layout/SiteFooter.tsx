@@ -7,6 +7,7 @@ const NAV = [
   { href: "/#groups", label: "Groups" },
   { href: "/app/start", label: "Start a Group" },
   { href: "/#how", label: "How It Works" },
+  { href: "/christianity", label: "Christianity" },
   { href: "/#beliefs", label: "Our Beliefs" },
   { href: "/app/start", label: "Contact" },
 ];

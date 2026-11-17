@@ -11,6 +11,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 const LEFT = [
   { href: "/#groups", label: "Find a Group" },
   { href: "/#how", label: "How It Works" },
+  { href: "/christianity", label: "Christianity" },
   { href: "/#beliefs", label: "About" },
 ];
 
@@ -95,7 +96,7 @@ export function SiteHeader({ activeHref }: { tone?: "solid" | "overlay" | "light
           >
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
-          <nav className="hidden items-center gap-8 lg:flex">
+          <nav className="hidden items-center gap-4 lg:flex xl:gap-7">
             {LEFT.map((item) => (
               <Link key={item.href} href={item.href} className={linkClass(item.href === activeHref)}>
                 {item.label}
