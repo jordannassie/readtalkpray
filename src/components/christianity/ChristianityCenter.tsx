@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ARTICLES, FEATURED, TOPICS, filterArticles } from "@/lib/christianity/articles";
+import { QUESTION_CARDS } from "@/lib/christianity/questions";
 
 export function ChristianityCenter({ heading = "h1", library = true }: { heading?: "h1" | "h2"; library?: boolean }) {
   const Title = heading;
@@ -68,6 +69,26 @@ export function ChristianityCenter({ heading = "h1", library = true }: { heading
                 </li>
               ))}
             </ul>
+            {library ? (
+              <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+                {QUESTION_CARDS.map((card) => (
+                  <li key={card.slug} className="min-w-0">
+                    <Link
+                      href={`/christianity/${card.slug}`}
+                      className="group relative block h-44 overflow-hidden rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:h-52"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={card.image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10" />
+                      <span className="absolute inset-x-0 bottom-0 p-3 pr-12 text-sm font-semibold leading-snug text-white sm:text-base">{card.title}</span>
+                      <span className="absolute right-3 bottom-3 grid h-8 w-8 place-items-center rounded-full bg-white/20 text-white ring-1 ring-white/50">
+                        <ArrowRight size={16} aria-hidden />
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           )}
         </div>
       </section>

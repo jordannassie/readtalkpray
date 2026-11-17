@@ -7,7 +7,7 @@
     "build": "node scripts/guard-deploy.mjs && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --experimental-strip-types --import ./src/lib/leads/test-register.mjs --test src/lib/leads/*.test.ts src/lib/groups/*.test.ts src/lib/globe/*.test.ts src/lib/auth/*.test.ts",
+    "test": "node --experimental-strip-types --import ./src/lib/leads/test-register.mjs --test src/lib/leads/*.test.ts src/lib/groups/*.test.ts src/lib/globe/*.test.ts src/lib/auth/*.test.ts src/lib/christianity/*.test.ts",
     "test:sql": "node scripts/test-rtp-sql.mjs"
   },
   "dependencies": {

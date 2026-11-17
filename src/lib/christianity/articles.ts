@@ -1,3 +1,5 @@
+import { QUESTION_ARTICLES } from "./questions";
+
 export const TOPICS = [
   "Jesus",
   "Salvation",
@@ -10,6 +12,8 @@ export const TOPICS = [
 
 export type ChristianityTopic = (typeof TOPICS)[number];
 
+export type ChristianitySection = { heading: string; paragraphs: string[] };
+
 export type ChristianityArticle = {
   slug: string;
   title: string;
@@ -18,6 +22,9 @@ export type ChristianityArticle = {
   intro: string;
   references: string[];
   paragraphs: string[];
+  image?: string;
+  sections?: ChristianitySection[];
+  cta?: { label: string; href: string };
 };
 
 export const FEATURED = [
@@ -231,13 +238,41 @@ export const ARTICLES: ChristianityArticle[] = [
     slug: "how-do-i-pray",
     title: "How Do I Pray?",
     topic: "Prayer",
-    keywords: ["prayer", "talking to god", "lord's prayer", "ask"],
-    intro: "Prayer is talking with God. You do not need special words. Be honest, and pray in Jesus' name.",
-    references: ["Matthew 6:9–13", "Philippians 4:6–7", "1 Thessalonians 5:16–18"],
-    paragraphs: [
-      "Jesus taught his followers to pray simply. Honor the Father. Ask that his will be done. Ask for daily needs, forgiveness, and help against temptation.",
-      "Paul says not to be anxious, but to let your requests be made known to God with thanksgiving. Pray regularly, not only in a crisis.",
-      "A helpful pattern in a group is short and sincere: thank God, confess sin, pray for people by name, and ask for what the passage you just read requires.",
+    keywords: ["prayer", "pray", "how to pray", "talk to god", "talking to god", "lords prayer", "ask"],
+    image: "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/10%20more/how%20to%20pray.png",
+    intro: "Prayer is talking honestly with God. You do not need special language. You need a willing heart and the truth.",
+    references: ["Matthew 6:9–13", "Philippians 4:6", "1 Thessalonians 5:17", "Romans 8:26"],
+    paragraphs: [],
+    cta: { label: "Read the Bible", href: "/app/bible/matthew/6" },
+    sections: [
+      {
+        heading: "Talk to God as Father",
+        paragraphs: [
+          "Jesus taught his disciples to pray to 'our Father in heaven.' That is close and respectful at the same time. You are speaking to the holy God, and in Christ you are invited to come as a child.",
+          "You can pray out loud or quietly, kneeling or walking. The posture is less important than the honesty.",
+        ],
+      },
+      {
+        heading: "A simple pattern",
+        paragraphs: [
+          "Thank God for who he is and for what he has given. Worship him before you present a list. Confess sin plainly instead of dressing it up. Ask for help for yourself and for other people. Then trust his wisdom with what you asked.",
+          "The Lord's Prayer walks through worship, God's will, daily needs, forgiveness, and protection. Use it as a guide, and put the requests in your own words.",
+        ],
+      },
+      {
+        heading: "When you do not know what to say",
+        paragraphs: [
+          "Paul says the Spirit helps us in our weakness when we do not know how to pray. A sigh can be a prayer if it is aimed at God. Keep the habit anyway. Scripture says to pray without ceasing, which means prayer belongs in ordinary hours, not only in emergencies.",
+          "Philippians tells anxious people to bring their requests to God with thanksgiving. Peace is promised alongside the asking, not only after every problem is solved.",
+        ],
+      },
+      {
+        heading: "A short prayer you can use",
+        paragraphs: [
+          "Father, thank you for hearing me. I worship you as the God who made me and who sent Jesus. Forgive me for the ways I have turned from you. I need your help today, and I ask you to care for the people I love. Teach me to trust your will. Amen.",
+          "Pray that, or pray something truer to your own day. Then open the Bible and pray with someone else when you can.",
+        ],
+      },
     ],
   },
   {
@@ -296,7 +331,7 @@ export const ARTICLES: ChristianityArticle[] = [
     slug: "why-join-a-bible-group",
     title: "Why Join a Bible Group?",
     topic: "Bible Groups",
-    keywords: ["group", "join", "community", "read talk pray", "fellowship"],
+    keywords: ["group", "join", "community", "read talk pray", "fellowship", "church", "friends"],
     intro: "A Bible group gives you people to read with, talk with, and pray with. Faith grows in conversation, not only in private.",
     references: ["Acts 2:42", "Hebrews 10:24–25", "Matthew 18:20", "Colossians 3:16"],
     paragraphs: [
@@ -331,7 +366,60 @@ export const ARTICLES: ChristianityArticle[] = [
       "Leadership is service. A leader lives a life that reflects Jesus: humility, integrity, and faithfulness to Scripture. If you are ready to serve that way, start the application. Approval comes before the group is shown to everyone else.",
     ],
   },
+  ...QUESTION_ARTICLES,
 ];
+
+const SCRIPTURE_BOOKS: [string, string][] = [
+  ["1 corinthians", "1-corinthians"],
+  ["1 thessalonians", "1-thessalonians"],
+  ["1 timothy", "1-timothy"],
+  ["2 timothy", "2-timothy"],
+  ["1 peter", "1-peter"],
+  ["2 peter", "2-peter"],
+  ["2 corinthians", "2-corinthians"],
+  ["isaiah", "isaiah"],
+  ["james", "james"],
+  ["nehemiah", "nehemiah"],
+  ["1 john", "1-john"],
+  ["2 john", "2-john"],
+  ["3 john", "3-john"],
+  ["psalms", "psalms"],
+  ["psalm", "psalms"],
+  ["revelation", "revelation"],
+  ["genesis", "genesis"],
+  ["matthew", "matthew"],
+  ["mark", "mark"],
+  ["luke", "luke"],
+  ["john", "john"],
+  ["acts", "acts"],
+  ["romans", "romans"],
+  ["ephesians", "ephesians"],
+  ["philippians", "philippians"],
+  ["colossians", "colossians"],
+  ["hebrews", "hebrews"],
+  ["galatians", "galatians"],
+];
+
+export function scriptureHref(reference: string) {
+  const normalized = reference.toLowerCase().replace(/[–—]/g, "-");
+  for (const [name, slug] of SCRIPTURE_BOOKS) {
+    if (!normalized.startsWith(`${name} `)) continue;
+    const chapter = Number(normalized.slice(name.length).trim().match(/^(\d+)/)?.[1]);
+    if (!chapter) return null;
+    return `/app/bible/${slug}/${chapter}`;
+  }
+  return null;
+}
+
+export function articlePlainText(article: ChristianityArticle) {
+  const parts = [article.intro];
+  if (article.sections?.length) {
+    for (const section of article.sections) parts.push(section.heading, ...section.paragraphs);
+  } else {
+    parts.push(...article.paragraphs);
+  }
+  return parts.join(" ");
+}
 
 export function getArticle(slug: string) {
   return ARTICLES.find((article) => article.slug === slug);

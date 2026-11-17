@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { ChristianityCenter } from "@/components/christianity/ChristianityCenter";
-import { ARTICLES } from "@/lib/christianity/articles";
+import { ARTICLES, articlePlainText } from "@/lib/christianity/articles";
 
 const title = "Questions About Christianity";
 const description = "Simple, Bible-based answers to life's biggest questions. Learn about Jesus, baptism, the Bible, and Bible groups.";
@@ -22,7 +22,7 @@ export default function ChristianityPage() {
     mainEntity: ARTICLES.map((article) => ({
       "@type": "Question",
       name: article.title,
-      acceptedAnswer: { "@type": "Answer", text: [article.intro, ...article.paragraphs].join(" ") },
+      acceptedAnswer: { "@type": "Answer", text: articlePlainText(article) },
     })),
   };
 
