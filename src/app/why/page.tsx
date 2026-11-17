@@ -7,6 +7,9 @@ import { publicMetadata, SITE } from "@/lib/groups/seo";
 
 const WHY_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/WHY.png";
 const STORY_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/jordan%202.jpg";
+const STAR_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/thestar.png";
+const GROUP_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/biblegroup.JPG";
+const ATTENDANCE = [2, 4, 2, 14, 30, 20];
 const TITLE = "Why Read Talk Pray? | A Church Bigger Than a Building";
 const DESCRIPTION = "Discover why Read Talk Pray is rethinking church through simple Bible reading groups, volunteer leadership, real community, and a movement bigger than a building.";
 
@@ -69,52 +72,129 @@ export default function WhyPage() {
 
         <section className="mx-auto max-w-5xl px-5 py-16">
           <p className="text-xs font-semibold tracking-[0.18em] text-[#1976F3]">THE STORY BEHIND THE MOVEMENT</p>
-          <h2 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl">I Thought I Was Failing as a Pastor.</h2>
-          <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(240px,0.8fr)_minmax(0,1.2fr)] lg:gap-12">
-            <figure>
+          <div className="mt-6 flex flex-col items-start gap-6 sm:flex-row sm:items-center">
+            <figure className="w-40 shrink-0 sm:w-52">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={STORY_IMAGE}
-                alt="Jordan Nassie, co-founder of Read Talk Pray"
-                className="h-auto w-full rounded-3xl"
-              />
-              <figcaption className="mt-3 text-sm font-semibold text-[#142033]">Jordan Nassie — Co-founder, Read Talk Pray</figcaption>
+              <img src={STORY_IMAGE} alt="Jordan Nassie, co-founder of Read Talk Pray" className="h-auto w-full rounded-3xl" />
             </figure>
-            <div className="space-y-4 text-lg leading-relaxed text-[#334155]">
-              <p>For years, I thought I was failing as a pastor.</p>
-              <p>I didn&apos;t have a big church building. I didn&apos;t have hundreds of people sitting in rows. I didn&apos;t have a stage, giant screens, professional lighting, or a large staff.</p>
-              <p>I had something much simpler.</p>
-              <p>I had people gathering together to read the Bible, every Sunday morning.</p>
-              <p>And if I&apos;m being transparent, sometimes that made me feel like I wasn&apos;t succeeding.</p>
-              <p>I would look at large churches with beautiful buildings, packed auditoriums, and professional productions and wonder why my ministry didn&apos;t look like that.</p>
-              <p>But something incredible was happening in our small Bible groups.</p>
-              <p>People were reading God&apos;s Word. They were asking questions. They were praying for one another. They were building real friendships and growing in their faith.</p>
-              <p>Lives were being changed.</p>
-              <p>And one day, I began asking myself a different question.</p>
-              <Pull>What if I wasn&apos;t failing at building a church? What if I had been measuring church by the wrong things?</Pull>
-              <p>Jesus never told us to build bigger buildings. He told us to make disciples.</p>
-              <p>The early believers gathered in homes, shared meals, prayed together, and devoted themselves to the apostles&apos; teaching.</p>
-              <p>They didn&apos;t need a stage to worship Jesus.</p>
-              <p>They didn&apos;t need a building to become a church.</p>
-              <p>And they didn&apos;t need a paid professional leading every gathering to care for one another and grow in faith.</p>
-              <p>That&apos;s when I began to see something differently.</p>
-              <Pull>What if the very thing I thought made my church small was actually what could make it multiply?</Pull>
-              <p>What if ordinary Christians everywhere could gather around a Bible, build relationships, pray together, and help others do the same?</p>
-              <p>What if starting a church didn&apos;t require raising money, purchasing property, or hiring staff?</p>
-              <p>What if the Church could be bigger than a building?</p>
-              <p>That vision became Read Talk Pray.</p>
-              <p>Not another institution to maintain.</p>
-              <p>Not another building to finance.</p>
-              <p>But a simple way for people everywhere to gather around God&apos;s Word, follow Jesus, and make disciples.</p>
-              <p>My dream is to see Bible reading churches multiplying in homes, coffee shops, neighborhoods, cities, and villages around the world.</p>
-              <p>Because I believe the Church was never meant to be limited by the size of a building.</p>
-              <Pull>The Church is people following Jesus.</Pull>
-              <p>And everyone has a place at the table.</p>
-              <p className="pt-2 text-base font-semibold text-[#142033]">
-                Jordan Nassie
-                <span className="mt-1 block text-sm font-medium text-[#52627a]">Co-founder, Read Talk Pray</span>
-              </p>
+            <div>
+              <h2 className="max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl">I Thought I Was Failing as a Pastor.</h2>
+              <p className="mt-3 text-sm font-semibold text-[#142033]">Jordan Nassie — Co-founder, Read Talk Pray</p>
             </div>
+          </div>
+
+          <div className="mx-auto mt-10 max-w-3xl space-y-4 text-lg leading-relaxed text-[#334155]">
+            <p>For years, I thought I was failing as a pastor.</p>
+            <p>I didn&apos;t have a big church building. I didn&apos;t have hundreds of people sitting in rows. I didn&apos;t have a stage, giant screens, professional lighting, or a large staff.</p>
+            <p>What I had was something much simpler.</p>
+            <Pull>I had people gathering together to read the Bible, every Sunday morning.</Pull>
+          </div>
+
+          <div className="mt-8 grid items-center gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(240px,0.85fr)]">
+            <div className="space-y-4 text-lg leading-relaxed text-[#334155]">
+              <p>We started a Bible reading group at a coffee shop at The Star in Frisco, Texas.</p>
+              <p>Nothing fancy. Just ordinary people sitting around a table, drinking coffee, opening their Bibles, talking about life, and praying together.</p>
+            </div>
+            <StoryPhoto src={STAR_IMAGE} alt="The Star in Frisco, Texas, where the Sunday morning Bible group began" caption="The Star, Frisco, Texas — where our Sunday morning Bible group began." />
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl space-y-4 text-lg leading-relaxed text-[#334155]">
+            <p>At first, there were just two of us.</p>
+            <p>Then four came.</p>
+            <p>Then we were back down to two.</p>
+            <p>Eventually, we grew to 14, then 30, and sometimes back down to 20.</p>
+            <p>Our attendance fluctuated almost every Sunday.</p>
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl rounded-3xl border border-[#e6ebf2] bg-[#f8fafc] px-5 py-6 text-center">
+            <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-2xl font-semibold tracking-tight text-[#142033] sm:text-3xl">
+              {ATTENDANCE.map((count, index) => (
+                <span key={`${count}-${index}`} className="inline-flex items-center gap-2">
+                  {index > 0 ? <span className="text-[#1976F3]" aria-hidden>→</span> : null}
+                  <span>{count}</span>
+                </span>
+              ))}
+            </p>
+            <p className="mt-3 text-sm text-[#52627a]">Our Sunday attendance went up and down.</p>
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl space-y-4 text-lg leading-relaxed text-[#334155]">
+            <p>Some people came once and never returned. Others visited occasionally. Some became regulars, and others brought friends.</p>
+            <p>There were Sundays when I wondered whether we were actually growing or going backward.</p>
+            <p>And I&apos;ll be honest, sometimes it was discouraging.</p>
+            <p>I would see large churches with beautiful buildings, packed auditoriums, impressive stages, and hundreds of people attending every weekend.</p>
+            <p>And there I was, sitting around a coffee shop table with a handful of people and an open Bible.</p>
+            <p>I wondered whether I was doing something wrong.</p>
+            <Pull>Was I really building a church? Or was I just leading a Bible study?</Pull>
+          </div>
+
+          <div className="mt-8 grid items-center gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(240px,0.85fr)]">
+            <div className="space-y-4 text-lg leading-relaxed text-[#334155]">
+              <p>But something beautiful was happening that I almost overlooked.</p>
+              <p>People were getting to know one another.</p>
+              <p>They were sharing what was happening in their lives.</p>
+              <p>They were asking honest questions about God, Scripture, and faith.</p>
+              <p>They were encouraging one another, praying together, and developing real friendships.</p>
+              <p>People weren&apos;t just attending a service.</p>
+              <Pull>They were becoming family.</Pull>
+            </div>
+            <StoryPhoto src={GROUP_IMAGE} alt="The Sunday morning coffee shop Bible group gathered around a table" caption="Our Sunday morning coffee shop Bible group." />
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl space-y-4 text-lg leading-relaxed text-[#334155]">
+            <p>And over the course of a single year, something remarkable happened.</p>
+            <p>Although our group might have had only 10, 20, or 30 people around the table on any given Sunday, we had the opportunity to minister to <strong className="font-semibold text-[#142033]">more than 300 people</strong> throughout that year.</p>
+            <p>Three hundred people.</p>
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl rounded-3xl bg-[#142033] px-6 py-8 text-center text-white">
+            <p className="text-4xl font-semibold tracking-tight sm:text-6xl">300+</p>
+            <p className="mt-1 text-sm font-semibold tracking-[0.18em]">PEOPLE</p>
+            <p className="mt-3 text-base text-white/80">Ministered to over the course of one year.</p>
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl space-y-4 text-lg leading-relaxed text-[#334155]">
+            <p>Not because we had a building.</p>
+            <p>Not because we had a big budget.</p>
+            <p>Not because we had a professional production.</p>
+            <p>But because we kept showing up, opening the Bible, welcoming people, and making room at the table.</p>
+            <p>That&apos;s when I began to realize something.</p>
+            <Pull>Maybe I had been measuring church by the wrong things all along.</Pull>
+            <p>I had been measuring success by how many people showed up on Sunday.</p>
+            <p>But what if I should have been looking at how many people we were reaching, encouraging, discipling, and connecting with Jesus?</p>
+            <p>What if a church didn&apos;t need to grow into one enormous gathering to make an enormous impact?</p>
+            <p>What if it could simply keep welcoming people, raising up leaders, and multiplying into other neighborhoods?</p>
+            <p>I started thinking about the early church.</p>
+            <p>The believers gathered in homes. They shared meals. They devoted themselves to the apostles&apos; teaching, fellowship, and prayer.</p>
+            <p>They didn&apos;t need a massive building to be the Church.</p>
+            <p>And Jesus didn&apos;t command us to build bigger auditoriums.</p>
+            <Pull>He commanded us to make disciples.</Pull>
+            <p>Then a new question began forming in my heart.</p>
+            <p>What if the very thing I thought made my church small was actually what made it possible to multiply?</p>
+            <p>What if ordinary Christians could start Bible reading churches in coffee shops, homes, neighborhoods, and communities all over the world?</p>
+            <p>What if we removed the financial barriers?</p>
+            <p className="font-semibold text-[#142033]">No building required.</p>
+            <p className="font-semibold text-[#142033]">No paid local staff required.</p>
+            <p className="font-semibold text-[#142033]">No mandatory donations.</p>
+            <p>Just people gathering around God&apos;s Word, building genuine relationships, praying together, and helping others follow Jesus.</p>
+            <p>And when a group grows, instead of needing a bigger building, what if we simply help someone start another group?</p>
+            <Pull>One group becomes two. Two become four. And the Church keeps multiplying.</Pull>
+            <p>That&apos;s the vision behind Read Talk Pray.</p>
+            <p>I no longer believe a small gathering is a lesser expression of church simply because it doesn&apos;t have a building.</p>
+            <p>I believe something extraordinary can happen when ordinary people gather around the Bible.</p>
+            <p>I&apos;ve seen it happen.</p>
+            <p>I&apos;ve watched strangers become friends and friends become family.</p>
+            <p>And I&apos;ve seen how a simple coffee shop Bible group can touch hundreds of lives.</p>
+            <p>Now I dream of seeing that happen in thousands of communities around the world.</p>
+            <p>Not because we&apos;re trying to build the biggest institution.</p>
+            <p>But because we want to help more people encounter Jesus, discover their purpose, and become disciples who make disciples.</p>
+            <Pull>The Church was never meant to be limited by the size of a building.</Pull>
+            <p>That&apos;s why we started Read Talk Pray.</p>
+            <p className="italic">A Bible Reading Church That&apos;s Bigger Than a Building.</p>
+            <p className="pt-2 text-base font-semibold text-[#142033]">
+              — Jordan Nassie
+              <span className="mt-1 block text-sm font-medium text-[#52627a]">Co-founder, Read Talk Pray</span>
+            </p>
           </div>
         </section>
 
@@ -254,6 +334,16 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 function Pull({ children }: { children: ReactNode }) {
   return <p className="text-xl font-semibold tracking-tight text-[#142033]">{children}</p>;
+}
+
+function StoryPhoto({ src, alt, caption }: { src: string; alt: string; caption: string }) {
+  return (
+    <figure>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} className="h-auto w-full rounded-3xl" />
+      <figcaption className="mt-3 text-sm text-[#52627a]">{caption}</figcaption>
+    </figure>
+  );
 }
 
 function Practice({ name, body }: { name: string; body: string }) {
