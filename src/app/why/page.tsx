@@ -75,7 +75,7 @@ export default function WhyPage() {
           <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">I Thought I Was Failing as a Pastor.</h2>
           <div className="mt-6 flex items-center gap-4 border-b border-[#e6ebf2] pb-8">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={STORY_IMAGE} alt="Jordan Nassie, co-founder of Read Talk Pray" className="h-16 w-16 rounded-2xl object-cover ring-1 ring-[#e6ebf2] sm:h-20 sm:w-20" />
+            <img src={STORY_IMAGE} alt="Jordan Nassie, co-founder of Read Talk Pray" className="h-32 w-32 rounded-2xl object-cover ring-1 ring-[#e6ebf2] sm:h-40 sm:w-40" />
             <div>
               <p className="font-semibold text-[#142033]">Jordan Nassie</p>
               <p className="text-sm text-[#52627a]">Co-founder, Read Talk Pray</p>
