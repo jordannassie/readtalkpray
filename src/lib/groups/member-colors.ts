@@ -1,11 +1,20 @@
-const COLORS = ["#2563EB", "#F43F8A", "#A855F7", "#10B981", "#F97316", "#14B8A6", "#F43F5E", "#38BDF8"] as const;
+const GRADIENTS = [
+  "linear-gradient(135deg, #3E6BA8 0%, #6A90C0 100%)",
+  "linear-gradient(135deg, #B56B80 0%, #C992A4 100%)",
+  "linear-gradient(135deg, #6E629E 0%, #8B84B8 100%)",
+  "linear-gradient(135deg, #3F7F6C 0%, #6A9E88 100%)",
+  "linear-gradient(135deg, #B56E48 0%, #C99670 100%)",
+  "linear-gradient(135deg, #3A7C82 0%, #6A9EAA 100%)",
+  "linear-gradient(135deg, #A85A68 0%, #C08A78 100%)",
+  "linear-gradient(135deg, #54648F 0%, #7278A4 100%)",
+] as const;
 
-const COLOR_SETS: number[][] = [];
-for (let first = 0; first < COLORS.length; first += 1) {
-  for (let second = first + 1; second < COLORS.length; second += 1) {
-    for (let third = second + 1; third < COLORS.length; third += 1) {
-      for (let fourth = third + 1; fourth < COLORS.length; fourth += 1) {
-        COLOR_SETS.push([first, second, third, fourth]);
+const GRADIENT_SETS: number[][] = [];
+for (let first = 0; first < GRADIENTS.length; first += 1) {
+  for (let second = first + 1; second < GRADIENTS.length; second += 1) {
+    for (let third = second + 1; third < GRADIENTS.length; third += 1) {
+      for (let fourth = third + 1; fourth < GRADIENTS.length; fourth += 1) {
+        GRADIENT_SETS.push([first, second, third, fourth]);
       }
     }
   }
@@ -33,7 +42,7 @@ function permute<T>(items: readonly T[], seed: number) {
 
 export function groupMemberColors(groupId: string) {
   const hash = hashGroupId(groupId);
-  const chosen = COLOR_SETS[hash % COLOR_SETS.length].map((index) => COLORS[index]);
+  const chosen = GRADIENT_SETS[hash % GRADIENT_SETS.length].map((index) => GRADIENTS[index]);
   return permute(chosen, hashGroupId(`${groupId}:order`));
 }
 
