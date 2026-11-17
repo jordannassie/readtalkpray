@@ -81,7 +81,7 @@ export default async function HomePage() {
       <GroupFinder groups={groups} />
 
       <StartGuide />
-      <ChristianityCenter heading="h2" />
+      <ChristianityCenter heading="h2" library={false} />
       <Multiply />
       <WorldGlobe places={places} />
       <Beliefs />

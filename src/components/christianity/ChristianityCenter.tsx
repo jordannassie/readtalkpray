@@ -5,7 +5,7 @@ import { ArrowRight, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ARTICLES, FEATURED, TOPICS, filterArticles } from "@/lib/christianity/articles";
 
-export function ChristianityCenter({ heading = "h1" }: { heading?: "h1" | "h2" }) {
+export function ChristianityCenter({ heading = "h1", library = true }: { heading?: "h1" | "h2"; library?: boolean }) {
   const Title = heading;
   const [query, setQuery] = useState("");
   const results = useMemo(() => filterArticles(ARTICLES, query), [query]);
@@ -71,7 +71,7 @@ export function ChristianityCenter({ heading = "h1" }: { heading?: "h1" | "h2" }
           )}
         </div>
       </section>
-      {searching ? null : (
+      {library && !searching ? (
         <section className="mx-auto max-w-[1120px] px-4 py-12 sm:px-6">
           <h2 className="text-2xl font-semibold tracking-tight text-[#142033]">Answers by topic</h2>
           <div className="mt-6 space-y-8">
@@ -95,7 +95,7 @@ export function ChristianityCenter({ heading = "h1" }: { heading?: "h1" | "h2" }
             })}
           </div>
         </section>
-      )}
+      ) : null}
     </>
   );
 }

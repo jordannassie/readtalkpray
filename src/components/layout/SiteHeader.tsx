@@ -9,7 +9,6 @@ import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 const LEFT = [
-  { href: "/#groups", label: "Find a Group" },
   { href: "/#how", label: "How It Works" },
   { href: "/christianity", label: "Christianity" },
   { href: "/#beliefs", label: "About" },
@@ -136,8 +135,7 @@ export function SiteHeader({ activeHref }: { tone?: "solid" | "overlay" | "light
             {start.label}
           </Link>
           <Link href="/#groups" className={`${account ? "hidden lg:inline-flex" : "inline-flex"} h-10 items-center justify-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white`}>
-            <span className="lg:hidden">Join</span>
-            <span className="hidden lg:inline">Join a Group</span>
+            Find a Group
           </Link>
         </div>
       </div>
@@ -149,7 +147,7 @@ export function SiteHeader({ activeHref }: { tone?: "solid" | "overlay" | "light
             </Link>
           ))}
           <Link href={start.href} className="block py-3 text-base text-black" onClick={() => setOpen(false)}>{start.label}</Link>
-          <Link href="/#groups" className="block py-3 text-base text-black" onClick={() => setOpen(false)}>Join a Group</Link>
+          <Link href="/#groups" className="block py-3 text-base text-black" onClick={() => setOpen(false)}>Find a Group</Link>
           {account ? (
             <>
               <Link href="/app" className="block py-3 text-base text-black" onClick={() => setOpen(false)}>Account</Link>
