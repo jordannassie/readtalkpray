@@ -5,7 +5,8 @@ import { ArrowRight, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ARTICLES, FEATURED, TOPICS, filterArticles } from "@/lib/christianity/articles";
 
-export function ChristianityCenter() {
+export function ChristianityCenter({ heading = "h1" }: { heading?: "h1" | "h2" }) {
+  const Title = heading;
   const [query, setQuery] = useState("");
   const results = useMemo(() => filterArticles(ARTICLES, query), [query]);
   const searching = query.trim().length > 0;
@@ -15,7 +16,7 @@ export function ChristianityCenter() {
       <section className="bg-gradient-to-b from-[#1d74e0] to-[#0e4ea8] text-white">
         <div className="mx-auto max-w-[1120px] px-4 py-10 sm:px-6 sm:py-14">
           <div className="mx-auto max-w-3xl text-center">
-            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Questions About Christianity?</h1>
+            <Title className="text-4xl font-semibold tracking-tight sm:text-5xl">Questions About Christianity?</Title>
             <p className="mt-3 text-base text-white/90 sm:text-lg">Simple, Bible-based answers to life&apos;s biggest questions.</p>
             <label className="relative mx-auto mt-6 block max-w-xl text-left">
               <span className="sr-only">Search questions</span>

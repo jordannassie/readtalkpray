@@ -3,6 +3,7 @@ import { Beliefs } from "@/components/home/Beliefs";
 import { GroupFinder } from "@/components/home/GroupFinder";
 import { HeroVideo } from "@/components/home/HeroVideo";
 import { Multiply } from "@/components/home/Multiply";
+import { ChristianityCenter } from "@/components/christianity/ChristianityCenter";
 import { StartGuide } from "@/components/home/StartGuide";
 import { WorldGlobe } from "@/components/home/WorldGlobe";
 import { HERO_IMAGE } from "@/lib/demo/data";
@@ -80,6 +81,7 @@ export default async function HomePage() {
       <GroupFinder groups={groups} />
 
       <StartGuide />
+      <ChristianityCenter heading="h2" />
       <Multiply />
       <WorldGlobe places={places} />
       <Beliefs />
