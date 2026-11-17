@@ -60,9 +60,12 @@ export function BibleGroupChecklist({ initial }: { initial: boolean[] }) {
 
   return (
     <div className="mt-4">
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="text-sm font-semibold text-[#142033]">Your Bible Group Checklist</p>
-        <p className="shrink-0 text-sm text-[#52627a]">{done} of 6 complete</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-[#142033]">Your Bible Group Checklist</p>
+          <p className="mt-0.5 text-sm text-[#52627a]">Check off each step as you go.</p>
+        </div>
+        <p className="shrink-0 text-sm font-semibold text-[#142033]">{done}/6 Done</p>
       </div>
       <div className="mt-2 h-1 overflow-hidden rounded-full bg-[#e6ebf2]" aria-hidden>
         <div className="h-full bg-[#1976F3] motion-safe:transition-[width] motion-safe:duration-200" style={{ width: `${(done / 6) * 100}%` }} />
@@ -71,20 +74,19 @@ export function BibleGroupChecklist({ initial }: { initial: boolean[] }) {
         {STEPS.map((step, index) => {
           const checked = steps[index];
           return (
-            <li key={step.title} className={`rounded-2xl border border-[#e6ebf2] motion-safe:transition-colors motion-safe:duration-200 ${checked ? "bg-[#f4f8fc]" : "bg-white"}`}>
+            <li key={step.title} className={`rounded-2xl border border-[#e6ebf2] motion-safe:transition-colors motion-safe:duration-200 ${checked ? "bg-[#eef5ff]" : "bg-white"}`}>
               <button
                 type="button"
                 aria-pressed={checked}
                 onClick={() => toggle(index)}
                 className="flex w-full items-start gap-3 px-3 py-3 text-left motion-safe:transition motion-safe:duration-150 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1976F3]"
               >
-                <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#1976F3] text-sm font-semibold text-white">
-                  <span className={`motion-safe:transition motion-safe:duration-200 ${checked ? "scale-75 opacity-0" : "scale-100 opacity-100"}`}>{index + 1}</span>
-                  <Check className={`absolute motion-safe:transition motion-safe:duration-200 ${checked ? "scale-100 opacity-100" : "scale-75 opacity-0"}`} size={16} aria-hidden />
+                <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-md border-2 motion-safe:transition-colors motion-safe:duration-200 ${checked ? "border-[#1D74F5] bg-[#1D74F5]" : "border-[#98a2b3] bg-white"}`}>
+                  <Check className={`text-white motion-safe:transition motion-safe:duration-200 ${checked ? "scale-100 opacity-100" : "scale-50 opacity-0"}`} size={20} strokeWidth={3} aria-hidden />
                 </span>
                 <span className="min-w-0">
-                  <span className={`block text-sm font-semibold line-through decoration-2 motion-safe:transition-[color,text-decoration-color] motion-safe:duration-200 ${checked ? "text-[#94a3b8] decoration-[#94a3b8]" : "text-[#142033] decoration-transparent"}`}>{step.title}</span>
-                  <span className={`mt-0.5 block text-sm leading-snug line-through decoration-2 motion-safe:transition-[color,text-decoration-color] motion-safe:duration-200 ${checked ? "text-[#94a3b8] decoration-[#94a3b8]" : "text-[#52627a] decoration-transparent"}`}>{step.body}</span>
+                  <span className={`block text-sm font-semibold line-through decoration-2 motion-safe:transition-[color,text-decoration-color] motion-safe:duration-200 ${checked ? "text-[#142033] decoration-[#142033]" : "text-[#142033] decoration-transparent"}`}>{step.title}</span>
+                  <span className={`mt-0.5 block text-sm leading-snug motion-safe:transition-colors motion-safe:duration-200 ${checked ? "text-[#94a3b8]" : "text-[#52627a]"}`}>{step.body}</span>
                 </span>
               </button>
               {step.link ? (
