@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
-import { geocodePlace, googlePlaceDetails, googlePlaceSuggestions, suggestRealPlaces } from "@/lib/groups/geo";
+import { geocodePlace, googlePlaceDetails, googlePlaceSuggestions, reverseCity, suggestRealPlaces } from "@/lib/groups/geo";
+import { nearLabel } from "@/lib/groups/nearby";
 import { isIanaTimeZone } from "@/lib/groups/sunday";
 import { cleanText } from "@/lib/groups/text";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  if (url.searchParams.get("reverse") === "1") {
+    const latitude = Number(url.searchParams.get("lat"));
+    const longitude = Number(url.searchParams.get("lng"));
+    const found = await reverseCity(latitude, longitude);
+    return NextResponse.json({ ok: true, label: found ? nearLabel(found.city, found.state) : "" });
+  }
   const placeId = cleanText(url.searchParams.get("id") ?? "", 200);
   const key = process.env.GOOGLE_PLACES_API_KEY;
   if (placeId) {

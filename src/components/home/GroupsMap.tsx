@@ -35,17 +35,20 @@ function pinHtml(group: PublicGroup) {
 export function GroupsMap({
   groups,
   focus,
+  userLocation,
   selectedId,
   onSelect,
 }: {
   groups: PublicGroup[];
   focus: Focus;
+  userLocation?: Focus;
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
   const nodeRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
+  const userMarkerRef = useRef<Marker | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -83,6 +86,8 @@ export function GroupsMap({
     void import("leaflet").then((L) => {
       if (cancelled || mapRef.current !== map) return;
       markersRef.current.forEach((marker) => marker.remove());
+      userMarkerRef.current?.remove();
+      userMarkerRef.current = null;
       markersRef.current = groups.map((group) => {
         const pair = Boolean(group.co_leader_name);
         const marker = L.marker([group.latitude, group.longitude], {
@@ -105,13 +110,32 @@ export function GroupsMap({
       const latSpan = latitudes.length ? Math.max(...latitudes) - Math.min(...latitudes) : 0;
       const lngSpan = longitudes.length ? Math.max(...longitudes) - Math.min(...longitudes) : 0;
       const clustered = latSpan < 0.35 && lngSpan < 0.35;
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      if (focus) {
-        map.flyTo([focus.latitude, focus.longitude], 11, { duration: 0.6 });
+      if (userLocation) {
+        const marker = L.marker([userLocation.latitude, userLocation.longitude], {
+          icon: L.divIcon({
+            className: "rtp-user-icon",
+            html: `<div class="rtp-user-pin"><span></span></div>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+          }),
+          keyboard: false,
+          interactive: false,
+          zIndexOffset: 800,
+          title: "Your location",
+        });
+        marker.addTo(map);
+        userMarkerRef.current = marker;
+        const points: [number, number][] = [[userLocation.latitude, userLocation.longitude], ...groups.map((group) => [group.latitude, group.longitude] as [number, number])];
+        if (groups.length) map.fitBounds(L.latLngBounds(points), { padding: [48, 48], maxZoom: 13, animate: !reduceMotion });
+        else map.setView([userLocation.latitude, userLocation.longitude], 12);
+      } else if (focus) {
+        map.flyTo([focus.latitude, focus.longitude], 11, { duration: reduceMotion ? 0 : 0.6 });
       } else if (groups.length === 1) {
         map.setView([groups[0].latitude, groups[0].longitude], 12);
       } else if (groups.length > 1 && clustered) {
-        map.fitBounds(L.latLngBounds(groups.map((group) => [group.latitude, group.longitude])), { padding: [48, 48], maxZoom: 12 });
+        map.fitBounds(L.latLngBounds(groups.map((group) => [group.latitude, group.longitude])), { padding: [48, 48], maxZoom: 12, animate: !reduceMotion });
       } else {
         map.setView([36.1, -86.78], 11);
       }
@@ -121,15 +145,15 @@ export function GroupsMap({
       markersRef.current.forEach((marker, index) => {
         marker.getElement()?.classList.toggle("rtp-pin-selected", groups[index]?.id === selectedId);
       });
-      if (selected && selectedMarker) {
-        map.flyTo([selected.latitude, selected.longitude], Math.max(map.getZoom(), 12), { duration: 0.35 });
+      if (!userLocation && selected && selectedMarker) {
+        map.flyTo([selected.latitude, selected.longitude], Math.max(map.getZoom(), 12), { duration: reduceMotion ? 0 : 0.35 });
       }
       window.setTimeout(() => map.invalidateSize(), 50);
     });
     return () => {
       cancelled = true;
     };
-  }, [ready, groups, focus, selectedId, onSelect]);
+  }, [ready, groups, focus, userLocation, selectedId, onSelect]);
 
   useEffect(() => {
     const onResize = () => mapRef.current?.invalidateSize();

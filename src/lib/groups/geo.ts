@@ -254,6 +254,30 @@ export async function searchPlaces(query: string) {
   return body.map((place) => foundPlace(place, query)).filter((place): place is FoundPlace => Boolean(place));
 }
 
+export async function reverseCity(latitude: number, longitude: number) {
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null;
+  const url = new URL("https://nominatim.openstreetmap.org/reverse");
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("addressdetails", "1");
+  url.searchParams.set("zoom", "12");
+  url.searchParams.set("lat", latitude.toFixed(2));
+  url.searchParams.set("lon", longitude.toFixed(2));
+  const response = await fetch(url, {
+    headers: {
+      accept: "application/json",
+      "user-agent": "ReadTalkPray/1.0 (group finder)",
+    },
+  });
+  if (!response.ok) return null;
+  const body = (await response.json()) as NominatimPlace;
+  const address = body.address;
+  const city = address?.city || address?.town || address?.village || address?.hamlet || address?.suburb || "";
+  const state = address?.state || "";
+  if (!city && !state) return null;
+  return { city, state };
+}
+
 export async function geocodePlace(query: string) {
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("format", "jsonv2");

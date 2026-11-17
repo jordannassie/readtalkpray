@@ -4,10 +4,11 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowRight, Calendar, ChevronLeft, MapPin, Search, X } from "lucide-react";
+import { ArrowRight, Calendar, Check, ChevronLeft, Loader2, LocateFixed, MapPin, Search, X } from "lucide-react";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { LeaderFaces } from "@/components/groups/LeaderFaces";
 import { distanceKm } from "@/lib/groups/geo";
+import { formatMiles, groupsByDistance, SEARCH_RADII, widerRadius, type SearchRadius } from "@/lib/groups/nearby";
 import { cityState, leaderLine, meetingWhen, type PublicGroup } from "@/lib/groups/types";
 
 const GroupsMap = dynamic(() => import("@/components/home/GroupsMap").then((mod) => mod.GroupsMap), {
@@ -20,6 +21,12 @@ type Place = { latitude: number; longitude: number; label: string };
 export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
   const [query, setQuery] = useState("");
   const [place, setPlace] = useState<Place | null>(null);
+  const [located, setLocated] = useState<Place | null>(null);
+  const [radius, setRadius] = useState<SearchRadius>(10);
+  const [showAll, setShowAll] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const [locationNote, setLocationNote] = useState("");
   const [searching, setSearching] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(groups[0]?.id ?? null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -28,23 +35,40 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
   const [mounted, setMounted] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
+  const locateRequest = useRef(0);
 
-  const visible = useMemo(() => {
+  const listed = useMemo(() => {
     const text = query.trim().toLowerCase();
-    if (!text && !place) return groups;
-    return groups.filter((group) => {
+    const matchesText = (group: PublicGroup) => {
       const haystack = `${group.name} ${group.city} ${group.state ?? ""} ${group.country} ${group.public_location} ${group.meeting_day ?? ""} ${group.meeting_time ?? ""}`.toLowerCase();
-      if (text && haystack.includes(text)) return true;
-      if (place && distanceKm(place, group) <= 32) return true;
-      return false;
-    });
-  }, [groups, query, place]);
+      return haystack.includes(text);
+    };
+    if (located) {
+      const ranked = groupsByDistance(groups, located, showAll ? null : radius);
+      const filtered = text ? ranked.filter((item) => matchesText(item.group)) : ranked;
+      return filtered.map((item) => ({ group: item.group, km: item.km }));
+    }
+    const matched = !text && !place
+      ? groups
+      : groups.filter((group) => {
+          if (text && matchesText(group)) return true;
+          return Boolean(place && distanceKm(place, group) <= 32);
+        });
+    return matched.map((group) => ({ group, km: null as number | null }));
+  }, [groups, query, place, located, radius, showAll]);
 
+  const visible = listed.map((item) => item.group);
   const selected = visible.find((group) => group.id === selectedId) ?? null;
 
   function clearSearch() {
+    locateRequest.current += 1;
     setQuery("");
     setPlace(null);
+    setLocated(null);
+    setShowAll(false);
+    setLocating(false);
+    setLocationError("");
+    setLocationNote("");
     setNotice("");
   }
 
@@ -100,6 +124,66 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
     };
   }, [sheetOpen]);
 
+  function widenSearch() {
+    const next = widerRadius(radius);
+    if (next) {
+      setRadius(next);
+      return;
+    }
+    setShowAll(true);
+  }
+
+  async function useMyLocation() {
+    const request = ++locateRequest.current;
+    setLocationError("");
+    setNotice("");
+    if (!navigator.geolocation) {
+      setLocationError("Location unavailable. Search by city or ZIP code.");
+      return;
+    }
+    setLocating(true);
+    setShowMap(true);
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 12000,
+          maximumAge: 60000,
+        });
+      });
+      if (request !== locateRequest.current) return;
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        setLocationError("Location unavailable. Search by city or ZIP code.");
+        return;
+      }
+      const origin = { latitude, longitude, label: "" };
+      setPlace(null);
+      setShowAll(false);
+      setLocated(origin);
+      setLocationNote("Finding groups near you...");
+      const closest = groupsByDistance(groups, origin, radius)[0]?.group.id ?? null;
+      setSelectedId(closest);
+      window.setTimeout(() => {
+        if (request === locateRequest.current) setLocationNote("");
+      }, 1600);
+      try {
+        const response = await fetch(`/api/places?reverse=1&lat=${latitude.toFixed(2)}&lng=${longitude.toFixed(2)}`);
+        const body = (await response.json()) as { label?: string };
+        if (request !== locateRequest.current || !response.ok || !body.label) return;
+        setLocated({ latitude, longitude, label: body.label });
+      } catch {
+        // The city label is optional. The nearby search already used the device coordinates.
+      }
+    } catch {
+      if (request !== locateRequest.current) return;
+      setLocationError("Location unavailable. Search by city or ZIP code.");
+    } finally {
+      if (request === locateRequest.current) setLocating(false);
+    }
+  }
+
   async function onSearch(event: FormEvent) {
     event.preventDefault();
     const next = query.trim();
@@ -108,6 +192,12 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
       setPlace(null);
       return;
     }
+    locateRequest.current += 1;
+    setLocating(false);
+    setLocated(null);
+    setLocationError("");
+    setLocationNote("");
+    setShowAll(false);
     setSearching(true);
     try {
       const response = await fetch(`/api/places?q=${encodeURIComponent(next)}`);
@@ -130,19 +220,20 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
       <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-5 sm:py-10">
         <div id="groups" className="scroll-mt-28 text-center">
           <h2 className="text-4xl font-bold tracking-tight text-[#142033] sm:text-5xl">Find a Bible Group</h2>
-          <form onSubmit={onSearch} className="mx-auto mt-5 w-full max-w-[1080px]">
-            <label className="sr-only" htmlFor="group-search">Search by neighborhood or city</label>
+          <p className="mt-2 text-sm text-[#52627a] sm:text-base">Find people reading the Bible together near you.</p>
+          <form onSubmit={onSearch} className="mx-auto mt-4 w-full max-w-[1080px]">
+            <label className="sr-only" htmlFor="group-search">Search city, ZIP code, or neighborhood</label>
             <div className="flex h-14 items-center gap-3 rounded-full border border-[#c5daf8] bg-white px-5 shadow-sm focus-within:border-[#1976F3] focus-within:shadow-[0_0_0_4px_rgba(25,118,243,0.16)] sm:h-16">
               <Search size={20} className="shrink-0 text-[#1976F3]" aria-hidden />
               <input
                 id="group-search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search by neighborhood or city..."
+                placeholder="Search city, ZIP code, or neighborhood..."
                 className="h-full w-full bg-transparent text-base outline-none placeholder:text-[#8a8a8a]"
               />
-              {query || place ? (
-                <button type="button" onClick={clearSearch} aria-label="Clear search" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[#52627a]">
+              {query || place || located ? (
+                <button type="button" onClick={clearSearch} aria-label="Clear search" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[#52627a]">
                   <X size={18} aria-hidden />
                 </button>
               ) : null}
@@ -150,7 +241,45 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
             <button type="submit" className="sr-only" disabled={searching}>
               {searching ? "Searching" : "Search"}
             </button>
-            {notice ? <p className="mt-2 text-sm text-[#9a3412]">{notice}</p> : null}
+            <button
+              type="button"
+              onClick={useMyLocation}
+              disabled={locating}
+              aria-busy={locating}
+              className={`mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold text-white transition duration-200 active:scale-[0.98] disabled:cursor-wait motion-reduce:transform-none ${located && !locating ? "bg-[#15803d]" : "bg-[#1976F3] hover:bg-[#1565d8]"}`}
+            >
+              {locating ? <Loader2 size={18} className="animate-spin motion-reduce:animate-none" aria-hidden /> : located ? <Check size={18} aria-hidden /> : <LocateFixed size={18} aria-hidden />}
+              {locating ? "Finding Your Location..." : located?.label || (located ? "Location found" : "Use My Current Location")}
+            </button>
+            <p className="mt-2 inline-flex items-center justify-center gap-1.5 text-xs text-[#6d7b90]">
+              <LocateFixed size={13} aria-hidden />
+              Find nearby groups automatically
+            </p>
+            <div role="radiogroup" aria-label="Distance" className="mx-auto mt-3 flex max-w-md gap-2">
+              {SEARCH_RADII.map((miles) => {
+                const selectedRadius = !showAll && radius === miles;
+                return (
+                  <button
+                    key={miles}
+                    type="button"
+                    role="radio"
+                    aria-checked={selectedRadius}
+                    onClick={() => {
+                      setRadius(miles);
+                      setShowAll(false);
+                    }}
+                    className={`h-11 min-w-0 flex-1 rounded-full border text-sm font-semibold transition duration-200 active:scale-[0.98] motion-reduce:transform-none ${selectedRadius ? "border-[#1976F3] bg-[#e7f1ff] text-[#1565d8]" : "border-[#e6ebf2] bg-white text-[#52627a]"}`}
+                  >
+                    {miles} miles
+                  </button>
+                );
+              })}
+            </div>
+            {locationError || locationNote || notice ? (
+              <p aria-live="polite" className={`mt-2 text-sm ${locationError || notice ? "text-[#9a3412]" : "text-[#52627a]"}`}>
+                {locationError || locationNote || notice}
+              </p>
+            ) : null}
           </form>
         </div>
 
@@ -160,11 +289,31 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
             <div className="max-h-[460px] min-w-0 space-y-2 overflow-auto lg:max-h-none lg:flex-1">
               {visible.length === 0 ? (
                 <div className="rounded-2xl border border-[#d5deea] bg-[#f8fafc] px-4 py-8 text-center">
-                  <p className="font-semibold text-[#142033]">No groups in that search yet.</p>
-                  <p className="mt-1 text-sm text-[#52627a]">Try another city, or start a group nearby.</p>
+                  {located && !query.trim() ? (
+                    <>
+                      <p className="font-semibold text-[#142033]">No Bible Groups found within {radius} miles.</p>
+                      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                        {showAll ? null : (
+                          <button type="button" onClick={widenSearch} className="inline-flex h-11 items-center justify-center rounded-full border border-[#1976F3] bg-white px-4 text-sm font-semibold text-[#1565d8]">
+                            Widen Search
+                          </button>
+                        )}
+                        <Link href="/app/start" className="inline-flex h-11 items-center justify-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">
+                          Start a Group
+                        </Link>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-semibold text-[#142033]">No groups in that search yet.</p>
+                      <p className="mt-1 text-sm text-[#52627a]">Try another city, or start a group nearby.</p>
+                    </>
+                  )}
                 </div>
               ) : (
-                visible.map((group) => (
+                listed.map((item) => {
+                  const group = item.group;
+                  return (
                   <div
                     key={group.id}
                     role="button"
@@ -192,9 +341,10 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
                         <Calendar size={13} className="shrink-0 text-[#1976F3]" aria-hidden />
                         {meetingWhen(group) || "Time to be announced"}
                       </span>
-                      <span className="mt-0.5 flex items-center gap-1 text-sm text-[#5d6b82]">
+                      <span className="mt-0.5 flex min-w-0 items-center gap-1 text-sm text-[#5d6b82]">
                         <MapPin size={13} className="shrink-0 text-[#1976F3]" aria-hidden />
                         <span className="truncate">{cityState(group) || group.public_location}</span>
+                        {item.km != null ? <span className="shrink-0 font-semibold text-[#1976F3]">{formatMiles(item.km, group.location_type === "home")}</span> : null}
                       </span>
                       <span className="mt-0.5 block truncate text-xs text-[#52627a]">Led by {leaderLine(group)}</span>
                     </span>
@@ -209,13 +359,14 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
                       {group.is_demo ? "Preview" : "Join"} →
                     </button>
                   </div>
-                ))
+                );
+                })
               )}
             </div>
             </div>
 
             <div ref={mapRef} id="groups-map" className={`relative z-0 order-2 h-[220px] min-w-0 overflow-hidden rounded-[22px] border border-[#e6ebf2] bg-white shadow-sm isolate md:h-[320px] lg:order-2 lg:h-auto lg:min-h-[640px] ${sheetOpen ? "max-lg:hidden" : ""}`}>
-              {showMap ? <GroupsMap groups={visible} focus={place} selectedId={selectedId} onSelect={selectGroup} /> : <div className="h-full min-h-[220px] animate-pulse bg-[#e7eef8] md:min-h-[320px]" />}
+              {showMap ? <GroupsMap groups={visible} focus={located ?? place} userLocation={located} selectedId={selectedId} onSelect={selectGroup} /> : <div className="h-full min-h-[220px] animate-pulse bg-[#e7eef8] md:min-h-[320px]" />}
             </div>
 
             <aside id="group-panel" className="order-3 hidden min-w-0 overflow-auto rounded-[22px] border border-[#e6ebf2] bg-white p-4 shadow-sm lg:block lg:max-h-[680px]">
