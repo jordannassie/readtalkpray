@@ -40,7 +40,7 @@ export default async function HomePage() {
             <h1 className="max-w-[12ch] text-[2.7rem] leading-[0.95] font-semibold tracking-[-0.045em] text-white sm:text-6xl lg:text-7xl">
               Read. Talk. Pray.
             </h1>
-            <p className="mt-5 max-w-md text-lg text-white/85 sm:text-2xl">A simple way to follow Jesus together.</p>
+            <p className="mt-5 max-w-md text-lg text-white/85 sm:text-2xl">Discover Jesus together.</p>
             <ul className="mt-8 grid max-w-xl grid-cols-3 gap-2 sm:mt-10">
               {STEPS.map((step, index) => {
                 const Icon = step.icon;

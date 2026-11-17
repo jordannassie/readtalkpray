@@ -350,7 +350,7 @@ export function filterArticles(articles: ChristianityArticle[], query: string) {
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (!words.length) return articles;
   return articles.filter((article) => {
-    const haystack = [article.title, article.topic, ...article.keywords].join(" ").toLowerCase();
+    const haystack = [article.title, article.topic, article.intro, ...article.keywords].join(" ").toLowerCase();
     return words.every((word) => haystack.includes(word));
   });
 }

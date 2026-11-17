@@ -10,7 +10,8 @@ test("featured questions are in the library", () => {
 
 test("search matches title, topic, and keywords", () => {
   assert.equal(filterArticles(ARTICLES, "baptized").some((article) => article.slug === "why-get-baptized"), true);
-  assert.equal(filterArticles(ARTICLES, "prayer").every((article) => article.topic === "Prayer"), true);
+  assert.equal(filterArticles(ARTICLES, "prayer").some((article) => article.topic === "Prayer"), true);
   assert.equal(filterArticles(ARTICLES, "resurrection").some((article) => article.slug === "did-jesus-rise-from-the-dead"), true);
+  assert.equal(filterArticles(ARTICLES, "who is jesus").some((article) => article.slug === "who-is-jesus"), true);
   assert.equal(filterArticles(ARTICLES, "zzzz-no-match").length, 0);
 });
