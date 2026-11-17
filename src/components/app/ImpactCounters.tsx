@@ -1,23 +1,25 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Minus, Plus, Send, UserPlus, Waves } from "lucide-react";
+import { Check, Minus, Plus, Send, UserPlus, Users, Waves } from "lucide-react";
 import type { ImpactCounts } from "@/lib/impact";
 
 const METRICS = [
-  { key: "saved", label: "People Saved", icon: UserPlus, card: "bg-[#e7f1ff] text-[#1976F3]" },
-  { key: "baptized", label: "People Baptized", icon: Waves, card: "bg-[#e5f8fb] text-[#0891b2]" },
-  { key: "sent", label: "People Sent", icon: Send, card: "bg-[#f3e8ff] text-[#7c3aed]" },
+  { key: "members", label: "Group Members", icon: Users, card: "bg-[#e8f1ff]", iconClass: "text-[#1976F3]" },
+  { key: "saved", label: "People Saved", icon: UserPlus, card: "bg-[#e8f8ea]", iconClass: "text-[#16a34a]" },
+  { key: "baptized", label: "People Baptized", icon: Waves, card: "bg-[#e5f8fb]", iconClass: "text-[#0891b2]" },
+  { key: "sent", label: "People Sent", icon: Send, card: "bg-[#fff3df]", iconClass: "text-[#e07a12]" },
 ] as const;
 
 type Metric = (typeof METRICS)[number]["key"];
 
 export function ImpactCounters({ groupId, initial }: { groupId: string; initial: ImpactCounts }) {
   const [counts, setCounts] = useState(initial);
-  const [notice, setNotice] = useState("");
-  const [error, setError] = useState(false);
+  const [savedKey, setSavedKey] = useState<Metric | null>(null);
+  const [reason, setReason] = useState("");
   const confirmed = useRef(initial);
   const generation = useRef(0);
+  const applied = useRef(0);
   const inflight = useRef(0);
 
   useEffect(() => {
@@ -41,8 +43,8 @@ export function ImpactCounters({ groupId, initial }: { groupId: string; initial:
     if (delta < 0 && current <= 0) return;
     const id = ++generation.current;
     inflight.current += 1;
-    setError(false);
-    setNotice("");
+    setReason("");
+    setSavedKey(null);
     setCounts((value) => ({ ...value, [metric]: Math.max(0, value[metric] + delta) }));
     try {
       const response = await fetch("/api/impact", {
@@ -50,54 +52,56 @@ export function ImpactCounters({ groupId, initial }: { groupId: string; initial:
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ groupId, metric, delta }),
       });
-      const body = (await response.json()) as { ok?: boolean; counts?: ImpactCounts };
-      if (response.ok && body.counts) {
+      const body = (await response.json()) as { ok?: boolean; counts?: ImpactCounts; error?: string };
+      if (response.ok && body.counts && id >= applied.current) {
+        applied.current = id;
         confirmed.current = body.counts;
         if (id === generation.current) {
           setCounts(body.counts);
-          setNotice("Saved");
-          window.setTimeout(() => setNotice((value) => (value === "Saved" ? "" : value)), 1200);
+          setSavedKey(metric);
+          window.setTimeout(() => setSavedKey((value) => (value === metric ? null : value)), 1200);
         }
         return;
       }
+      if (id === generation.current) setReason(body.error || "The count could not be saved.");
     } catch {
-      // The request failed. The latest click restores the last saved counts.
+      if (id === generation.current) setReason("The count could not be saved.");
     } finally {
       inflight.current = Math.max(0, inflight.current - 1);
     }
-    if (id === generation.current) {
-      generation.current = 0;
-      setCounts(confirmed.current);
-      setError(true);
-    }
+    if (id === generation.current) setCounts(confirmed.current);
   }
 
   return (
     <section className="mt-5 rounded-[28px] bg-white p-3 shadow-sm sm:p-4" aria-label="Ministry impact">
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
         {METRICS.map((metric) => {
           const Icon = metric.icon;
           const value = counts[metric.key];
+          const saved = savedKey === metric.key;
           return (
-            <div key={metric.key} className={`rounded-3xl px-2 py-4 text-center sm:px-4 ${metric.card}`}>
-              <Icon className="mx-auto" size={22} aria-hidden />
-              <p className="mt-2 text-xs font-semibold text-[#142033] sm:text-sm">{metric.label}</p>
+            <div key={metric.key} className={`rounded-3xl px-2 py-4 text-center sm:px-3 ${metric.card}`}>
+              <Icon className={`mx-auto ${metric.iconClass}`} size={22} aria-hidden />
+              <p className="mt-2 flex items-center justify-center gap-1 text-xs font-semibold text-[#142033] sm:text-sm">
+                {metric.label}
+                {saved ? <Check size={14} className="text-[#16A34A]" aria-hidden /> : null}
+              </p>
               <div className="mt-3 flex items-center justify-center gap-1 sm:gap-2">
                 <button
                   type="button"
                   aria-label={`Decrease ${metric.label}`}
                   disabled={value <= 0}
                   onClick={() => void adjust(metric.key, -1)}
-                  className="grid h-11 w-9 place-items-center rounded-full bg-white/80 text-[#142033] shadow-sm motion-safe:transition motion-safe:duration-150 active:scale-95 disabled:opacity-40 motion-reduce:active:scale-100 sm:w-11"
+                  className="grid h-11 w-11 place-items-center rounded-full bg-white text-[#142033] shadow-sm motion-safe:transition motion-safe:duration-150 active:scale-95 disabled:opacity-40 motion-reduce:active:scale-100"
                 >
                   <Minus size={16} aria-hidden />
                 </button>
-                <span key={`${metric.key}-${value}`} className="rtp-count min-w-[1.6ch] text-3xl font-semibold text-[#142033] tabular-nums sm:text-4xl">{value}</span>
+                <span key={`${metric.key}-${value}`} className="rtp-count min-w-[1.6ch] text-3xl font-semibold text-[#142033] tabular-nums">{value}</span>
                 <button
                   type="button"
                   aria-label={`Increase ${metric.label}`}
                   onClick={() => void adjust(metric.key, 1)}
-                  className="grid h-11 w-9 place-items-center rounded-full bg-white/80 text-[#142033] shadow-sm motion-safe:transition motion-safe:duration-150 active:scale-95 motion-reduce:active:scale-100 sm:w-11"
+                  className="grid h-11 w-11 place-items-center rounded-full bg-white text-[#142033] shadow-sm motion-safe:transition motion-safe:duration-150 active:scale-95 motion-reduce:active:scale-100"
                 >
                   <Plus size={16} aria-hidden />
                 </button>
@@ -106,8 +110,9 @@ export function ImpactCounters({ groupId, initial }: { groupId: string; initial:
           );
         })}
       </div>
-      {notice ? <p className="mt-2 text-center text-xs font-semibold text-[#16A34A]">{notice}</p> : null}
-      {error ? <p className="mt-2 text-center text-xs text-[#b91c1c]">Couldn&apos;t save that count. Try again.</p> : null}
+      <p aria-live="polite" className={reason ? "mt-2 text-center text-xs text-[#b91c1c]" : "sr-only"}>
+        {reason || (savedKey ? "Saved" : "")}
+      </p>
     </section>
   );
 }

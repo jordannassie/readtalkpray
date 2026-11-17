@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { impactCounts } from "@/lib/impact";
+import { impactCounts, impactSaveFailure } from "@/lib/impact";
 import { isUuid } from "@/lib/groups/text";
 import { createClient } from "@/lib/supabase/server";
 
-const METRICS = new Set(["saved", "baptized", "sent"]);
+const METRICS = new Set(["members", "saved", "baptized", "sent"]);
+const COUNT_COLUMNS = "group_members, people_saved, people_baptized, people_sent";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -11,9 +12,13 @@ export async function GET(request: Request) {
   if (!data.user) return NextResponse.json({ ok: false }, { status: 401 });
   const groupId = new URL(request.url).searchParams.get("groupId") ?? "";
   if (!isUuid(groupId)) return NextResponse.json({ ok: false }, { status: 400 });
-  const { data: row, error } = await supabase.from("rtp_group_impact").select("people_saved, people_baptized, people_sent").eq("group_id", groupId).maybeSingle();
-  if (error) return NextResponse.json({ ok: false }, { status: 503 });
-  return NextResponse.json({ ok: true, counts: impactCounts(row) });
+  const full = await supabase.from("rtp_group_impact").select(COUNT_COLUMNS).eq("group_id", groupId).maybeSingle();
+  if (!full.error) return NextResponse.json({ ok: true, counts: impactCounts(full.data) });
+  if (/group_members/i.test(full.error.message)) {
+    const legacy = await supabase.from("rtp_group_impact").select("people_saved, people_baptized, people_sent").eq("group_id", groupId).maybeSingle();
+    if (!legacy.error) return NextResponse.json({ ok: true, counts: impactCounts(legacy.data) });
+  }
+  return NextResponse.json({ ok: false, error: impactSaveFailure(full.error.message).error }, { status: 503 });
 }
 
 export async function POST(request: Request) {
@@ -37,8 +42,8 @@ export async function POST(request: Request) {
     delta: body.delta,
   });
   if (error) {
-    const denied = /not allowed/i.test(error.message);
-    return NextResponse.json({ ok: false }, { status: denied ? 403 : 503 });
+    const failure = impactSaveFailure(error.message);
+    return NextResponse.json({ ok: false, error: failure.error }, { status: failure.status });
   }
   const row = Array.isArray(rows) ? rows[0] : rows;
   return NextResponse.json({ ok: true, counts: impactCounts(row) });
