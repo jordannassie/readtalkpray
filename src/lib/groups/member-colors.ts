@@ -1,12 +1,12 @@
 const GRADIENTS = [
-  "linear-gradient(135deg, #3E6BA8 0%, #6A90C0 100%)",
-  "linear-gradient(135deg, #B56B80 0%, #C992A4 100%)",
-  "linear-gradient(135deg, #6E629E 0%, #8B84B8 100%)",
-  "linear-gradient(135deg, #3F7F6C 0%, #6A9E88 100%)",
-  "linear-gradient(135deg, #B56E48 0%, #C99670 100%)",
-  "linear-gradient(135deg, #3A7C82 0%, #6A9EAA 100%)",
-  "linear-gradient(135deg, #A85A68 0%, #C08A78 100%)",
-  "linear-gradient(135deg, #54648F 0%, #7278A4 100%)",
+  "linear-gradient(135deg, #2563EB 0%, #22D3EE 100%)",
+  "linear-gradient(135deg, #F43F8A 0%, #FB7185 100%)",
+  "linear-gradient(135deg, #A855F7 0%, #6366F1 100%)",
+  "linear-gradient(135deg, #10B981 0%, #84CC16 100%)",
+  "linear-gradient(135deg, #F97316 0%, #FBBF24 100%)",
+  "linear-gradient(135deg, #14B8A6 0%, #38BDF8 100%)",
+  "linear-gradient(135deg, #F43F5E 0%, #F59E0B 100%)",
+  "linear-gradient(135deg, #38BDF8 0%, #4F46E5 100%)",
 ] as const;
 
 const GRADIENT_SETS: number[][] = [];
