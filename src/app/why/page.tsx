@@ -84,7 +84,7 @@ export default function WhyPage() {
               <p>For years, I thought I was failing as a pastor.</p>
               <p>I didn&apos;t have a big church building. I didn&apos;t have hundreds of people sitting in rows. I didn&apos;t have a stage, giant screens, professional lighting, or a large staff.</p>
               <p>I had something much simpler.</p>
-              <p>I had people gathering together to read the Bible.</p>
+              <p>I had people gathering together to read the Bible, every Sunday morning.</p>
               <p>And if I&apos;m being transparent, sometimes that made me feel like I wasn&apos;t succeeding.</p>
               <p>I would look at large churches with beautiful buildings, packed auditoriums, and professional productions and wonder why my ministry didn&apos;t look like that.</p>
               <p>But something incredible was happening in our small Bible groups.</p>
