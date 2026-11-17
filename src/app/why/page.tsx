@@ -70,39 +70,55 @@ export default function WhyPage() {
           />
         </figure>
 
-        <section className="mx-auto max-w-3xl px-5 py-16">
+        <section className="mx-auto max-w-5xl px-5 py-16">
           <p className="text-xs font-semibold tracking-[0.18em] text-[#1976F3]">THE STORY BEHIND THE MOVEMENT</p>
-          <h2 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">I Thought I Was Failing as a Pastor.</h2>
-          <div className="mt-6 flex items-center gap-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={STORY_IMAGE} alt="Jordan Nassie, co-founder of Read Talk Pray" className="h-20 w-20 rounded-2xl object-cover sm:h-24 sm:w-24" />
-            <p className="text-sm font-semibold text-[#142033]">Jordan Nassie — Co-founder, Read Talk Pray</p>
+          <div className="mt-6 flex flex-col items-start gap-6 sm:flex-row sm:items-center">
+            <figure className="w-40 shrink-0 sm:w-52">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={STORY_IMAGE} alt="Jordan Nassie, co-founder of Read Talk Pray" className="h-auto w-full rounded-3xl" />
+            </figure>
+            <div>
+              <h2 className="max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl">I Thought I Was Failing as a Pastor.</h2>
+              <p className="mt-3 text-sm font-semibold text-[#142033]">Jordan Nassie — Co-founder, Read Talk Pray</p>
+            </div>
           </div>
 
-          <div className="mt-10 space-y-4 text-lg leading-relaxed text-[#334155]">
+          <div className="mx-auto mt-10 max-w-3xl space-y-4 text-lg leading-relaxed text-[#334155]">
             <p>For years, I thought I was failing as a pastor.</p>
             <p>I didn&apos;t have a big church building. I didn&apos;t have hundreds of people sitting in rows. I didn&apos;t have a stage, giant screens, professional lighting, or a large staff.</p>
             <p>What I had was something much simpler.</p>
             <Pull>I had people gathering together to read the Bible, every Sunday morning.</Pull>
-            <p>We started a Bible reading group at a coffee shop at The Star in Frisco, Texas.</p>
-            <p>Nothing fancy. Just ordinary people sitting around a table, drinking coffee, opening their Bibles, talking about life, and praying together.</p>
-            <StoryPhoto src={STAR_IMAGE} alt="The Star in Frisco, Texas, where the Sunday morning Bible group began" caption="The Star, Frisco, Texas — where our Sunday morning Bible group began." className="mx-auto max-w-md py-4" />
+          </div>
+
+          <div className="mt-8 grid items-center gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(240px,0.85fr)]">
+            <div className="space-y-4 text-lg leading-relaxed text-[#334155]">
+              <p>We started a Bible reading group at a coffee shop at The Star in Frisco, Texas.</p>
+              <p>Nothing fancy. Just ordinary people sitting around a table, drinking coffee, opening their Bibles, talking about life, and praying together.</p>
+            </div>
+            <StoryPhoto src={STAR_IMAGE} alt="The Star in Frisco, Texas, where the Sunday morning Bible group began" caption="The Star, Frisco, Texas — where our Sunday morning Bible group began." />
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl space-y-4 text-lg leading-relaxed text-[#334155]">
             <p>At first, there were just two of us.</p>
             <p>Then four came.</p>
             <p>Then we were back down to two.</p>
             <p>Eventually, we grew to 14, then 30, and sometimes back down to 20.</p>
             <p>Our attendance fluctuated almost every Sunday.</p>
-            <div className="rounded-3xl border border-[#e6ebf2] bg-[#f8fafc] px-5 py-6 text-center">
-              <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-2xl font-semibold tracking-tight text-[#142033] sm:text-3xl">
-                {ATTENDANCE.map((count, index) => (
-                  <span key={`${count}-${index}`} className="inline-flex items-center gap-2">
-                    {index > 0 ? <span className="text-[#1976F3]" aria-hidden>→</span> : null}
-                    <span>{count}</span>
-                  </span>
-                ))}
-              </p>
-              <p className="mt-3 text-sm text-[#52627a]">Our Sunday attendance went up and down.</p>
-            </div>
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl rounded-3xl border border-[#e6ebf2] bg-[#f8fafc] px-5 py-6 text-center">
+            <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-2xl font-semibold tracking-tight text-[#142033] sm:text-3xl">
+              {ATTENDANCE.map((count, index) => (
+                <span key={`${count}-${index}`} className="inline-flex items-center gap-2">
+                  {index > 0 ? <span className="text-[#1976F3]" aria-hidden>→</span> : null}
+                  <span>{count}</span>
+                </span>
+              ))}
+            </p>
+            <p className="mt-3 text-sm text-[#52627a]">Our Sunday attendance went up and down.</p>
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl space-y-4 text-lg leading-relaxed text-[#334155]">
             <p>Some people came once and never returned. Others visited occasionally. Some became regulars, and others brought friends.</p>
             <p>There were Sundays when I wondered whether we were actually growing or going backward.</p>
             <p>And I&apos;ll be honest, sometimes it was discouraging.</p>
@@ -110,24 +126,35 @@ export default function WhyPage() {
             <p>And there I was, sitting around a coffee shop table with a handful of people and an open Bible.</p>
             <p>I wondered whether I was doing something wrong.</p>
             <Pull>Was I really building a church? Or was I just leading a Bible study?</Pull>
-            <p>But something beautiful was happening that I almost overlooked.</p>
-            <p>People were getting to know one another.</p>
-            <p>They were sharing what was happening in their lives.</p>
-            <p>They were asking honest questions about God, Scripture, and faith.</p>
-            <p>They were encouraging one another, praying together, and developing real friendships.</p>
-            <p>People weren&apos;t just attending a service.</p>
-            <Pull>They were becoming family.</Pull>
-            <StoryPhoto src={GROUP_IMAGE} alt="The Sunday morning coffee shop Bible group gathered around a table" caption="Our Sunday morning coffee shop Bible group." className="py-4" />
+          </div>
+
+          <div className="mt-8 grid items-center gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(240px,0.85fr)]">
+            <div className="space-y-4 text-lg leading-relaxed text-[#334155]">
+              <p>But something beautiful was happening that I almost overlooked.</p>
+              <p>People were getting to know one another.</p>
+              <p>They were sharing what was happening in their lives.</p>
+              <p>They were asking honest questions about God, Scripture, and faith.</p>
+              <p>They were encouraging one another, praying together, and developing real friendships.</p>
+              <p>People weren&apos;t just attending a service.</p>
+              <Pull>They were becoming family.</Pull>
+            </div>
+            <StoryPhoto src={GROUP_IMAGE} alt="The Sunday morning coffee shop Bible group gathered around a table" caption="Our Sunday morning coffee shop Bible group." />
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl space-y-4 text-lg leading-relaxed text-[#334155]">
             <p>And over the course of a single year, something remarkable happened.</p>
             <p>Although our group might have had only 10, 20, or 30 people around the table on any given Sunday, we had the opportunity to minister to <strong className="font-semibold text-[#142033]">more than 300 people</strong> throughout that year.</p>
             <p>Three hundred people.</p>
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl space-y-4 text-lg leading-relaxed text-[#334155]">
             <p>Not because we had a building.</p>
             <p>Not because we had a big budget.</p>
             <p>Not because we had a professional production.</p>
             <p>But because we kept showing up, opening the Bible, welcoming people, and making room at the table.</p>
             <p>That&apos;s when I began to realize something.</p>
             <Pull>Maybe I had been measuring church by the wrong things all along.</Pull>
-            <p>I had been measuring success by how many people showed up on Sunday.</p>
+            <p>I had been measuring success by if we looked like all the mega churches.</p>
             <p>But what if I should have been looking at how many people we were reaching, encouraging, discipling, and connecting with Jesus?</p>
             <p>What if a church didn&apos;t need to grow into one enormous gathering to make an enormous impact?</p>
             <p>What if it could simply keep welcoming people, raising up leaders, and multiplying into other neighborhoods?</p>
@@ -303,9 +330,9 @@ function Pull({ children }: { children: ReactNode }) {
   return <p className="text-xl font-semibold tracking-tight text-[#142033]">{children}</p>;
 }
 
-function StoryPhoto({ src, alt, caption, className = "" }: { src: string; alt: string; caption: string; className?: string }) {
+function StoryPhoto({ src, alt, caption }: { src: string; alt: string; caption: string }) {
   return (
-    <figure className={className}>
+    <figure>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={alt} className="h-auto w-full rounded-3xl" />
       <figcaption className="mt-3 text-sm text-[#52627a]">{caption}</figcaption>
