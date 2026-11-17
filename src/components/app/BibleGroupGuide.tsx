@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Download } from "lucide-react";
 import { BibleGroupChecklist } from "@/components/app/BibleGroupChecklist";
+import { BLACK_LOGO, BLACK_LOGO_PNG, WHITE_LOGO, WHITE_LOGO_PNG } from "@/components/brand/logos";
 import { GROUP_GUIDE_IMAGE, GROUP_GUIDE_PDF, HERO_VIDEO, HERO_VIDEO_POSTER } from "@/lib/demo/data";
 
 export function BibleGroupGuide({ steps }: { steps: boolean[] }) {
@@ -19,14 +20,28 @@ export function BibleGroupGuide({ steps }: { steps: boolean[] }) {
           />
         </div>
         <div className="flex flex-col items-center justify-center rounded-[28px] border border-[#e6ebf2] bg-white p-5 text-center">
-          <Image
-            src={GROUP_GUIDE_IMAGE}
-            alt="How to Start a Bible Group guide"
-            width={1199}
-            height={1312}
-            sizes="(max-width: 1024px) 280px, 320px"
-            className="h-auto w-full max-w-[280px] lg:max-w-[320px]"
-          />
+          <div className="flex w-full flex-col items-center justify-center gap-4 sm:flex-row sm:items-center">
+            <Image
+              src={GROUP_GUIDE_IMAGE}
+              alt="How to Start a Bible Group guide"
+              width={1199}
+              height={1312}
+              sizes="(max-width: 1024px) 220px, 240px"
+              className="h-auto w-full max-w-[220px] lg:max-w-[240px]"
+            />
+            <div className="grid w-full max-w-[180px] grid-cols-1 gap-3">
+              <a href={BLACK_LOGO_PNG} download="read-talk-pray-logo-black.png" className="flex flex-col items-center gap-1 rounded-2xl border border-[#e6ebf2] bg-white px-3 py-3 text-xs font-semibold text-[#142033]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={BLACK_LOGO} alt="" className="h-16 w-16 object-contain" />
+                Black PNG
+              </a>
+              <a href={WHITE_LOGO_PNG} download="read-talk-pray-logo-white.png" className="flex flex-col items-center gap-1 rounded-2xl bg-[#142033] px-3 py-3 text-xs font-semibold text-white">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={WHITE_LOGO} alt="" className="h-16 w-16 object-contain" />
+                White PNG
+              </a>
+            </div>
+          </div>
           <h2 className="mt-4 text-2xl font-semibold tracking-tight">How to Run a Bible Group</h2>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-[#555]">It&apos;s simple. Invite people, meet together, and Read. Talk. Pray.</p>
           <a
