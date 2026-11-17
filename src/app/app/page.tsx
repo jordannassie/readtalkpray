@@ -4,6 +4,8 @@ import { ProfilePhoto } from "@/components/account/ProfilePhoto";
 import { BibleGroupGuide } from "@/components/app/BibleGroupGuide";
 import { loadAccount } from "@/lib/auth/account";
 import { loadChecklist } from "@/lib/checklist";
+import { ImpactCounters } from "@/components/app/ImpactCounters";
+import { loadImpact } from "@/lib/impact";
 import { googleAvatar } from "@/lib/auth/profile";
 import { ownsGroup } from "@/lib/groups/ownership";
 
@@ -15,6 +17,8 @@ export default async function AppHomePage() {
   const name = account.profile.full_name || "Welcome";
   const hasGroup = ownsGroup(account.applications, account.groups);
   const steps = await loadChecklist();
+  const impactGroup = account.groups.find((group) => (group.status === "approved" || group.status === "paused") && (group.leader_user_id === account.user?.id || account.admin));
+  const impact = impactGroup ? await loadImpact(impactGroup.id) : null;
   return (
     <div>
       <section className="relative overflow-hidden rounded-[30px] bg-[linear-gradient(145deg,#0a4cb5_0%,#1976F3_46%,#49d0ff_100%)] px-5 py-8 text-center text-white shadow-[0_18px_40px_rgba(21,101,216,0.28)] sm:px-10 sm:py-10">
@@ -53,6 +57,7 @@ export default async function AppHomePage() {
         locationChanges={account.locationChanges}
         invites={account.invites}
       />
+      {impactGroup && impact ? <ImpactCounters groupId={impactGroup.id} initial={impact} /> : null}
       <BibleGroupGuide steps={steps} />
     </div>
   );
