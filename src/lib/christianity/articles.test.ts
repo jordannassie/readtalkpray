@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ARTICLES, FEATURED, filterArticles } from "./articles.ts";
+import { ARTICLES, FEATURED, filterArticles } from "./articles";
 
 test("featured questions are in the library", () => {
   for (const card of FEATURED) {
