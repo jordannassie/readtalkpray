@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BLACK_LOGO } from "@/components/brand/logos";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { publicMetadata, SITE } from "@/lib/groups/seo";
@@ -220,6 +221,8 @@ export default function WhyPage() {
           </Section>
 
           <Section title="Read. Talk. Pray.">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={BLACK_LOGO} alt="Read Talk Pray" width={1254} height={1254} className="h-20 w-auto object-contain sm:h-24" />
             <p>Three simple practices:</p>
             <ul className="grid gap-4 sm:grid-cols-3">
               <Practice name="Read" body="Open the Bible together and discover what God's Word says." />
