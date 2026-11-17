@@ -1,41 +1,48 @@
+import Link from "next/link";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
-import { GroupLandingMap } from "@/components/groups/GroupLandingMap";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { SiteHeader } from "@/components/layout/SiteHeader";
-import { cityState } from "@/lib/groups/types";
+import { BLACK_LOGO } from "@/components/brand/logos";
 import type { PublicGroup } from "@/lib/groups/types";
 
 export function GroupLanding({ group }: { group: PublicGroup }) {
   return (
-    <div className="min-h-screen bg-[#F4F7FC] text-[#111]">
-      <SiteHeader />
-      <main className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 sm:py-10">
-        <h1 className="text-4xl font-semibold tracking-tight text-[#142033] sm:text-5xl">Join Our Group.</h1>
-        <p className="mt-2 text-lg text-[#52627a]">Read the Bible. Talk about it. Pray together.</p>
-        <div className="mt-6 grid items-start gap-4 lg:grid-cols-2">
-          <div className="order-2 h-[320px] overflow-hidden rounded-[28px] border border-[#e6ebf2] bg-white lg:order-1 lg:h-[680px]">
-            <GroupLandingMap group={group} />
-          </div>
-          <div className="order-1 rounded-[28px] border border-[#e6ebf2] bg-white p-6 shadow-sm sm:p-8 lg:order-2">
-            <JoinGroupForm group={group} variant="panel" faces="profile" />
-          </div>
+    <div className="min-h-screen overflow-x-clip bg-[#eef3fb] text-[#142033]">
+      <header className="flex justify-center px-5 pt-6">
+        <BrandMark />
+      </header>
+      <main className="mx-auto w-full max-w-[600px] px-4 pt-5 pb-10">
+        <h1 className="text-center text-[1.85rem] leading-[1.05] font-semibold tracking-tight sm:text-4xl">Join a Bible Group Near You.</h1>
+        <p className="mt-2 text-center text-base text-[#52627a] sm:text-lg">Read the Bible. Talk about it. Pray together.</p>
+        <div className="mt-5 rounded-[28px] bg-white p-5 shadow-sm sm:p-7">
+          <JoinGroupForm group={group} variant="landing" faces="profile" />
         </div>
-        <p className="mt-4 text-sm text-[#6d7b90]">{cityState(group) ? `Meeting near ${cityState(group)}.` : "A neighborhood Bible group."}</p>
+        <p className="mt-4 text-center text-xs text-[#6d7b90]">
+          <Link href="/privacy" className="underline">Privacy</Link>
+        </p>
       </main>
-      <SiteFooter />
     </div>
   );
 }
 
 export function PausedGroupPage() {
   return (
-    <div className="min-h-screen bg-[#F4F7FC] text-[#111]">
-      <SiteHeader />
-      <main className="mx-auto flex max-w-xl flex-col items-center px-5 py-20 text-center">
-        <h1 className="text-4xl font-semibold tracking-tight">This group is paused.</h1>
-        <p className="mt-3 text-lg text-[#52627a]">It is not meeting publicly right now. Check back later, or find another group.</p>
+    <div className="min-h-screen overflow-x-clip bg-[#eef3fb] text-[#142033]">
+      <header className="flex justify-center px-5 pt-8">
+        <BrandMark />
+      </header>
+      <main className="mx-auto max-w-[600px] px-5 py-10 text-center">
+        <h1 className="text-3xl font-semibold tracking-tight">This group is paused.</h1>
+        <p className="mt-3 text-base leading-relaxed text-[#52627a]">It is not meeting publicly right now, so new signups are closed.</p>
+        <p className="mt-8 text-xs text-[#6d7b90]">
+          <Link href="/privacy" className="underline">Privacy</Link>
+        </p>
       </main>
-      <SiteFooter />
     </div>
+  );
+}
+
+function BrandMark() {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={BLACK_LOGO} alt="Read Talk Pray" width={1254} height={1254} className="h-14 w-auto" />
   );
 }

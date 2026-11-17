@@ -9,7 +9,7 @@ import { ProfilePhoto } from "@/components/account/ProfilePhoto";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { GroupStatusToggle } from "@/components/groups/LiveStatus";
 import { publicLocationLabel } from "@/lib/groups/geo";
-import { groupPublicPath } from "@/lib/groups/slug";
+import { groupMarketingUrl, groupPublicPath } from "@/lib/groups/slug";
 import { PhoneInput } from "@/components/phone/PhoneInput";
 import { dialPhone, displayPhone } from "@/lib/phone";
 import { cityState, meetingWhen, type CoLeaderInvite, type OwnedApplication, type PublicGroup } from "@/lib/groups/types";
@@ -256,10 +256,10 @@ function GroupDesk({
         )}
         {approved && group ? (
           <CopyButton
-            value={() => `${window.location.origin}${profileHref}`}
+            value={() => groupMarketingUrl(group)}
             idleLabel="Share Group"
             successLabel="Link Copied!"
-            share={() => ({ title: name, text: `Join ${name} on Read Talk Pray.`, url: `${window.location.origin}${profileHref}` })}
+            share={() => ({ title: name, text: `Join ${name} on Read Talk Pray.`, url: groupMarketingUrl(group) })}
             className="border border-black/10 px-4 text-sm font-semibold"
           />
         ) : null}
@@ -276,10 +276,10 @@ function GroupDesk({
             <p className="text-sm text-[#666]">No one has signed up yet. Share your group to invite people.</p>
             {approved && group ? (
               <CopyButton
-                value={() => `${window.location.origin}${profileHref}`}
+                value={() => groupMarketingUrl(group)}
                 idleLabel="Share Group"
                 successLabel="Link Copied!"
-                share={() => ({ title: name, text: `Join ${name} on Read Talk Pray.`, url: `${window.location.origin}${profileHref}` })}
+                share={() => ({ title: name, text: `Join ${name} on Read Talk Pray.`, url: groupMarketingUrl(group) })}
                 className="mt-2 bg-[#1976F3] px-4 text-sm font-semibold text-white"
               />
             ) : null}

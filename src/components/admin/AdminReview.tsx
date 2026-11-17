@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Eye, X } from "lucide-react";
+import { ChevronDown, ExternalLink, Eye, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -8,6 +8,8 @@ import { GroupMembersDisplay } from "@/components/groups/GroupMembersDisplay";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { LeaderFaces } from "@/components/groups/LeaderFaces";
 import { GroupStatusToggle, SyncedLiveStatus } from "@/components/groups/LiveStatus";
+import { CopyButton } from "@/components/app/CopyButton";
+import { groupMarketingUrl } from "@/lib/groups/slug";
 import { cityState, meetingWhen, type PublicGroup } from "@/lib/groups/types";
 import { dialPhone, displayPhone } from "@/lib/phone";
 
@@ -60,6 +62,7 @@ type Group = {
   leader_email?: string | null;
   leader_phone?: string | null;
   members?: number;
+  slug?: string | null;
 };
 type Review = { id: string; application_id: string; action: string; note: string | null; message: string | null; created_at: string };
 type LocationChange = { id: string; group_id: string; public_location: string; private_address: string | null; status: string };
@@ -289,13 +292,14 @@ export function AdminReview({
                   </div>
                   {group.status === "approved" || group.status === "paused" ? <SyncedLiveStatus groupId={group.id} serverLive={group.status === "approved"} /> : <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${pillClass(group.status)}`}>{pillLabel(group.status)}</span>}
                 </div>
-                <div className="mt-3 flex gap-2">
+                <div className="mt-3 flex flex-wrap items-center gap-2">
                   {group.status === "approved" || group.status === "paused" ? (
                     <button type="button" onClick={() => setViewing(group)} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1976F3] px-3 text-sm font-semibold text-white">
                       <Eye size={15} aria-hidden />
                       View Group
                     </button>
                   ) : null}
+                  {group.status === "approved" ? <MarketingLink group={group} /> : null}
                   <button type="button" onClick={() => setManagedId(open ? "" : group.id)} className="inline-flex h-10 items-center rounded-full border border-[#e6ebf2] px-3 text-sm font-semibold">
                     {open ? "Close" : "Manage"}
                   </button>
@@ -395,6 +399,18 @@ function GroupDrawer({ group, onClose }: { group: Group; onClose: () => void }) 
         </div>
       </aside>
     </div>
+  );
+}
+
+function MarketingLink({ group }: { group: Group }) {
+  const url = groupMarketingUrl(group);
+  return (
+    <>
+      <CopyButton value={url} idleLabel="Copy Marketing Link" successLabel="Copied!" variant="icon" className="border border-[#e6ebf2]" />
+      <a href={url} target="_blank" rel="noopener noreferrer" aria-label="Open marketing page" className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e6ebf2] text-[#1976F3]">
+        <ExternalLink size={15} aria-hidden />
+      </a>
+    </>
   );
 }
 

@@ -21,3 +21,7 @@ export function nextGroupSlug(name: string, taken: string[]) {
 export function groupPublicPath(group: { id: string; slug?: string | null }) {
   return group.slug ? `/g/${group.slug}` : `/groups/${group.id}`;
 }
+
+export function groupMarketingUrl(group: { id: string; slug?: string | null }) {
+  return `https://readtalkpray.com${groupPublicPath(group)}`;
+}

@@ -46,7 +46,7 @@ export default async function AppAdminPage({
   const groupStatus = filter === "suspended" ? "suspended" : filter === "all" ? null : "approved";
   let groupsQuery = supabase
     .from("rtp_groups")
-    .select("id, name, city, state, country, status, public_location, address, location_type, latitude, longitude, meeting_day, meeting_time, description, leader_name, leader_photo_url, co_leader_name, co_leader_photo_url", { count: "exact" })
+    .select("id, name, slug, city, state, country, status, public_location, address, location_type, latitude, longitude, meeting_day, meeting_time, description, leader_name, leader_photo_url, co_leader_name, co_leader_photo_url", { count: "exact" })
     .order("city");
   if (groupStatus === "approved") groupsQuery = groupsQuery.in("status", ["approved", "paused"]);
   else if (groupStatus) groupsQuery = groupsQuery.eq("status", groupStatus);

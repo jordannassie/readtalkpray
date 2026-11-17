@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useRef, useState, type ReactNode } from "react";
+import { FormEvent, useEffect, useRef, useState, type Dispatch, type ReactNode, type RefObject, type SetStateAction } from "react";
 import { ArrowRight, Calendar, Check, MapPin, User, Users } from "lucide-react";
 import { GroupMembersDisplay } from "@/components/groups/GroupMembersDisplay";
 import { PhoneInput } from "@/components/phone/PhoneInput";
@@ -27,7 +27,7 @@ export function JoinGroupForm({
   faces,
 }: {
   group: PublicGroup;
-  variant?: "page" | "panel";
+  variant?: "page" | "panel" | "landing";
   onFindAnother?: () => void;
   preview?: boolean;
   hideJoin?: boolean;
@@ -99,6 +99,28 @@ export function JoinGroupForm({
       lock.current = false;
       setSubmitting(false);
     }
+  }
+
+  if (variant === "landing") {
+    return (
+      <LandingJoin
+        group={group}
+        when={when}
+        place={place}
+        venue={venue}
+        done={done}
+        firstName={firstName}
+        mobile={mobile}
+        errors={errors}
+        submitting={submitting}
+        preview={preview}
+        nameRef={nameRef}
+        onSubmit={onSubmit}
+        setFirstName={setFirstName}
+        setMobile={setMobile}
+        setErrors={setErrors}
+      />
+    );
   }
 
   if (done) {
@@ -218,6 +240,154 @@ export function JoinGroupForm({
           </form>
       </div>
       )}
+    </div>
+  );
+}
+
+const landingFieldClass =
+  "h-14 w-full rounded-2xl border border-[#e6e6e6] bg-[#f7f7f7] pr-4 pl-11 text-base text-[#111] outline-none placeholder:text-[#8a8a8a] focus:border-[#16A34A] focus:bg-white";
+
+function LandingJoin({
+  group,
+  when,
+  place,
+  venue,
+  done,
+  firstName,
+  mobile,
+  errors,
+  submitting,
+  preview,
+  nameRef,
+  onSubmit,
+  setFirstName,
+  setMobile,
+  setErrors,
+}: {
+  group: PublicGroup;
+  when: string;
+  place: string;
+  venue: string | null;
+  done: "new" | "duplicate" | "demo" | null;
+  firstName: string;
+  mobile: string;
+  errors: { firstName?: string; mobile?: string; form?: string };
+  submitting: boolean;
+  preview: boolean;
+  nameRef: RefObject<HTMLInputElement | null>;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  setFirstName: (value: string) => void;
+  setMobile: (value: string) => void;
+  setErrors: Dispatch<SetStateAction<{ firstName?: string; mobile?: string; form?: string }>>;
+}) {
+  return (
+    <div className="text-[#111]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-2xl font-semibold tracking-tight text-[#142033]">{group.name}</h2>
+          <p className="mt-1 text-sm font-medium text-[#142033]">Led by {leaderLine(group)}</p>
+        </div>
+        <LeaderFaces leaderName={group.leader_name} leaderPhoto={group.leader_photo_url} coLeaderName={group.co_leader_name} coLeaderPhoto={group.co_leader_photo_url} size="profile" />
+      </div>
+      <p className="mt-3 flex items-center gap-2 text-[15px] font-semibold text-[#142033]">
+        <Calendar size={16} className="shrink-0 text-[#1976F3]" aria-hidden />
+        {when}
+      </p>
+      <p className="mt-1 flex items-start gap-2 text-sm text-[#52627a]">
+        <MapPin size={16} className="mt-0.5 shrink-0 text-[#1976F3]" aria-hidden />
+        <span>{place}</span>
+      </p>
+      {venue ? <p className="mt-1 pl-6 text-sm text-[#52627a]">{venue}</p> : null}
+      {typeof group.members === "number" ? (
+        <div className="mt-3">
+          <GroupMembersDisplay groupId={group.id} count={group.members} compact live={!group.is_demo} />
+        </div>
+      ) : null}
+      {done ? (
+        <LandingConfirmation done={done} groupName={group.name} when={when} />
+      ) : (
+        <>
+          <p className="mt-4 text-sm leading-relaxed text-[#52627a]">Come as you are. No experience needed. We’d love to meet you!</p>
+          <form className="mt-4 space-y-3" onSubmit={onSubmit} noValidate>
+            <h3 className="text-xl font-semibold tracking-tight">Come Join Us!</h3>
+            <label className="block">
+              <span className="sr-only">First Name</span>
+              <span className="relative block">
+                <User aria-hidden size={18} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-[#b5b5b5]" />
+                <input
+                  required
+                  name="firstName"
+                  autoComplete="given-name"
+                  enterKeyHint="next"
+                  ref={nameRef}
+                  placeholder="First Name"
+                  value={firstName}
+                  onChange={(event) => {
+                    setFirstName(event.target.value);
+                    setErrors((current) => ({ ...current, firstName: undefined, form: undefined }));
+                  }}
+                  aria-invalid={Boolean(errors.firstName)}
+                  disabled={preview}
+                  className={landingFieldClass}
+                />
+              </span>
+              {errors.firstName ? <span className="mt-1 block text-sm text-[#c2410c]">{errors.firstName}</span> : null}
+            </label>
+            <label className="block">
+              <span className="sr-only">Mobile Number</span>
+              <PhoneInput
+                name="mobile"
+                required
+                placeholder="Mobile Number"
+                value={mobile}
+                onChange={(value) => {
+                  setMobile(value);
+                  setErrors((current) => ({ ...current, mobile: undefined, form: undefined }));
+                }}
+                invalid={Boolean(errors.mobile)}
+                disabled={preview}
+                className={landingFieldClass}
+              />
+              {errors.mobile ? <span className="mt-1 block text-sm text-[#c2410c]">{errors.mobile}</span> : null}
+            </label>
+            <p className="text-xs leading-relaxed text-[#6d7b90]">
+              Your name and mobile number are shared with this group’s leader so they can follow up. This does not sign you up for promotional text messages.{" "}
+              <Link href="/privacy" className="underline">Privacy</Link>
+            </p>
+            {errors.form ? <p role="alert" className="text-sm text-[#c2410c]">{errors.form}</p> : null}
+            <button
+              type={preview ? "button" : "submit"}
+              disabled={preview || submitting}
+              aria-busy={submitting}
+              className="inline-flex h-14 min-h-14 w-full items-center justify-center rounded-full bg-[#16A34A] text-base font-bold text-white disabled:opacity-70"
+            >
+              {submitting ? "Sending…" : "I’m Coming"}
+            </button>
+          </form>
+        </>
+      )}
+    </div>
+  );
+}
+
+function LandingConfirmation({ done, groupName, when }: { done: "new" | "duplicate" | "demo"; groupName: string; when: string }) {
+  if (done === "demo") {
+    return <p role="status" className="mt-5 text-sm leading-relaxed text-[#52627a]">This sample group does not take reservations. Nothing was saved.</p>;
+  }
+  const duplicate = done === "duplicate";
+  return (
+    <div role="status" className="mt-5 border-t border-[#e6ebf2] pt-5 text-center">
+      <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#dcfce7] text-[#16A34A]">
+        <Check size={28} aria-hidden />
+      </span>
+      <h3 className="mt-3 text-2xl font-semibold tracking-tight text-[#142033]">{duplicate ? "You’re already on the List!" : "You’re on the List!"}</h3>
+      <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-[#52627a]">
+        {duplicate
+          ? `Your group leader already has your request. We look forward to meeting you at ${groupName}.`
+          : "Thanks for signing up! Your group leader can reach out with the details. We look forward to meeting you."}
+      </p>
+      <p className="mt-3 text-sm font-semibold text-[#142033]">{groupName}</p>
+      <p className="text-sm text-[#52627a]">{when}</p>
     </div>
   );
 }
