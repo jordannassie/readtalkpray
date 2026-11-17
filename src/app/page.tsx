@@ -98,7 +98,7 @@ export default async function HomePage() {
 
       <section className="bg-[linear-gradient(100deg,#1565d8_0%,#3d9bff_46%,#1a6fe0_100%)] px-5 py-5 text-center text-white sm:py-6">
         <p className="mx-auto max-w-4xl text-lg font-semibold tracking-tight sm:text-2xl">
-          A Bible Reading Church that's to big for a Building.
+          A Bible Reading Church That's Bigger Than a Building.
         </p>
         <ul className="mx-auto mt-3 flex max-w-3xl flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm font-medium sm:text-base">
           {PROMISES.map((item) => (
