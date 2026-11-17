@@ -74,9 +74,9 @@ export default async function ChristianityArticlePage({ params }: PageProps) {
         <Link href="/christianity" className="text-sm font-semibold text-[#1976F3]">Christianity</Link>
         <p className="mt-5 text-sm font-semibold text-[#1976F3]">{article.topic}</p>
         <h1 className="mt-2 text-4xl font-semibold tracking-tight">{article.title}</h1>
-        {article.image ? (
+        {image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={article.image} alt={article.title} className="mt-6 h-64 w-full rounded-3xl object-cover sm:h-80" />
+          <img src={image} alt={article.title} className="mt-6 h-64 w-full rounded-3xl object-cover sm:h-80" />
         ) : null}
         <p className="mt-4 text-lg leading-relaxed text-[#334155]">{article.intro}</p>
         <h2 className="mt-8 text-sm font-semibold tracking-wide text-[#52627a]">Bible</h2>
