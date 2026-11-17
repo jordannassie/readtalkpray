@@ -47,6 +47,7 @@ export function ChristianityCenter({ heading = "h1", library = true }: { heading
               ) : null}
             </div>
           ) : (
+            <>
             <ul className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
               {FEATURED.map((card) => (
                 <li key={card.slug}>
@@ -89,6 +90,7 @@ export function ChristianityCenter({ heading = "h1", library = true }: { heading
                 ))}
               </ul>
             ) : null}
+            </>
           )}
         </div>
       </section>
