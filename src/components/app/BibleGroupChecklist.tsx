@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { Check } from "lucide-react";
 
-const STEPS: { title: string; body: string; link?: { href: string; label: string } }[] = [
+const STEPS: { title: string; body: string; link?: { href: string; label: string; external?: boolean } }[] = [
   {
     title: "PRAY FOR PEOPLE",
     body: "Ask God to show you three to eight people to invite. Pray for open hearts and genuine friendship.",
@@ -11,6 +12,7 @@ const STEPS: { title: string; body: string; link?: { href: string; label: string
   {
     title: "CHOOSE A TIME + PLACE",
     body: "Choose a consistent day and time. Meet for about one hour at a home or quiet public place. Arrive early.",
+    link: { href: "/app/start", label: "Create Your Group" },
   },
   {
     title: "INVITE PERSONALLY",
@@ -23,7 +25,7 @@ const STEPS: { title: string; body: string; link?: { href: string; label: string
   {
     title: "STAY CONNECTED",
     body: "Keep everyone connected between meetings. Start a group chat using GroupMe to share updates, prayer requests, and meeting reminders.",
-    link: { href: "https://groupme.com/", label: "Start a GroupMe Chat" },
+    link: { href: "https://groupme.com/", label: "Start a GroupMe Chat", external: true },
   },
   {
     title: "HELP OTHERS BEGIN",
@@ -90,9 +92,15 @@ export function BibleGroupChecklist({ initial }: { initial: boolean[] }) {
                 </span>
               </button>
               {step.link ? (
-                <a href={step.link.href} target="_blank" rel="noopener noreferrer" className="mt-[-4px] mb-3 ml-14 inline-flex text-sm font-semibold text-[#1976F3]">
-                  {step.link.label}
-                </a>
+                step.link.external ? (
+                  <a href={step.link.href} target="_blank" rel="noopener noreferrer" className="mt-[-4px] mb-3 ml-14 inline-flex text-sm font-semibold text-[#1976F3]">
+                    {step.link.label}
+                  </a>
+                ) : (
+                  <Link href={step.link.href} className="mt-[-4px] mb-3 ml-14 inline-flex text-sm font-semibold text-[#1976F3]">
+                    {step.link.label}
+                  </Link>
+                )
               ) : null}
             </li>
           );
