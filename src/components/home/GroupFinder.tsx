@@ -129,7 +129,7 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
     <div id="join" className="scroll-mt-28 bg-[#f4f7fb]">
       <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-5 sm:py-10">
         <div id="groups" className="scroll-mt-28 text-center">
-          <h2 className="text-4xl font-bold tracking-tight text-[#142033] sm:text-5xl">Find a Group</h2>
+          <h2 className="text-4xl font-bold tracking-tight text-[#142033] sm:text-5xl">Find a Bible Group</h2>
           <form onSubmit={onSearch} className="mx-auto mt-5 w-full max-w-[1080px]">
             <label className="sr-only" htmlFor="group-search">Search by neighborhood or city</label>
             <div className="flex h-14 items-center gap-3 rounded-full border border-[#c5daf8] bg-white px-5 shadow-sm focus-within:border-[#1976F3] focus-within:shadow-[0_0_0_4px_rgba(25,118,243,0.16)] sm:h-16">
