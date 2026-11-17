@@ -127,7 +127,7 @@ export default function WhyPage() {
             <p>But because we kept showing up, opening the Bible, welcoming people, and making room at the table.</p>
             <p>That&apos;s when I began to realize something.</p>
             <Pull>Maybe I had been measuring church by the wrong things all along.</Pull>
-            <p>I had been measuring success by if we looked like all the mega churches.</p>
+            <p>I had been measuring success by how many people showed up on Sunday.</p>
             <p>But what if I should have been looking at how many people we were reaching, encouraging, discipling, and connecting with Jesus?</p>
             <p>What if a church didn&apos;t need to grow into one enormous gathering to make an enormous impact?</p>
             <p>What if it could simply keep welcoming people, raising up leaders, and multiplying into other neighborhoods?</p>
