@@ -20,7 +20,7 @@ const description = "Find a Bible group near you. Read the Bible, talk about it,
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
-  title: { default: "Bible Groups Near You | Read Talk Pray" },
+  title: { default: "Bible Groups Near You | Read Talk Pray", template: "%s" },
   description,
   applicationName: "Read Talk Pray",
   manifest: "/site.webmanifest",
