@@ -26,8 +26,15 @@ test("a nearby label uses a real city and does not invent one", () => {
   assert.equal(nearLabel("", "Kansas"), "");
 });
 
-test("widen search steps from 5 to 10 to 25 and then stops", () => {
-  assert.equal(widerRadius(5), 10);
-  assert.equal(widerRadius(10), 25);
-  assert.equal(widerRadius(25), null);
+test("expand search jumps to 50 miles and then stops", () => {
+  assert.equal(widerRadius(5), 50);
+  assert.equal(widerRadius(10), 50);
+  assert.equal(widerRadius(25), 50);
+  assert.equal(widerRadius(50), null);
+});
+
+test("50 miles includes a group that 25 miles leaves out", () => {
+  const farther = { id: "farther", latitude: 36.76, longitude: -86.78 };
+  assert.deepEqual(groupsByDistance([farther], origin, 25).map((item) => item.group.id), []);
+  assert.deepEqual(groupsByDistance([farther], origin, 50).map((item) => item.group.id), ["farther"]);
 });

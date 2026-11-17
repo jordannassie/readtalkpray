@@ -7,7 +7,6 @@ import { createPortal } from "react-dom";
 import { ArrowRight, Calendar, Check, ChevronLeft, Loader2, LocateFixed, MapPin, Search, X } from "lucide-react";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { LeaderFaces } from "@/components/groups/LeaderFaces";
-import { distanceKm } from "@/lib/groups/geo";
 import { formatMiles, groupsByDistance, SEARCH_RADII, widerRadius, type SearchRadius } from "@/lib/groups/nearby";
 import { cityState, leaderLine, meetingWhen, type PublicGroup } from "@/lib/groups/types";
 
@@ -22,8 +21,7 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
   const [query, setQuery] = useState("");
   const [place, setPlace] = useState<Place | null>(null);
   const [located, setLocated] = useState<Place | null>(null);
-  const [radius, setRadius] = useState<SearchRadius>(10);
-  const [showAll, setShowAll] = useState(false);
+  const [radius, setRadius] = useState<SearchRadius>(25);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
   const [locationNote, setLocationNote] = useState("");
@@ -43,19 +41,15 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
       const haystack = `${group.name} ${group.city} ${group.state ?? ""} ${group.country} ${group.public_location} ${group.meeting_day ?? ""} ${group.meeting_time ?? ""}`.toLowerCase();
       return haystack.includes(text);
     };
-    if (located) {
-      const ranked = groupsByDistance(groups, located, showAll ? null : radius);
-      const filtered = text ? ranked.filter((item) => matchesText(item.group)) : ranked;
+    const origin = located ?? place;
+    if (origin) {
+      const ranked = groupsByDistance(groups, origin, radius);
+      const filtered = located && text ? ranked.filter((item) => matchesText(item.group)) : ranked;
       return filtered.map((item) => ({ group: item.group, km: item.km }));
     }
-    const matched = !text && !place
-      ? groups
-      : groups.filter((group) => {
-          if (text && matchesText(group)) return true;
-          return Boolean(place && distanceKm(place, group) <= 32);
-        });
+    const matched = text ? groups.filter(matchesText) : groups;
     return matched.map((group) => ({ group, km: null as number | null }));
-  }, [groups, query, place, located, radius, showAll]);
+  }, [groups, query, place, located, radius]);
 
   const visible = listed.map((item) => item.group);
   const selected = visible.find((group) => group.id === selectedId) ?? null;
@@ -65,7 +59,6 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
     setQuery("");
     setPlace(null);
     setLocated(null);
-    setShowAll(false);
     setLocating(false);
     setLocationError("");
     setLocationNote("");
@@ -124,13 +117,9 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
     };
   }, [sheetOpen]);
 
-  function widenSearch() {
+  function expandTo50() {
     const next = widerRadius(radius);
-    if (next) {
-      setRadius(next);
-      return;
-    }
-    setShowAll(true);
+    if (next) setRadius(next);
   }
 
   async function useMyLocation() {
@@ -160,7 +149,6 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
       }
       const origin = { latitude, longitude, label: "" };
       setPlace(null);
-      setShowAll(false);
       setLocated(origin);
       setLocationNote("Finding groups near you...");
       const closest = groupsByDistance(groups, origin, radius)[0]?.group.id ?? null;
@@ -197,7 +185,6 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
     setLocated(null);
     setLocationError("");
     setLocationNote("");
-    setShowAll(false);
     setSearching(true);
     try {
       const response = await fetch(`/api/places?q=${encodeURIComponent(next)}`);
@@ -255,20 +242,17 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
               <LocateFixed size={13} aria-hidden />
               Find nearby groups automatically
             </p>
-            <div role="radiogroup" aria-label="Distance" className="mx-auto mt-3 flex max-w-md gap-2">
+            <div role="radiogroup" aria-label="Distance" className="mx-auto mt-3 flex max-w-lg rounded-full border border-[#d5e3f5] bg-white p-1">
               {SEARCH_RADII.map((miles) => {
-                const selectedRadius = !showAll && radius === miles;
+                const selectedRadius = radius === miles;
                 return (
                   <button
                     key={miles}
                     type="button"
                     role="radio"
                     aria-checked={selectedRadius}
-                    onClick={() => {
-                      setRadius(miles);
-                      setShowAll(false);
-                    }}
-                    className={`h-11 min-w-0 flex-1 rounded-full border text-sm font-semibold transition duration-200 active:scale-[0.98] motion-reduce:transform-none ${selectedRadius ? "border-[#1976F3] bg-[#e7f1ff] text-[#1565d8]" : "border-[#e6ebf2] bg-white text-[#52627a]"}`}
+                    onClick={() => setRadius(miles)}
+                    className={`h-11 min-w-0 flex-1 rounded-full px-1 text-xs font-semibold whitespace-nowrap transition duration-200 motion-reduce:transition-none sm:text-sm ${selectedRadius ? "bg-[#1976F3] text-white" : "text-[#52627a] hover:text-[#142033]"}`}
                   >
                     {miles} miles
                   </button>
@@ -289,18 +273,19 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
             <div className="max-h-[460px] min-w-0 space-y-2 overflow-auto lg:max-h-none lg:flex-1">
               {visible.length === 0 ? (
                 <div className="rounded-2xl border border-[#d5deea] bg-[#f8fafc] px-4 py-8 text-center">
-                  {located && !query.trim() ? (
+                  {(located || place) && !(located && query.trim()) ? (
                     <>
                       <p className="font-semibold text-[#142033]">No Bible Groups found within {radius} miles.</p>
                       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                        {showAll ? null : (
-                          <button type="button" onClick={widenSearch} className="inline-flex h-11 items-center justify-center rounded-full border border-[#1976F3] bg-white px-4 text-sm font-semibold text-[#1565d8]">
-                            Widen Search
+                        {widerRadius(radius) ? (
+                          <button type="button" onClick={expandTo50} className="inline-flex h-11 items-center justify-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white transition duration-200 active:scale-[0.98] motion-reduce:transform-none">
+                            Expand to 50 Miles
                           </button>
+                        ) : (
+                          <Link href="/app/start" className="inline-flex h-11 items-center justify-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">
+                            Start a Group
+                          </Link>
                         )}
-                        <Link href="/app/start" className="inline-flex h-11 items-center justify-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">
-                          Start a Group
-                        </Link>
                       </div>
                     </>
                   ) : (

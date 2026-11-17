@@ -1,6 +1,6 @@
 import { distanceKm } from "./geo";
 
-export const SEARCH_RADII = [5, 10, 25] as const;
+export const SEARCH_RADII = [5, 10, 25, 50] as const;
 
 export type SearchRadius = (typeof SEARCH_RADII)[number];
 
@@ -101,7 +101,5 @@ export function formatMiles(km: number, approximate: boolean) {
 }
 
 export function widerRadius(radius: SearchRadius): SearchRadius | null {
-  if (radius === 5) return 10;
-  if (radius === 10) return 25;
-  return null;
+  return radius < 50 ? 50 : null;
 }
