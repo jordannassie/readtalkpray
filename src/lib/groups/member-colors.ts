@@ -1,4 +1,11 @@
-const COLORS = ["#1D4ED8", "#15803D", "#C2410C", "#6D28D9", "#BE185D", "#0F766E", "#3730A3", "#BE123C"] as const;
+const GRADIENTS = [
+  "linear-gradient(135deg, #2563EB 0%, #22D3EE 100%)",
+  "linear-gradient(135deg, #F43F8A 0%, #FB7185 100%)",
+  "linear-gradient(135deg, #A855F7 0%, #6366F1 100%)",
+  "linear-gradient(135deg, #10B981 0%, #84CC16 100%)",
+  "linear-gradient(135deg, #F97316 0%, #FBBF24 100%)",
+  "linear-gradient(135deg, #14B8A6 0%, #38BDF8 100%)",
+] as const;
 
 function hashGroupId(groupId: string) {
   let hash = 2166136261;
@@ -10,10 +17,9 @@ function hashGroupId(groupId: string) {
 }
 
 export function groupMemberColors(groupId: string) {
-  const hash = hashGroupId(groupId);
-  const start = hash % COLORS.length;
-  const step = [1, 3, 5, 7][Math.floor(hash / COLORS.length) % 4];
-  return Array.from({ length: 4 }, (_, offset) => COLORS[(start + offset * step) % COLORS.length]);
+  const ranked = GRADIENTS.map((gradient, index) => ({ gradient, rank: hashGroupId(`${groupId}:${index}`) }));
+  ranked.sort((left, right) => left.rank - right.rank);
+  return ranked.slice(0, 4).map((item) => item.gradient);
 }
 
 export function groupMemberLabel(count: number) {

@@ -13,7 +13,7 @@ export function GroupMembersDisplay({
   compact?: boolean;
 }) {
   const colors = groupMemberColors(groupId);
-  const size = compact ? 24 : 28;
+  const size = compact ? 26 : 28;
   return (
     <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
       <span className="flex shrink-0 items-center" aria-hidden>
@@ -21,9 +21,9 @@ export function GroupMembersDisplay({
           <span
             key={`${color}-${index}`}
             className="relative grid place-items-center rounded-full border-2 border-white text-white"
-            style={{ width: size, height: size, marginLeft: index === 0 ? 0 : -8, backgroundColor: color, zIndex: colors.length - index }}
+            style={{ width: size, height: size, marginLeft: index === 0 ? 0 : -8, backgroundImage: color, zIndex: colors.length - index }}
           >
-            <UserRound size={compact ? 13 : 15} strokeWidth={2.4} />
+            <UserRound size={compact ? 14 : 15} strokeWidth={2.6} style={{ filter: "drop-shadow(0 1px 1px rgba(15, 23, 42, 0.45))" }} />
           </span>
         ))}
       </span>

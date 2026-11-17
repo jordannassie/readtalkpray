@@ -7,7 +7,7 @@ alter table public.rtp_group_impact
   add column if not exists group_members integer not null default 0 check (group_members >= 0);
 
 create or replace view public.rtp_public_member_counts
-with (security_invoker = false) as
+with (security_invoker = false, security_barrier = true) as
 select impact.group_id, impact.group_members
 from public.rtp_group_impact as impact
 join public.rtp_groups as groups on groups.id = impact.group_id

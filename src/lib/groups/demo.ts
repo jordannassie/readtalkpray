@@ -24,6 +24,7 @@ const DEMO_GROUPS: PublicGroup[] = [
     leader_name: "Caleb Brooks",
     leader_photo_url: "/demo/leaders/caleb.jpg",
     is_demo: true,
+    members: 10,
   },
   {
     id: "demo-downtown",
@@ -42,6 +43,7 @@ const DEMO_GROUPS: PublicGroup[] = [
     leader_name: "Maya Chen",
     leader_photo_url: "/demo/leaders/maya.jpg",
     is_demo: true,
+    members: 15,
   },
   {
     id: "demo-east",
@@ -60,6 +62,7 @@ const DEMO_GROUPS: PublicGroup[] = [
     leader_name: "Andre Williams",
     leader_photo_url: "/demo/leaders/andre.jpg",
     is_demo: true,
+    members: 9,
   },
   {
     id: "demo-brentwood",
