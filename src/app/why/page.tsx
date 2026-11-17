@@ -89,7 +89,7 @@ export default function WhyPage() {
             <Quote>I had people gathering together to read the Bible, every Sunday morning.</Quote>
             <p>We started a Bible reading group at a coffee shop at The Star in Frisco, Texas.</p>
             <p>Nothing fancy. Just ordinary people sitting around a table, drinking coffee, opening their Bibles, talking about life, and praying together.</p>
-            <StoryPhoto src={STAR_IMAGE} alt="The Star in Frisco, Texas, where the Sunday morning Bible group began" caption="The Star, Frisco, Texas — where our Sunday morning Bible group began." />
+            <StoryPhoto src={STAR_IMAGE} alt="The Star in Frisco, Texas, where the Sunday morning Bible group began" caption="The Star, Frisco, Texas — where our Sunday morning Bible group began." contained />
             <p>At first, there were just two of us.</p>
             <p>Then four came.</p>
             <p>Then we were back down to two.</p>
@@ -300,11 +300,11 @@ function Quote({ children }: { children: ReactNode }) {
   return <p className="border-l-2 border-[#1976F3] pl-4 text-xl font-semibold leading-snug tracking-tight text-[#142033]">{children}</p>;
 }
 
-function StoryPhoto({ src, alt, caption }: { src: string; alt: string; caption: string }) {
+function StoryPhoto({ src, alt, caption, contained = false }: { src: string; alt: string; caption: string; contained?: boolean }) {
   return (
     <figure className="py-2">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} className="h-auto w-full rounded-2xl ring-1 ring-black/5" />
+      <img src={src} alt={alt} className={contained ? "mx-auto h-auto w-full max-w-md rounded-2xl ring-1 ring-black/5" : "h-auto w-full rounded-2xl ring-1 ring-black/5"} />
       <figcaption className="mt-2.5 text-sm leading-relaxed text-[#52627a]">{caption}</figcaption>
     </figure>
   );
