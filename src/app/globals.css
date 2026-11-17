@@ -85,34 +85,11 @@ a {
   text-align: center;
 }
 
-.rtp-member-badge {
-  position: absolute;
-  right: -4px;
-  bottom: -4px;
-  z-index: 4;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border: 2px solid #fff;
-  border-radius: 999px;
-  background: #1976F3;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 14px;
-  text-align: center;
-}
-
 .rtp-pin-pair {
   position: relative;
   width: 76px;
   height: 46px;
   filter: drop-shadow(0 6px 10px rgba(20, 40, 80, 0.22));
-}
-
-.rtp-pin-pair .rtp-member-badge {
-  right: 0;
-  bottom: -10px;
 }
 
 .rtp-pin-pair img,

@@ -4,6 +4,7 @@ import { ChevronDown, Eye, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { GroupMembersDisplay } from "@/components/groups/GroupMembersDisplay";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { LeaderFaces } from "@/components/groups/LeaderFaces";
 import { GroupStatusToggle, SyncedLiveStatus } from "@/components/groups/LiveStatus";
@@ -283,7 +284,8 @@ export function AdminReview({
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{group.name}</p>
                     <p className="truncate text-xs text-[#555]">{group.leader_name}{group.co_leader_name ? ` & ${group.co_leader_name}` : ""}</p>
-                    <p className="truncate text-xs text-[#667085]">{[place, when].filter(Boolean).join(" · ")}{typeof group.members === "number" ? ` · ${group.members} Members` : ""}</p>
+                    <p className="truncate text-xs text-[#667085]">{[place, when].filter(Boolean).join(" · ")}</p>
+                    {typeof group.members === "number" ? <div className="mt-1"><GroupMembersDisplay groupId={group.id} count={group.members} compact /></div> : null}
                   </div>
                   {group.status === "approved" || group.status === "paused" ? <SyncedLiveStatus groupId={group.id} serverLive={group.status === "approved"} /> : <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${pillClass(group.status)}`}>{pillLabel(group.status)}</span>}
                 </div>

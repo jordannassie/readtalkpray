@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Calendar, Check, MapPin, User, Users } from "lucide-react";
+import { GroupMembersDisplay } from "@/components/groups/GroupMembersDisplay";
 import { PhoneInput } from "@/components/phone/PhoneInput";
 import { LeaderFaces } from "@/components/groups/LeaderFaces";
 import { LocationPreview } from "@/components/groups/LocationPreview";
@@ -123,10 +124,9 @@ export function JoinGroupForm({
           </p>
           {venue ? <p className="mt-1 pl-6 text-sm text-[#52627a]">{venue}</p> : null}
           {typeof group.members === "number" ? (
-            <p className="mt-1 flex items-center gap-2 text-sm font-medium text-[#142033]">
-              <Users size={16} className="shrink-0 text-[#1976F3]" aria-hidden />
-              {group.members} Group Members
-            </p>
+            <div className="mt-2">
+              <GroupMembersDisplay groupId={group.id} count={group.members} example={group.is_demo} compact={variant === "panel"} />
+            </div>
           ) : null}
           {availability ? <p className="mt-3"><LiveStatus live={availability === "live"} /></p> : statusLabel ? <p className="mt-3"><span className="inline-flex rounded-full bg-[#e8f8ee] px-3 py-1 text-xs font-semibold text-[#157a3a]">{statusLabel}</span></p> : null}
         </div>

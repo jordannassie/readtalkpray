@@ -78,6 +78,7 @@ const DEMO_GROUPS: PublicGroup[] = [
     leader_name: "Sofia Reyes",
     leader_photo_url: "/demo/leaders/sofia.jpg",
     is_demo: true,
+    members: 12,
   },
   {
     id: "demo-thompsons",
@@ -96,6 +97,7 @@ const DEMO_GROUPS: PublicGroup[] = [
     leader_name: "Hannah Cole",
     leader_photo_url: "/demo/leaders/hannah.jpg",
     is_demo: true,
+    members: 8,
   },
   {
     id: "demo-12-south",
@@ -114,6 +116,7 @@ const DEMO_GROUPS: PublicGroup[] = [
     leader_name: "Priya Shah",
     leader_photo_url: "/demo/leaders/priya.jpg",
     is_demo: true,
+    members: 14,
   },
   {
     id: "demo-spring-hill",
@@ -132,6 +135,7 @@ const DEMO_GROUPS: PublicGroup[] = [
     leader_name: "Marcus Hale",
     leader_photo_url: "/demo/leaders/marcus.jpg",
     is_demo: true,
+    members: 11,
   },
   {
     id: "demo-murfreesboro",
@@ -150,6 +154,7 @@ const DEMO_GROUPS: PublicGroup[] = [
     leader_name: "Elena Vasquez",
     leader_photo_url: "/demo/leaders/elena.jpg",
     is_demo: true,
+    members: 9,
   },
 ];
 

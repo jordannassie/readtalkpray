@@ -4,7 +4,8 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowRight, Calendar, Check, ChevronLeft, Loader2, LocateFixed, MapPin, Search, Users, X } from "lucide-react";
+import { ArrowRight, Calendar, Check, ChevronLeft, Loader2, LocateFixed, MapPin, Search, X } from "lucide-react";
+import { GroupMembersDisplay } from "@/components/groups/GroupMembersDisplay";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { LeaderFaces } from "@/components/groups/LeaderFaces";
 import { formatMiles, groupsByDistance, SEARCH_RADII, widerRadius, type SearchRadius } from "@/lib/groups/nearby";
@@ -331,13 +332,12 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
                         <span className="truncate">{cityState(group) || group.public_location}</span>
                         {item.km != null ? <span className="shrink-0 font-semibold text-[#1976F3]">{formatMiles(item.km, group.location_type === "home")}</span> : null}
                       </span>
-                      <span className="mt-0.5 block truncate text-xs text-[#52627a]">Led by {leaderLine(group)}</span>
                       {typeof group.members === "number" ? (
-                        <span className="mt-0.5 flex items-center gap-1 text-xs font-medium text-[#142033]">
-                          <Users size={12} className="shrink-0 text-[#1976F3]" aria-hidden />
-                          {group.members} Members
+                        <span className="mt-1 block">
+                          <GroupMembersDisplay groupId={group.id} count={group.members} example={group.is_demo} compact />
                         </span>
                       ) : null}
+                      <span className="mt-0.5 block truncate text-xs text-[#52627a]">Led by {leaderLine(group)}</span>
                     </span>
                     <button
                       type="button"

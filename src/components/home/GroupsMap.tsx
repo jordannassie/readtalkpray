@@ -27,15 +27,9 @@ function pinFace(name: string, url: string | null) {
   return src ? `<img src="${escapeHtml(src)}" alt="" />` : `<span>${initial}</span>`;
 }
 
-function memberBadge(group: PublicGroup) {
-  if (group.is_demo || typeof group.members !== "number" || group.members < 1) return "";
-  return `<span class="rtp-member-badge">${group.members}</span>`;
-}
-
 function pinHtml(group: PublicGroup) {
-  const badge = memberBadge(group);
-  if (!group.co_leader_name) return `<div class="rtp-pin">${pinFace(group.leader_name, group.leader_photo_url)}${badge}</div>`;
-  return `<div class="rtp-pin rtp-pin-pair">${pinFace(group.leader_name, group.leader_photo_url)}${pinFace(group.co_leader_name, group.co_leader_photo_url ?? null)}${badge}</div>`;
+  if (!group.co_leader_name) return `<div class="rtp-pin">${pinFace(group.leader_name, group.leader_photo_url)}</div>`;
+  return `<div class="rtp-pin rtp-pin-pair">${pinFace(group.leader_name, group.leader_photo_url)}${pinFace(group.co_leader_name, group.co_leader_photo_url ?? null)}</div>`;
 }
 
 export function GroupsMap({
