@@ -10,6 +10,7 @@ const STORY_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/
 const STAR_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/thestar.png";
 const GROUP_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/biblegroup.JPG";
 const WESLEY_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/Wesley.png";
+const JESUS_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/Jesus%20teaching.png";
 const ATTENDANCE = [2, 4, 2, 14, 30, 20];
 const TITLE = "Why Read Talk Pray? | A Church Bigger Than a Building";
 const DESCRIPTION = "Discover why Read Talk Pray is rethinking church through simple Bible reading groups, volunteer leadership, real community, and a movement bigger than a building.";
@@ -161,6 +162,7 @@ export default function WhyPage() {
 
         <article className="mx-auto max-w-3xl px-5 pb-20">
           <Section title="The Church Was Never a Building">
+            <StoryPhoto src={JESUS_IMAGE} alt="Illustration of Jesus teaching His disciples beside the Sea of Galilee." width={1672} height={941} />
             <p>Before church buildings, professional productions, and institutional structures, Christians gathered around Jesus and His Word.</p>
             <p>The early believers met in homes. They shared meals, learned from the apostles&apos; teaching, prayed together, cared for one another, and shared the Gospel.</p>
             <p>Acts 2:42 describes their devotion to the apostles&apos; teaching, fellowship, breaking bread, and prayer.</p>
@@ -178,6 +180,8 @@ export default function WhyPage() {
               alt="An illustration of John and Charles Wesley with believers gathered around a Bible"
               caption="John and Charles Wesley — The early Methodist movement empowered ordinary believers to gather in small groups for discipleship, prayer, and accountability."
               note="Historical illustration."
+              width={1672}
+              height={941}
             />
             <p>Many were led by ordinary laypeople rather than ordained ministers. A new paid pastor was not required for every new group.</p>
             <p>These groups helped people grow through fellowship, prayer, and accountability.</p>
@@ -307,15 +311,17 @@ function Quote({ children }: { children: ReactNode }) {
   return <p className="border-l-2 border-[#1976F3] pl-4 text-xl font-semibold leading-snug tracking-tight text-[#142033]">{children}</p>;
 }
 
-function StoryPhoto({ src, alt, caption, note, contained = false }: { src: string; alt: string; caption: string; note?: string; contained?: boolean }) {
+function StoryPhoto({ src, alt, caption, note, contained = false, width, height }: { src: string; alt: string; caption?: string; note?: string; contained?: boolean; width?: number; height?: number }) {
   return (
     <figure className="py-2">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} width={src === WESLEY_IMAGE ? 1672 : undefined} height={src === WESLEY_IMAGE ? 941 : undefined} className={contained ? "mx-auto h-auto w-full max-w-md rounded-2xl ring-1 ring-black/5" : "h-auto w-full rounded-2xl ring-1 ring-black/5"} />
-      <figcaption className="mt-2.5 text-sm leading-relaxed text-[#52627a]">
-        {caption}
-        {note ? <span className="mt-1 block text-xs">{note}</span> : null}
-      </figcaption>
+      <img src={src} alt={alt} width={width} height={height} className={contained ? "mx-auto h-auto w-full max-w-md rounded-2xl ring-1 ring-black/5" : "h-auto w-full rounded-2xl ring-1 ring-black/5"} />
+      {caption ? (
+        <figcaption className="mt-2.5 text-sm leading-relaxed text-[#52627a]">
+          {caption}
+          {note ? <span className="mt-1 block text-xs">{note}</span> : null}
+        </figcaption>
+      ) : null}
     </figure>
   );
 }
