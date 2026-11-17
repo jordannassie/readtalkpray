@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const group = await getApprovedGroupBySlug(slug);
   if (group) return groupLandingMetadata(group, `/g/${slug}`);
   if ((await publicSlugState(slug)) === "paused") return { title: "This group is paused · Read Talk Pray", robots: { index: false, follow: false } };
-  return { title: "Group · Read Talk Pray" };
+  return { title: "Group · Read Talk Pray", robots: { index: false, follow: false } };
 }
 
 export default async function FriendlyGroupPage({ params }: { params: Promise<{ slug: string }> }) {

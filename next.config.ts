@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
       { source: "/hero/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
       { source: "/brand/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
       { source: "/bible/web/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+      ...["/app", "/app/:path*", "/api/:path*", "/admin", "/dashboard", "/dashboard/:path*", "/login", "/login/:path*", "/signup", "/csv", "/profile", "/leader", "/events", "/training"].map((source) => ({
+        source,
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      })),
     ];
   },
   images: {

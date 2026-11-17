@@ -3,10 +3,13 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { BELIEFS } from "@/components/home/Beliefs";
 
-export const metadata: Metadata = {
-  title: "Statement of Faith · Read Talk Pray",
-  description: "The statement of faith for Read Talk Pray groups.",
-};
+import { publicMetadata } from "@/lib/groups/seo";
+
+export const metadata: Metadata = publicMetadata({
+  title: "Statement of Faith",
+  description: "What Read Talk Pray churches believe about the Bible, Jesus Christ, and following him together.",
+  path: "/statement-of-faith",
+});
 
 export default function StatementOfFaithPage() {
   return (

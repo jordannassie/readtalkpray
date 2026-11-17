@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { RegisterServiceWorker } from "@/components/app/RegisterServiceWorker";
 import { SHARE_IMAGE } from "@/components/brand/logos";
+import { SITE } from "@/lib/groups/seo";
 import { DemoAuthProvider } from "@/lib/demo/auth";
 import "./globals.css";
 
@@ -15,9 +16,12 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+const description = "Find a Bible group near you. Read the Bible, talk about it, and pray together. A simple church gathering for anyone who wants to follow Jesus.";
+
 export const metadata: Metadata = {
-  title: "Read Talk Pray",
-  description: "A simple way to follow Jesus together. Join or start a Bible study group.",
+  metadataBase: new URL(SITE),
+  title: { default: "Bible Groups Near You | Read Talk Pray" },
+  description,
   applicationName: "Read Talk Pray",
   manifest: "/site.webmanifest",
   appleWebApp: { capable: true, title: "Read Talk Pray", statusBarStyle: "default" },
@@ -30,16 +34,17 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   openGraph: {
-    title: "Read Talk Pray",
-    description: "A simple way to follow Jesus together. Join or start a Bible study group.",
+    title: "Bible Groups Near You | Read Talk Pray",
+    description,
+    url: SITE,
     siteName: "Read Talk Pray",
     type: "website",
     images: [{ url: SHARE_IMAGE, width: 1080, height: 1080, alt: "Read Talk Pray" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Read Talk Pray",
-    description: "A simple way to follow Jesus together. Join or start a Bible study group.",
+    title: "Bible Groups Near You | Read Talk Pray",
+    description,
     images: [SHARE_IMAGE],
   },
 };

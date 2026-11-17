@@ -3,10 +3,13 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { LEADER_COMMITMENTS, LEADER_COMMITMENT_SCRIPTURE } from "@/lib/groups/commitments";
 
-export const metadata: Metadata = {
-  title: "Leader Commitments · Read Talk Pray",
-  description: "What a Read Talk Pray group leader agrees to do.",
-};
+import { publicMetadata } from "@/lib/groups/seo";
+
+export const metadata: Metadata = publicMetadata({
+  title: "Leader Commitments",
+  description: "What a Read Talk Pray Bible group leader agrees to do.",
+  path: "/leader-commitments",
+});
 
 export default function LeaderCommitmentsPage() {
   return (

@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const group = (await getDemoGroup(id)) ?? (isUuid(id) ? await getApprovedGroup(id) : null);
   if (!group) {
     if (isUuid(id) && (await publicGroupState(id)) === "paused") return { title: "This group is paused · Read Talk Pray", robots: { index: false, follow: false } };
-    return { title: "Group · Read Talk Pray" };
+    return { title: "Group · Read Talk Pray", robots: { index: false, follow: false } };
   }
   return groupLandingMetadata(group, group.slug ? `/g/${group.slug}` : `/groups/${id}`);
 }

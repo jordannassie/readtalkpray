@@ -3,17 +3,13 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { ChristianityCenter } from "@/components/christianity/ChristianityCenter";
 import { ARTICLES, articlePlainText } from "@/lib/christianity/articles";
+import { publicMetadata } from "@/lib/groups/seo";
 
-const title = "Questions About Christianity";
-const description = "Simple, Bible-based answers to life's biggest questions. Learn about Jesus, baptism, the Bible, and Bible groups.";
-const url = "https://readtalkpray.com/christianity";
-
-export const metadata: Metadata = {
-  title: `${title} · Read Talk Pray`,
-  description,
-  alternates: { canonical: url },
-  openGraph: { title, description, url, siteName: "Read Talk Pray", type: "website" },
-};
+export const metadata: Metadata = publicMetadata({
+  title: "Questions About Christianity",
+  description: "Simple, Bible-based answers to life's biggest questions. Learn about Jesus, baptism, the Bible, and Bible groups.",
+  path: "/christianity",
+});
 
 export default function ChristianityPage() {
   const faq = {

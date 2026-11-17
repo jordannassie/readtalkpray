@@ -3,10 +3,13 @@ import type { Metadata } from "next";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy · Read Talk Pray",
+import { publicMetadata } from "@/lib/groups/seo";
+
+export const metadata: Metadata = publicMetadata({
+  title: "Privacy Policy",
   description: "How Read Talk Pray handles accounts, group applications, and interested people.",
-};
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

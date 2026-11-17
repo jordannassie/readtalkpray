@@ -1,17 +1,23 @@
 import Link from "next/link";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { BLACK_LOGO } from "@/components/brand/logos";
-import type { PublicGroup } from "@/lib/groups/types";
+import { groupJsonLd, groupSeoDescription, SITE } from "@/lib/groups/seo";
+import { groupPublicPath } from "@/lib/groups/slug";
+import { cityState, type PublicGroup } from "@/lib/groups/types";
 
 export function GroupLanding({ group }: { group: PublicGroup }) {
+  const place = cityState(group);
+  const schema = groupJsonLd(group, `${SITE}${groupPublicPath(group)}`);
   return (
     <div className="min-h-screen overflow-x-clip bg-[#eef3fb] text-[#142033]">
+      {schema ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} /> : null}
       <header className="flex justify-center px-5 pt-6">
         <BrandMark />
       </header>
       <main className="mx-auto w-full max-w-[600px] px-4 pt-5 pb-10">
-        <h1 className="text-center text-[1.85rem] leading-[1.05] font-semibold tracking-tight sm:text-4xl">Join a Bible Group Near You.</h1>
-        <p className="mt-2 text-center text-base text-[#52627a] sm:text-lg">Read the Bible. Talk about it. Pray together.</p>
+        <h1 className="text-center text-[1.85rem] leading-[1.05] font-semibold tracking-tight sm:text-4xl">{place ? `Bible Group in ${place}` : "Join a Bible Group Near You."}</h1>
+        <p className="mt-2 text-center text-base text-[#52627a] sm:text-lg">{group.name}. Read the Bible. Talk about it. Pray together.</p>
+        <p className="mx-auto mt-3 max-w-md text-center text-sm leading-relaxed text-[#52627a]">{groupSeoDescription(group)}</p>
         <div className="mt-5 rounded-[28px] bg-white p-5 shadow-sm sm:p-7">
           <JoinGroupForm group={group} variant="landing" faces="profile" />
         </div>

@@ -11,9 +11,18 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { demoGroups } from "@/lib/groups/demo";
 import { listApprovedGroups } from "@/lib/groups/queries";
-import { placeLabel } from "@/lib/groups/types";
+import { publicMetadata, SITE } from "@/lib/groups/seo";
+import { groupPublicPath } from "@/lib/groups/slug";
+import { cityState, placeLabel } from "@/lib/groups/types";
+import Link from "next/link";
 
 export const revalidate = 120;
+
+export const metadata = publicMetadata({
+  title: "Bible Groups Near You",
+  description: "Find a Bible group near you. Read the Bible, talk about it, and pray together. A simple church gathering for anyone who wants to follow Jesus.",
+  path: "",
+});
 
 const STEPS = [
   { title: "Read", body: "Read the Bible together.", icon: BookOpen },
@@ -28,8 +37,31 @@ export default async function HomePage() {
   const groups = [...realGroups, ...(await demoGroups())];
   const places = globePlaces(realGroups);
 
+  const directory = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        name: "Read Talk Pray",
+        url: `${SITE}/`,
+        description: "A network of locally led Bible groups. Read the Bible, talk about it, and pray together.",
+      },
+      {
+        "@type": "ItemList",
+        name: "Bible groups",
+        itemListElement: realGroups.map((group, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: `${group.name} in ${cityState(group)}`,
+          url: `${SITE}${groupPublicPath(group)}`,
+        })),
+      },
+    ],
+  };
+
   return (
     <div className="overflow-x-clip bg-[#eef3fb] text-[#111]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(directory) }} />
       <SiteHeader activeHref="/#groups" />
       <section
         className="relative isolate overflow-hidden bg-cover bg-center bg-no-repeat text-white"
@@ -79,6 +111,7 @@ export default async function HomePage() {
       </section>
 
       <GroupFinder groups={groups} />
+      {realGroups.length ? <GroupDirectory groups={realGroups} /> : null}
 
       <StartGuide />
       <ChristianityCenter heading="h2" library={false} />
@@ -87,6 +120,23 @@ export default async function HomePage() {
       <Beliefs />
       <SiteFooter />
     </div>
+  );
+}
+
+function GroupDirectory({ groups }: { groups: Awaited<ReturnType<typeof listApprovedGroups>> }) {
+  return (
+    <section className="mx-auto max-w-[1120px] px-5 py-8" aria-labelledby="group-directory">
+      <h2 id="group-directory" className="text-xl font-semibold tracking-tight text-[#142033]">Bible groups by city</h2>
+      <ul className="mt-3 flex flex-wrap gap-2">
+        {groups.map((group) => (
+          <li key={group.id}>
+            <Link href={groupPublicPath(group)} className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#142033] shadow-sm">
+              {group.name} in {cityState(group)}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

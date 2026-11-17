@@ -3,10 +3,13 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 
-export const metadata: Metadata = {
-  title: "Terms of Use · Read Talk Pray",
+import { publicMetadata } from "@/lib/groups/seo";
+
+export const metadata: Metadata = publicMetadata({
+  title: "Terms of Use",
   description: "Terms for using the Read Talk Pray website, accounts, and group tools.",
-};
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (
