@@ -3,6 +3,7 @@ import { AccountDashboard } from "@/components/account/AccountDashboard";
 import { ProfilePhoto } from "@/components/account/ProfilePhoto";
 import { BibleGroupGuide } from "@/components/app/BibleGroupGuide";
 import { loadAccount } from "@/lib/auth/account";
+import { loadChecklist } from "@/lib/checklist";
 import { googleAvatar } from "@/lib/auth/profile";
 import { ownsGroup } from "@/lib/groups/ownership";
 
@@ -13,6 +14,7 @@ export default async function AppHomePage() {
   if (!account.configured || !account.user) return null;
   const name = account.profile.full_name || "Welcome";
   const hasGroup = ownsGroup(account.applications, account.groups);
+  const steps = await loadChecklist();
   return (
     <div>
       <section className="relative overflow-hidden rounded-[30px] bg-[linear-gradient(145deg,#0a4cb5_0%,#1976F3_46%,#49d0ff_100%)] px-5 py-8 text-center text-white shadow-[0_18px_40px_rgba(21,101,216,0.28)] sm:px-10 sm:py-10">
@@ -51,7 +53,7 @@ export default async function AppHomePage() {
         locationChanges={account.locationChanges}
         invites={account.invites}
       />
-      <BibleGroupGuide />
+      <BibleGroupGuide steps={steps} />
     </div>
   );
 }

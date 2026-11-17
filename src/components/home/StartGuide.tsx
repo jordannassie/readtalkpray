@@ -9,8 +9,8 @@ export function StartGuide() {
         <Image
           src={GROUP_GUIDE_IMAGE}
           alt="How to Start a Bible Group guide"
-          width={1254}
-          height={1254}
+          width={1199}
+          height={1312}
           sizes="(max-width: 1024px) 360px, 440px"
           className="mx-auto h-auto w-full max-w-[360px] lg:max-w-[440px]"
         />

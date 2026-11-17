@@ -196,9 +196,19 @@ a {
   animation: rtp-bell-ring 0.7s ease-in-out;
 }
 
+@keyframes rtp-checklist-done {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: none; }
+}
+
+.rtp-checklist-done {
+  animation: rtp-checklist-done 200ms ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rtp-banner-flow,
-  .rtp-bell-ring { animation: none; }
+  .rtp-bell-ring,
+  .rtp-checklist-done { animation: none; }
 }
 
 .rtp-demo {
