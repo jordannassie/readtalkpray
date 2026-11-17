@@ -99,6 +99,7 @@ export function GroupsMap({
           }),
           keyboard: true,
           title: group.name,
+          zIndexOffset: group.is_demo ? 0 : 1000,
         });
         marker.on("click", () => onSelect(group.id));
         marker.addTo(map);
