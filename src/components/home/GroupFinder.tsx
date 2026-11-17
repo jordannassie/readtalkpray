@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowRight, Calendar, ChevronLeft, MapPin } from "lucide-react";
+import { ArrowRight, Calendar, ChevronLeft, MapPin, Search, X } from "lucide-react";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { LeaderFaces } from "@/components/groups/LeaderFaces";
 import { distanceKm } from "@/lib/groups/geo";
@@ -40,7 +40,13 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
     });
   }, [groups, query, place]);
 
-  const selected = visible.find((group) => group.id === selectedId) ?? groups.find((group) => group.id === selectedId) ?? null;
+  const selected = visible.find((group) => group.id === selectedId) ?? null;
+
+  function clearSearch() {
+    setQuery("");
+    setPlace(null);
+    setNotice("");
+  }
 
   const selectGroup = useCallback((id: string) => {
     setSelectedId(id);
@@ -62,6 +68,12 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!visible.length) return;
+    if (visible.some((group) => group.id === selectedId)) return;
+    setSelectedId(visible[0].id);
+  }, [visible, selectedId]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -116,46 +128,36 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
   return (
     <div id="join" className="scroll-mt-28 bg-[#f4f7fb]">
       <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-5 sm:py-10">
-        <div id="groups" className="scroll-mt-28">
-          <h2 className="text-3xl font-semibold tracking-tight text-[#142033] sm:text-4xl">{place ? `Find a Group near ${place.label}` : "Find a Group in Nashville"}</h2>
-          <p className="mt-2 max-w-2xl text-base text-[#52627a] sm:text-lg">Read the Bible. Talk about it. Pray together. Any day, any time. About one hour.</p>
-        </div>
-
-        <section className="mt-5 rounded-[28px] bg-[#f7f9fc] p-3 sm:p-4">
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,35%)_minmax(0,35%)_minmax(0,30%)] lg:items-stretch">
-            <div className="order-1 flex min-w-0 flex-col rounded-[22px] bg-white p-3 shadow-sm lg:max-h-[680px]">
-              <form onSubmit={onSearch}>
-                <label className="sr-only" htmlFor="group-search">Search by neighborhood or city</label>
-                <span className="flex h-12 items-center gap-2 rounded-full border border-[#e6ebf2] bg-[#f8fafc] px-4">
-                  <MapPin size={16} className="shrink-0 text-[#1976F3]" aria-hidden />
-                  <input
-                    id="group-search"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search by neighborhood or city..."
-                    className="h-full w-full bg-transparent text-base outline-none placeholder:text-[#8a8a8a]"
-                  />
-                </span>
-                <button type="submit" className="sr-only" disabled={searching}>
-                  {searching ? "Searching" : "Search"}
-                </button>
-              </form>
-              {notice ? <p className="mt-2 text-sm text-[#9a3412]">{notice}</p> : null}
+        <div id="groups" className="scroll-mt-28 text-center">
+          <h2 className="text-4xl font-bold tracking-tight text-[#142033] sm:text-5xl">Find a Group</h2>
+          <form onSubmit={onSearch} className="mx-auto mt-5 w-full max-w-[1080px]">
+            <label className="sr-only" htmlFor="group-search">Search by neighborhood or city</label>
+            <div className="flex h-14 items-center gap-3 rounded-full border border-[#c5daf8] bg-white px-5 shadow-sm focus-within:border-[#1976F3] focus-within:shadow-[0_0_0_4px_rgba(25,118,243,0.16)] sm:h-16">
+              <Search size={20} className="shrink-0 text-[#1976F3]" aria-hidden />
+              <input
+                id="group-search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search by neighborhood or city..."
+                className="h-full w-full bg-transparent text-base outline-none placeholder:text-[#8a8a8a]"
+              />
               {query || place ? (
-                <button
-                  type="button"
-                  className="mt-2 min-h-11 text-sm font-medium text-[#1976F3]"
-                  onClick={() => {
-                    setQuery("");
-                    setPlace(null);
-                    setNotice("");
-                  }}
-                >
-                  Clear search
+                <button type="button" onClick={clearSearch} aria-label="Clear search" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[#52627a]">
+                  <X size={18} aria-hidden />
                 </button>
               ) : null}
+            </div>
+            <button type="submit" className="sr-only" disabled={searching}>
+              {searching ? "Searching" : "Search"}
+            </button>
+            {notice ? <p className="mt-2 text-sm text-[#9a3412]">{notice}</p> : null}
+          </form>
+        </div>
 
-            <div className="mt-3 max-h-[460px] min-w-0 space-y-2 overflow-auto lg:max-h-none lg:flex-1">
+        <section className="mt-6 rounded-[28px] bg-[#f7f9fc] p-3 sm:p-4">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,35%)_minmax(0,35%)_minmax(0,30%)] lg:items-stretch">
+            <div className="order-1 flex min-w-0 flex-col rounded-[22px] bg-white p-3 shadow-sm lg:max-h-[680px]">
+            <div className="max-h-[460px] min-w-0 space-y-2 overflow-auto lg:max-h-none lg:flex-1">
               {visible.length === 0 ? (
                 <div className="rounded-2xl border border-[#d5deea] bg-[#f8fafc] px-4 py-8 text-center">
                   <p className="font-semibold text-[#142033]">No groups in that search yet.</p>
