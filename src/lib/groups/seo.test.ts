@@ -36,6 +36,8 @@ test("group descriptions stay specific and short", () => {
   assert.ok(description.length <= 170);
   const custom = groupSeoDescription(group({ description: "A Sunday Bible group for people in Frisco who want to follow Jesus together." }));
   assert.match(custom, /Sunday Bible group/);
+  const added = groupSeoDescription(group({ description: "For people who want to read the Bible together and find a community to belong." }));
+  assert.match(added, /Frisco, Texas/);
 });
 
 test("public venues can publish a street address and home groups cannot", () => {

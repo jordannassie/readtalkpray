@@ -32,14 +32,20 @@ export function groupSeoTitle(group: Pick<PublicGroup, "name" | "city" | "state"
 
 export function groupSeoDescription(group: PublicGroup) {
   const custom = group.description?.replace(/\s+/g, " ").trim();
-  if (custom && custom.length >= 40 && custom.length <= 160) return custom;
-  const place = cityState(group) || "your area";
+  const place = cityState(group);
+  if (custom && custom.length >= 40) {
+    const city = group.city.trim().toLowerCase();
+    if (!place || (city && custom.toLowerCase().includes(city))) return custom.slice(0, 160);
+    const local = `${custom} Bible group in ${place}.`;
+    if (local.length <= 170) return local;
+  }
+  const area = place || "your area";
   const when = meetingWhen(group);
   const venue = venueName(group);
   const meeting = when && venue ? ` Meets ${when} at ${venue}.` : when ? ` Meets ${when}.` : venue ? ` Meets at ${venue}.` : "";
-  const full = `${group.name} is a Bible group in ${place}.${meeting} Read the Bible, talk about Jesus, and pray together.`;
+  const full = `${group.name} is a Bible group in ${area}.${meeting} Read the Bible, talk about Jesus, and pray together.`;
   if (full.length <= 170) return full;
-  return `${group.name} is a Bible group in ${place}. Read the Bible, talk about Jesus, and pray together.`;
+  return `${group.name} is a Bible group in ${area}. Read the Bible, talk about Jesus, and pray together.`;
 }
 
 export function groupJsonLd(group: PublicGroup, url: string) {
