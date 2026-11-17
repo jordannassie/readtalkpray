@@ -18,7 +18,7 @@ const GroupsMap = dynamic(() => import("@/components/home/GroupsMap").then((mod)
 
 type Place = { latitude: number; longitude: number; label: string };
 
-export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
+export function GroupFinder({ groups, samplePreview = false }: { groups: PublicGroup[]; samplePreview?: boolean }) {
   const [query, setQuery] = useState("");
   const [place, setPlace] = useState<Place | null>(null);
   const [located, setLocated] = useState<Place | null>(null);
@@ -268,6 +268,7 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
           </form>
         </div>
 
+        {samplePreview ? <p className="mt-4 rounded-2xl bg-[#e7f0ff] px-4 py-3 text-sm font-semibold text-[#1565d8]">Preview — Sample Groups</p> : null}
         <section className="mt-6 rounded-[28px] bg-[#f7f9fc] p-3 sm:p-4">
           <div className="grid gap-3 lg:grid-cols-[minmax(0,35%)_minmax(0,35%)_minmax(0,30%)] lg:items-stretch">
             <div className="order-1 flex min-w-0 flex-col rounded-[22px] bg-white p-3 shadow-sm lg:max-h-[680px]">
@@ -319,9 +320,6 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center gap-1.5">
                         <span className="line-clamp-2 font-semibold leading-snug">{group.name}</span>
-                        {group.is_demo ? (
-                          <span className="shrink-0 rounded-full bg-[#e7f0ff] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[#1976F3] uppercase">Demo</span>
-                        ) : null}
                       </span>
                       <span className="mt-0.5 flex items-center gap-1 text-[13px] font-medium whitespace-nowrap text-[#142033]">
                         <Calendar size={13} className="shrink-0 text-[#1976F3]" aria-hidden />
@@ -334,7 +332,7 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
                       </span>
                       {typeof group.members === "number" ? (
                         <span className="mt-1 block">
-                          <GroupMembersDisplay groupId={group.id} count={group.members} example={group.is_demo} compact />
+                          <GroupMembersDisplay groupId={group.id} count={group.members} compact live={!group.is_demo} />
                         </span>
                       ) : null}
                       <span className="mt-0.5 block truncate text-xs text-[#52627a]">Led by {leaderLine(group)}</span>
@@ -374,7 +372,7 @@ export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
             </aside>
           </div>
           <p className="mt-3 px-1 text-xs leading-relaxed text-[#6d7b90]">
-            Home groups show an approximate area. The exact address is shared after the leader confirms a real request. Demo groups are examples and do not take reservations.
+            Home groups show an approximate area. The exact address is shared after the leader confirms a real request.
           </p>
         </section>
 

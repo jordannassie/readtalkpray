@@ -1,17 +1,27 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { UserRound } from "lucide-react";
 import { groupMemberColors, groupMemberLabel } from "@/lib/groups/member-colors";
+import { subscribeMemberCount } from "@/lib/member-sync";
 
 export function GroupMembersDisplay({
   groupId,
   count,
-  example = false,
   compact = false,
+  live = true,
 }: {
   groupId: string;
   count: number;
-  example?: boolean;
   compact?: boolean;
+  live?: boolean;
 }) {
+  const [shown, setShown] = useState(count);
+  useEffect(() => setShown(count), [groupId, count]);
+  useEffect(() => {
+    if (!live) return;
+    return subscribeMemberCount(groupId, setShown);
+  }, [groupId, live]);
   const colors = groupMemberColors(groupId);
   const size = compact ? 26 : 28;
   return (
@@ -28,8 +38,7 @@ export function GroupMembersDisplay({
         ))}
       </span>
       <span className={`${compact ? "text-xs" : "text-sm"} font-medium text-[#142033]`}>
-        {groupMemberLabel(count)}
-        {example ? <span className="ml-1.5 text-[10px] font-bold tracking-wide text-[#1976F3] uppercase">Example</span> : null}
+        {groupMemberLabel(shown)}
       </span>
     </p>
   );

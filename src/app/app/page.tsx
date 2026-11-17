@@ -51,7 +51,7 @@ export default async function AppHomePage() {
         email={account.user.email ?? ""}
         isAdmin={account.admin}
         applications={account.applications}
-        groups={account.groups}
+        groups={impact && impactGroup ? account.groups.map((group) => (group.id === impactGroup.id ? { ...group, members: impact.members } : group)) : account.groups}
         requests={account.requests}
         details={account.details}
         locationChanges={account.locationChanges}

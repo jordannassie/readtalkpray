@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { impactCounts, impactSaveFailure } from "@/lib/impact";
 import { isUuid } from "@/lib/groups/text";
@@ -46,5 +47,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: failure.error }, { status: failure.status });
   }
   const row = Array.isArray(rows) ? rows[0] : rows;
+  revalidatePath("/");
   return NextResponse.json({ ok: true, counts: impactCounts(row) });
 }

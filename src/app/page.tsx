@@ -9,7 +9,6 @@ import { WorldGlobe } from "@/components/home/WorldGlobe";
 import { HERO_IMAGE } from "@/lib/demo/data";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
-import { demoGroups } from "@/lib/groups/demo";
 import { listApprovedGroups } from "@/lib/groups/queries";
 import { placeLabel } from "@/lib/groups/types";
 
@@ -24,9 +23,8 @@ const STEPS = [
 const PROMISES = ["No Donations", "No Paid Staff", "No Judgement", "Only the Bible"];
 
 export default async function HomePage() {
-  const realGroups = await listApprovedGroups();
-  const groups = [...(await demoGroups()), ...realGroups];
-  const places = globePlaces(realGroups);
+  const groups = await listApprovedGroups();
+  const places = globePlaces(groups);
 
   return (
     <div className="overflow-x-clip bg-[#eef3fb] text-[#111]">

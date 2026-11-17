@@ -125,16 +125,13 @@ export function JoinGroupForm({
           {venue ? <p className="mt-1 pl-6 text-sm text-[#52627a]">{venue}</p> : null}
           {typeof group.members === "number" ? (
             <div className="mt-2">
-              <GroupMembersDisplay groupId={group.id} count={group.members} example={group.is_demo} compact={variant === "panel"} />
+              <GroupMembersDisplay groupId={group.id} count={group.members} compact={variant === "panel"} live={!group.is_demo} />
             </div>
           ) : null}
           {availability ? <p className="mt-3"><LiveStatus live={availability === "live"} /></p> : statusLabel ? <p className="mt-3"><span className="inline-flex rounded-full bg-[#e8f8ee] px-3 py-1 text-xs font-semibold text-[#157a3a]">{statusLabel}</span></p> : null}
         </div>
         <div className="relative shrink-0">
           <LeaderFaces leaderName={group.leader_name} leaderPhoto={group.leader_photo_url} coLeaderName={group.co_leader_name} coLeaderPhoto={group.co_leader_photo_url} size={faces ?? (variant === "panel" ? "md" : "lg")} />
-          {!hideJoin && group.is_demo ? (
-            <span className="absolute -top-1 -right-1 rounded-full bg-[#e7f0ff] px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-[#1976F3] uppercase">Demo</span>
-          ) : null}
         </div>
       </div>
       <p className="mt-3 text-sm font-medium text-[#142033]">Led by {leaderLine(group)}</p>
@@ -240,7 +237,7 @@ function Confirmation({
   return (
     <div role="status" className="px-1 py-4 text-center">
       {demo ? (
-        <p className="mx-auto mb-4 inline-flex rounded-full bg-[#e7f0ff] px-2.5 py-1 text-[11px] font-bold tracking-wide text-[#1976F3] uppercase">Demo preview</p>
+        <p className="mx-auto mb-4 max-w-sm text-sm text-[#52627a]">This sample group does not take reservations.</p>
       ) : (
         <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#dcfce7] text-[#16A34A]">
           <Check size={32} aria-hidden />

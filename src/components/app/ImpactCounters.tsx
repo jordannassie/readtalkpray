@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Minus, Plus, Send, UserPlus, Users, Waves } from "lucide-react";
 import type { ImpactCounts } from "@/lib/impact";
+import { publishMemberCount } from "@/lib/member-sync";
 
 const METRICS = [
   { key: "members", label: "Group Members", icon: Users, card: "bg-[#e8f1ff]", iconClass: "text-[#1976F3]" },
@@ -18,9 +19,14 @@ export function ImpactCounters({ groupId, initial }: { groupId: string; initial:
   const [savedKey, setSavedKey] = useState<Metric | null>(null);
   const [reason, setReason] = useState("");
   const confirmed = useRef(initial);
+  const countsRef = useRef(initial);
   const generation = useRef(0);
-  const applied = useRef(0);
   const inflight = useRef(0);
+  countsRef.current = counts;
+
+  useEffect(() => {
+    publishMemberCount(groupId, counts.members);
+  }, [groupId, counts.members]);
 
   useEffect(() => {
     function refresh() {
@@ -39,37 +45,54 @@ export function ImpactCounters({ groupId, initial }: { groupId: string; initial:
   }, [groupId]);
 
   async function adjust(metric: Metric, delta: 1 | -1) {
-    const current = counts[metric];
-    if (delta < 0 && current <= 0) return;
+    if (delta < 0 && countsRef.current[metric] <= 0) return;
     const id = ++generation.current;
+    const next = { ...countsRef.current, [metric]: Math.max(0, countsRef.current[metric] + delta) };
+    countsRef.current = next;
     inflight.current += 1;
     setReason("");
     setSavedKey(null);
-    setCounts((value) => ({ ...value, [metric]: Math.max(0, value[metric] + delta) }));
+    setCounts(next);
+    let errorMessage = "";
     try {
       const response = await fetch("/api/impact", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ groupId, metric, delta }),
       });
-      const body = (await response.json()) as { ok?: boolean; counts?: ImpactCounts; error?: string };
-      if (response.ok && body.counts && id >= applied.current) {
-        applied.current = id;
-        confirmed.current = body.counts;
-        if (id === generation.current) {
-          setCounts(body.counts);
-          setSavedKey(metric);
-          window.setTimeout(() => setSavedKey((value) => (value === metric ? null : value)), 1200);
-        }
-        return;
-      }
-      if (id === generation.current) setReason(body.error || "The count could not be saved.");
+      const body = (await response.json()) as { ok?: boolean; error?: string };
+      if (!response.ok || !body.ok) errorMessage = body.error || "The count could not be saved.";
     } catch {
-      if (id === generation.current) setReason("The count could not be saved.");
+      errorMessage = "The count could not be saved.";
     } finally {
       inflight.current = Math.max(0, inflight.current - 1);
+      if (inflight.current === 0) {
+        try {
+          const response = await fetch(`/api/impact?groupId=${groupId}`);
+          const body = (await response.json()) as { ok?: boolean; counts?: ImpactCounts };
+          if (inflight.current === 0 && response.ok && body.ok && body.counts) {
+            confirmed.current = body.counts;
+            countsRef.current = body.counts;
+            setCounts(body.counts);
+            if (id === generation.current) {
+              setReason(errorMessage);
+              if (!errorMessage) {
+                setSavedKey(metric);
+                window.setTimeout(() => setSavedKey((value) => (value === metric ? null : value)), 1200);
+              }
+            }
+            return;
+          }
+        } catch {
+          errorMessage = errorMessage || "The count could not be saved.";
+        }
+        if (id === generation.current) {
+          countsRef.current = confirmed.current;
+          setCounts(confirmed.current);
+          setReason(errorMessage || "The count could not be saved.");
+        }
+      }
     }
-    if (id === generation.current) setCounts(confirmed.current);
   }
 
   return (
