@@ -26,7 +26,7 @@ export const loadAccount = cache(async () => {
   const ownedIds = new Set((ownedGroups ?? []).map((group) => group.id));
   const coIds = (leaderRows ?? []).map((row) => row.group_id).filter((id) => !ownedIds.has(id));
   const coGroups = coIds.length ? await selectGroupsByIds(supabase, coIds) : [];
-  const groups = [...(ownedGroups ?? []), ...coGroups];
+  const groups = await withMemberCounts(supabase, [...(ownedGroups ?? []), ...coGroups]);
   const email = data.user.email ?? "";
   const [{ data: sentInvites }, { data: receivedInvites }] = await Promise.all([
     supabase.from("rtp_co_leader_invites").select("id, application_id, group_id, invited_by, name, email, group_name, status, approved, accepted_by").eq("invited_by", data.user.id),
@@ -60,6 +60,15 @@ export const loadAccount = cache(async () => {
     invites,
   };
 });
+
+async function withMemberCounts(supabase: Awaited<ReturnType<typeof createClient>>, groups: any[]) {
+  const ids = groups.map((group) => group.id).filter(Boolean);
+  if (!ids.length) return groups;
+  const { data, error } = await supabase.from("rtp_group_impact").select("group_id, group_members").in("group_id", ids);
+  if (error || !data) return groups;
+  const counts = new Map(data.map((row) => [row.group_id, Math.max(0, Math.floor(Number(row.group_members) || 0))]));
+  return groups.map((group) => (counts.has(group.id) ? { ...group, members: counts.get(group.id) } : group));
+}
 
 async function selectApplications(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const withCo = await supabase

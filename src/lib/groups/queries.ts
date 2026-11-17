@@ -20,22 +20,49 @@ async function selectApproved(filter: { id?: string; slug?: string }) {
   return null;
 }
 
+async function publicMemberCounts() {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase.from("rtp_public_member_counts").select("group_id, group_members");
+  const counts = new Map<string, number>();
+  if (error || !data) return counts;
+  for (const row of data) {
+    const value = Number(row.group_members);
+    if (row.group_id && Number.isFinite(value)) counts.set(row.group_id, Math.max(0, Math.floor(value)));
+  }
+  return counts;
+}
+
+function withMemberCounts(groups: PublicGroup[], counts: Map<string, number>) {
+  return groups.map((group) => {
+    if (group.is_demo || !counts.has(group.id)) return group;
+    return { ...group, members: counts.get(group.id) };
+  });
+}
+
 export async function listApprovedGroups(): Promise<PublicGroup[]> {
   if (!isSupabaseConfigured()) return [];
   const data = await selectApproved({});
-  return Array.isArray(data) ? data : [];
+  const groups = Array.isArray(data) ? data : [];
+  if (!groups.length) return [];
+  return withMemberCounts(groups, await publicMemberCounts());
+}
+
+async function withOneMemberCount(group: PublicGroup | null) {
+  if (!group || group.is_demo) return group;
+  const counts = await publicMemberCounts();
+  return counts.has(group.id) ? { ...group, members: counts.get(group.id) } : group;
 }
 
 export async function getApprovedGroupBySlug(slug: string): Promise<PublicGroup | null> {
   if (!isSupabaseConfigured() || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return null;
   const data = await selectApproved({ slug });
-  return data && !Array.isArray(data) ? data : null;
+  return withOneMemberCount(data && !Array.isArray(data) ? data : null);
 }
 
 export async function getApprovedGroup(id: string): Promise<PublicGroup | null> {
   if (!isSupabaseConfigured()) return null;
   const data = await selectApproved({ id });
-  return data && !Array.isArray(data) ? data : null;
+  return withOneMemberCount(data && !Array.isArray(data) ? data : null);
 }
 
 export async function publicSlugState(slug: string) {

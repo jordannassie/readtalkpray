@@ -84,6 +84,10 @@ export default async function AppAdminPage({
     ? await supabase.from("rtp_group_private").select("group_id, leader_email, leader_phone").in("group_id", groupIds)
     : { data: [] };
   const contactByGroup = new Map((contacts ?? []).map((item) => [item.group_id, item]));
+  const { data: memberRows } = groupIds.length
+    ? await supabase.from("rtp_group_impact").select("group_id, group_members").in("group_id", groupIds)
+    : { data: [] };
+  const membersByGroup = new Map((memberRows ?? []).map((row) => [row.group_id, Math.max(0, Math.floor(Number(row.group_members) || 0))]));
   const ids = (applications ?? []).map((item) => item.id);
   const { data: reviews } = ids.length
     ? await supabase.from("rtp_application_reviews").select("id, application_id, action, note, message, created_at").in("application_id", ids).order("created_at", { ascending: false })
@@ -103,6 +107,7 @@ export default async function AppAdminPage({
           ...group,
           leader_email: contactByGroup.get(group.id)?.leader_email ?? null,
           leader_phone: contactByGroup.get(group.id)?.leader_phone ?? null,
+          members: membersByGroup.has(group.id) ? membersByGroup.get(group.id) : undefined,
         }))}
         groupTotal={groupCount ?? 0}
         reviews={reviews ?? []}

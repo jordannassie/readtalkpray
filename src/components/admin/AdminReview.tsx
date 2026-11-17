@@ -58,6 +58,7 @@ type Group = {
   co_leader_photo_url?: string | null;
   leader_email?: string | null;
   leader_phone?: string | null;
+  members?: number;
 };
 type Review = { id: string; application_id: string; action: string; note: string | null; message: string | null; created_at: string };
 type LocationChange = { id: string; group_id: string; public_location: string; private_address: string | null; status: string };
@@ -282,7 +283,7 @@ export function AdminReview({
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{group.name}</p>
                     <p className="truncate text-xs text-[#555]">{group.leader_name}{group.co_leader_name ? ` & ${group.co_leader_name}` : ""}</p>
-                    <p className="truncate text-xs text-[#667085]">{[place, when].filter(Boolean).join(" · ")}</p>
+                    <p className="truncate text-xs text-[#667085]">{[place, when].filter(Boolean).join(" · ")}{typeof group.members === "number" ? ` · ${group.members} Members` : ""}</p>
                   </div>
                   {group.status === "approved" || group.status === "paused" ? <SyncedLiveStatus groupId={group.id} serverLive={group.status === "approved"} /> : <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${pillClass(group.status)}`}>{pillLabel(group.status)}</span>}
                 </div>
@@ -377,6 +378,7 @@ function GroupDrawer({ group, onClose }: { group: Group; onClose: () => void }) 
     leader_photo_url: group.leader_photo_url ?? null,
     co_leader_name: group.co_leader_name ?? null,
     co_leader_photo_url: group.co_leader_photo_url ?? null,
+    members: group.members,
   };
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>

@@ -23,6 +23,7 @@ export type PublicGroup = {
   groupme_url?: string | null;
   slug?: string | null;
   is_demo?: boolean;
+  members?: number;
 };
 
 export const PUBLIC_GROUP_COLUMNS =

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 
 export const BELIEFS = [
@@ -100,7 +101,7 @@ export function Beliefs() {
           Read Talk Pray
         </p>
         <h2 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Our Beliefs and Church Structure
+          Our Beliefs & Leadership
         </h2>
 
         <div className="mt-10 space-y-4">
@@ -305,6 +306,39 @@ export function Beliefs() {
                 </p>
               </div>
             </div>
+          </Dropdown>
+
+          <Dropdown title="Leading a Group">
+            <h3 className="text-base font-semibold tracking-tight text-white">Leading a Group</h3>
+            <p className="mt-3 text-sm leading-relaxed text-white/75">
+              Anyone who follows Jesus, personally affirms our Statement of Christian Faith, and agrees to our Leader Commitments can apply to lead a Read Talk Pray group.
+            </p>
+            <h4 className="mt-6 text-base font-semibold tracking-tight text-white">You&apos;re Not Leading Alone</h4>
+            <p className="mt-2 text-sm leading-relaxed text-white/75">
+              Every approved Read Talk Pray group will be connected with a ministry overseer who provides encouragement, prayer, guidance, and accountability.
+            </p>
+            <h4 className="mt-6 text-base font-semibold tracking-tight text-white">Monthly Leadership Gatherings</h4>
+            <p className="mt-2 text-sm leading-relaxed text-white/75">
+              Group leaders stay connected through monthly online Zoom gatherings for prayer, training, encouragement, and sharing what God is doing through their groups.
+            </p>
+            <h4 className="mt-6 text-base font-semibold tracking-tight text-white">Leader Commitments</h4>
+            <ol className="mt-3 space-y-4">
+              <li>
+                <p className="text-sm font-semibold tracking-wide text-white">1. SHARED FAITH</p>
+                <p className="mt-1 text-sm leading-relaxed text-white/75">Personally affirm our Statement of Christian Faith and agree to lead according to Scripture.</p>
+              </li>
+              <li>
+                <p className="text-sm font-semibold tracking-wide text-white">2. CONNECTED LEADERSHIP</p>
+                <p className="mt-1 text-sm leading-relaxed text-white/75">Stay connected with your ministry overseer for encouragement, prayer, guidance, and accountability.</p>
+              </li>
+              <li>
+                <p className="text-sm font-semibold tracking-wide text-white">3. MONTHLY LEADERSHIP GATHERINGS</p>
+                <p className="mt-1 text-sm leading-relaxed text-white/75">Participate in monthly Read Talk Pray leadership Zoom calls to grow and encourage other leaders.</p>
+              </li>
+            </ol>
+            <Link href="/app/start" className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#1976F3] px-5 text-sm font-semibold text-white">
+              Start a Group
+            </Link>
           </Dropdown>
         </div>
       </div>

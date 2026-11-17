@@ -1,11 +1,13 @@
 export const AGREEMENT_POLICY_VERSION = "faith-commitments-1";
 
 export const LEADER_COMMITMENTS = [
+  "Personally affirm the Statement of Christian Faith and agree to lead according to Scripture.",
+  "Stay connected with your ministry overseer for encouragement, prayer, guidance, and accountability.",
+  "Participate in monthly Read Talk Pray leadership Zoom gatherings to grow and encourage other leaders.",
   "Group leaders are called to live lives that reflect Jesus Christ.",
   "Leaders teach from Scripture, serve people, and stay accountable. Leadership is about serving people, not controlling them.",
   "Leaders must demonstrate biblical character, humility, integrity, sound doctrine, servant leadership, and faithfulness to Scripture.",
   "Leaders remain accountable to Scripture and, where they belong to one, to their local church. Local autonomy does not mean independence from biblical accountability.",
-  "Leaders agree to join the monthly leader meeting.",
   "Leaders who persist in unrepentant sin, teach false doctrine, engage in serious misconduct, or reject biblical accountability may be removed from leadership and may no longer be recognized with Read Talk Pray.",
 ] as const;
 

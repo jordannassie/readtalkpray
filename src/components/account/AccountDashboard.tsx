@@ -38,6 +38,7 @@ type Group = {
   latitude?: number | null;
   longitude?: number | null;
   status: string;
+  members?: number;
 };
 type RequestRow = { id: string; group_id: string; first_name: string; phone: string; email?: string | null; status: string; created_at: string };
 type Detail = { group_id: string; address: string | null };
@@ -416,6 +417,7 @@ function toPublicGroup({
     co_leader_name: group?.co_leader_name ?? application?.co_leader_name ?? null,
     co_leader_photo_url: group?.co_leader_photo_url ?? application?.co_leader_photo_url ?? null,
     groupme_url: group?.groupme_url ?? null,
+    members: typeof group?.members === "number" ? group.members : undefined,
   };
 }
 

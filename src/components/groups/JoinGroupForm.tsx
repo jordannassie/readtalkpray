@@ -122,6 +122,12 @@ export function JoinGroupForm({
             <span>{place}</span>
           </p>
           {venue ? <p className="mt-1 pl-6 text-sm text-[#52627a]">{venue}</p> : null}
+          {typeof group.members === "number" ? (
+            <p className="mt-1 flex items-center gap-2 text-sm font-medium text-[#142033]">
+              <Users size={16} className="shrink-0 text-[#1976F3]" aria-hidden />
+              {group.members} Group Members
+            </p>
+          ) : null}
           {availability ? <p className="mt-3"><LiveStatus live={availability === "live"} /></p> : statusLabel ? <p className="mt-3"><span className="inline-flex rounded-full bg-[#e8f8ee] px-3 py-1 text-xs font-semibold text-[#157a3a]">{statusLabel}</span></p> : null}
         </div>
         <div className="relative shrink-0">
