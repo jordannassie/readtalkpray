@@ -10,6 +10,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 const LEFT = [
   { href: "/#how", label: "How It Works" },
+  { href: "/why", label: "Why" },
   { href: "/christianity", label: "Christianity" },
   { href: "/#beliefs", label: "About" },
 ];
