@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { Mail, MessageSquare, Phone } from "lucide-react";
+import { Eye, Mail, MessageSquare, Pencil, Phone, Share2 } from "lucide-react";
 import { CopyButton, PressLink } from "@/components/app/CopyButton";
 import { useRouter } from "next/navigation";
 import { ProfilePhoto } from "@/components/account/ProfilePhoto";
@@ -247,17 +247,18 @@ function GroupDesk({
         </div>
       ) : null}
       <div className="flex flex-wrap gap-2 border-t border-[#e6ebf2] px-4 py-3">
-        <Link href={editHref} className="inline-flex h-11 items-center rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white">Edit Group</Link>
+        <Link href={editHref} className="inline-flex h-11 items-center gap-1.5 rounded-full bg-[#1976F3] px-4 text-sm font-semibold text-white"><Pencil size={16} aria-hidden />Edit Group</Link>
         {approved && group ? (
-          <a href={groupMarketingUrl(group)} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">View Profile</a>
+          <a href={groupMarketingUrl(group)} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 items-center gap-1.5 rounded-full border border-black/10 px-4 text-sm font-semibold"><Eye size={16} aria-hidden />View Profile</a>
         ) : (
-          <button type="button" onClick={() => setPreviewing(true)} className="inline-flex h-11 items-center rounded-full border border-black/10 px-4 text-sm font-semibold">View Profile</button>
+          <button type="button" onClick={() => setPreviewing(true)} className="inline-flex h-11 items-center gap-1.5 rounded-full border border-black/10 px-4 text-sm font-semibold"><Eye size={16} aria-hidden />View Profile</button>
         )}
         {approved && group ? (
           <CopyButton
             value={() => groupMarketingUrl(group)}
             idleLabel="Share Group"
             successLabel="Link Copied!"
+            icon={<Share2 size={16} aria-hidden />}
             share={() => ({ title: name, text: `Join ${name} on Read Talk Pray.`, url: groupMarketingUrl(group) })}
             className="border border-black/10 px-4 text-sm font-semibold"
           />
@@ -278,6 +279,7 @@ function GroupDesk({
                 value={() => groupMarketingUrl(group)}
                 idleLabel="Share Group"
                 successLabel="Link Copied!"
+                icon={<Share2 size={16} aria-hidden />}
                 share={() => ({ title: name, text: `Join ${name} on Read Talk Pray.`, url: groupMarketingUrl(group) })}
                 className="mt-2 bg-[#1976F3] px-4 text-sm font-semibold text-white"
               />

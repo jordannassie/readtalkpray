@@ -37,6 +37,7 @@ export function CopyButton({
   variant = "text",
   className = "",
   share,
+  icon,
 }: {
   value: string | (() => string);
   idleLabel: string;
@@ -45,6 +46,7 @@ export function CopyButton({
   variant?: "icon" | "text";
   className?: string;
   share?: { title: string; text: string; url: string } | (() => { title: string; text: string; url: string });
+  icon?: ReactNode;
 }) {
   const { phase, copy } = useClipboardCopy();
   const success = phase === "copied";
@@ -96,7 +98,7 @@ export function CopyButton({
       aria-live="polite"
       className={`inline-flex h-11 items-center gap-1.5 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1976F3] ${className}`}
     >
-      {success ? <Check size={16} className="text-[#16A34A] motion-safe:transition motion-safe:duration-200" aria-hidden /> : null}
+      {success ? <Check size={16} className="text-[#16A34A] motion-safe:transition motion-safe:duration-200" aria-hidden /> : icon}
       <span className={success ? "text-[#16A34A]" : failed ? "text-[#b91c1c]" : ""}>{spoken}</span>
     </button>
   );
