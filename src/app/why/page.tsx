@@ -147,12 +147,6 @@ export default function WhyPage() {
             <p>Three hundred people.</p>
           </div>
 
-          <div className="mx-auto mt-8 max-w-3xl rounded-3xl bg-[#142033] px-6 py-8 text-center text-white">
-            <p className="text-4xl font-semibold tracking-tight sm:text-6xl">300+</p>
-            <p className="mt-1 text-sm font-semibold tracking-[0.18em]">PEOPLE</p>
-            <p className="mt-3 text-base text-white/80">Ministered to over the course of one year.</p>
-          </div>
-
           <div className="mx-auto mt-8 max-w-3xl space-y-4 text-lg leading-relaxed text-[#334155]">
             <p>Not because we had a building.</p>
             <p>Not because we had a big budget.</p>
