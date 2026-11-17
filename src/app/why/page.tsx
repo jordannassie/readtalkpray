@@ -12,6 +12,8 @@ const STAR_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/p
 const GROUP_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/biblegroup.JPG";
 const WESLEY_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/Wesley.png";
 const JESUS_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/Jesus%20teaching.png";
+const MULTIPLY_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/multiply.png";
+const TABLE_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/tables%20chruch.png";
 const ATTENDANCE = [2, 4, 2, 14, 30, 20];
 const TITLE = "Why Read Talk Pray? | A Church Bigger Than a Building";
 const DESCRIPTION = "Discover why Read Talk Pray is rethinking church through simple Bible reading groups, volunteer leadership, real community, and a movement bigger than a building.";
@@ -206,6 +208,7 @@ export default function WhyPage() {
           </Section>
 
           <Section title="Built to Multiply. Not Built to Maintain.">
+            <StoryPhoto src={MULTIPLY_IMAGE} alt="One Bible group multiplying into many." width={1672} height={941} />
             <p>Buildings cost money. Staff require salaries. Facilities need maintenance.</p>
             <p>These things aren&apos;t inherently wrong. Many faithful churches use their resources to do tremendous good.</p>
             <p>But what happens when keeping an institution running becomes more important than reaching and discipling people?</p>
@@ -275,6 +278,7 @@ export default function WhyPage() {
 
           <section className="mt-16 border-t border-[#e6ebf2] pt-16 text-center">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">Church Can Start Around a Table.</h2>
+            <StoryPhoto src={TABLE_IMAGE} alt="People gathered around tables as a church." width={980} height={314} />
             <div className="mx-auto mt-6 max-w-xl space-y-4 text-lg leading-relaxed text-[#334155]">
               <p>You don&apos;t need a building to gather as the Church.</p>
               <p>You don&apos;t need to be a professional pastor to help others grow in faith.</p>
