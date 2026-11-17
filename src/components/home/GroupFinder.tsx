@@ -18,7 +18,7 @@ const GroupsMap = dynamic(() => import("@/components/home/GroupsMap").then((mod)
 
 type Place = { latitude: number; longitude: number; label: string };
 
-export function GroupFinder({ groups, samplePreview = false }: { groups: PublicGroup[]; samplePreview?: boolean }) {
+export function GroupFinder({ groups }: { groups: PublicGroup[] }) {
   const [query, setQuery] = useState("");
   const [place, setPlace] = useState<Place | null>(null);
   const [located, setLocated] = useState<Place | null>(null);
@@ -268,7 +268,6 @@ export function GroupFinder({ groups, samplePreview = false }: { groups: PublicG
           </form>
         </div>
 
-        {samplePreview ? <p className="mt-4 rounded-2xl bg-[#e7f0ff] px-4 py-3 text-sm font-semibold text-[#1565d8]">Preview — Sample Groups</p> : null}
         <section className="mt-6 rounded-[28px] bg-[#f7f9fc] p-3 sm:p-4">
           <div className="grid gap-3 lg:grid-cols-[minmax(0,35%)_minmax(0,35%)_minmax(0,30%)] lg:items-stretch">
             <div className="order-1 flex min-w-0 flex-col rounded-[22px] bg-white p-3 shadow-sm lg:max-h-[680px]">
