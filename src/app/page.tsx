@@ -118,7 +118,7 @@ export default async function HomePage() {
       <Multiply />
       <WorldGlobe places={places} />
       <Beliefs />
-      <SiteFooter stores />
+      <SiteFooter />
     </div>
   );
 }

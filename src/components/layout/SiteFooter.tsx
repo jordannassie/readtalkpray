@@ -16,7 +16,18 @@ const NAV = [
 const APP_STORE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/app%20store/app-store.svg";
 const GOOGLE_PLAY = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/app%20store/google-play.svg";
 
-export function SiteFooter({ stores = false }: { stores?: boolean }) {
+export function StoreBadges({ align = "start" }: { align?: "start" | "center" }) {
+  return (
+    <div className={align === "center" ? "flex flex-wrap items-center justify-center gap-3" : "flex flex-wrap items-center justify-center gap-3 lg:justify-start"}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={APP_STORE} alt="App Store" width={135} height={40} className="h-10 w-auto" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={GOOGLE_PLAY} alt="Google Play" width={135} height={40} className="h-10 w-auto" />
+    </div>
+  );
+}
+
+export function SiteFooter() {
   return (
     <footer className="bg-[#1976F3] text-white">
       <div className="mx-auto flex max-w-[1280px] flex-col items-center gap-5 px-5 py-10 text-center sm:flex-row sm:items-center sm:justify-between sm:py-12 sm:text-left">
@@ -36,14 +47,9 @@ export function SiteFooter({ stores = false }: { stores?: boolean }) {
         <div className="flex flex-col items-center lg:items-start">
           <Logo invert width={120} />
           <p className="mt-3 max-w-sm text-base text-white">Read the Bible. Talk about it. Pray together.</p>
-          {stores ? (
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={APP_STORE} alt="App Store" width={135} height={40} className="h-10 w-auto" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={GOOGLE_PLAY} alt="Google Play" width={135} height={40} className="h-10 w-auto" />
-            </div>
-          ) : null}
+          <div className="mt-4">
+            <StoreBadges />
+          </div>
         </div>
         <nav className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-white lg:justify-center">
           {NAV.map((item) => (

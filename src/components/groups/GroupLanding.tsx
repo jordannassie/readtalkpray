@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { JoinGroupForm } from "@/components/groups/JoinGroupForm";
 import { BLACK_LOGO } from "@/components/brand/logos";
+import { StoreBadges } from "@/components/layout/SiteFooter";
 import { groupJsonLd, groupSeoDescription, SITE } from "@/lib/groups/seo";
 import { groupPublicPath } from "@/lib/groups/slug";
 import { cityState, type PublicGroup } from "@/lib/groups/types";
@@ -24,6 +25,9 @@ export function GroupLanding({ group }: { group: PublicGroup }) {
         <p className="mt-4 text-center text-xs text-[#6d7b90]">
           <Link href="/privacy" className="underline">Privacy</Link>
         </p>
+        <div className="mt-5">
+          <StoreBadges align="center" />
+        </div>
       </main>
     </div>
   );
@@ -41,6 +45,9 @@ export function PausedGroupPage() {
         <p className="mt-8 text-xs text-[#6d7b90]">
           <Link href="/privacy" className="underline">Privacy</Link>
         </p>
+        <div className="mt-5">
+          <StoreBadges align="center" />
+        </div>
       </main>
     </div>
   );
