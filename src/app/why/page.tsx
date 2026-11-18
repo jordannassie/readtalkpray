@@ -14,7 +14,7 @@ const WESLEY_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object
 const JESUS_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/Jesus%20teaching.png";
 const MULTIPLY_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/multiply.png";
 const TABLE_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/tables%20chruch.png";
-const ATTENDANCE = [2, 4, 2, 14, 30, 20];
+const NUMBERS_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/FAQ/numbers.png";
 const TITLE = "Why Read Talk Pray? | A Church Bigger Than a Building";
 const DESCRIPTION = "Discover why Read Talk Pray is rethinking church through simple Bible reading groups, volunteer leadership, real community, and a movement bigger than a building.";
 
@@ -100,7 +100,7 @@ export default function WhyPage() {
             <p>Then we were back down to two.</p>
             <p>Eventually, we grew to 14, then 30, and sometimes back down to 20.</p>
             <p>Our attendance fluctuated almost every Sunday.</p>
-            <AttendanceTrail />
+            <StoryPhoto src={NUMBERS_IMAGE} alt="Sunday attendance went from 2 to 4, back to 2, then 14, 30, and 20." width={987} height={275} />
             <p>Some people came once and never returned. Others visited occasionally. Some became regulars, and others brought friends.</p>
             <p>There were Sundays when I wondered whether we were actually growing or going backward.</p>
             <p>And I&apos;ll be honest, sometimes it was discouraging.</p>
@@ -330,22 +330,6 @@ function StoryPhoto({ src, alt, caption, note, contained = false, width, height 
         </figcaption>
       ) : null}
     </figure>
-  );
-}
-
-function AttendanceTrail() {
-  return (
-    <div className="rounded-2xl bg-[#f4f7fb] px-4 py-5 sm:px-6">
-      <ol className="flex flex-wrap items-center justify-center gap-x-2 gap-y-3">
-        {ATTENDANCE.map((count, index) => (
-          <li key={`${count}-${index}`} className="flex items-center gap-2">
-            {index > 0 ? <span className="text-sm font-semibold text-[#1976F3]" aria-hidden>→</span> : null}
-            <span className="grid h-11 min-w-11 place-items-center rounded-xl bg-white px-2.5 text-lg font-semibold text-[#142033] ring-1 ring-[#e6ebf2]">{count}</span>
-          </li>
-        ))}
-      </ol>
-      <p className="mt-4 text-center text-sm text-[#52627a]">Our Sunday attendance went up and down.</p>
-    </div>
   );
 }
 
