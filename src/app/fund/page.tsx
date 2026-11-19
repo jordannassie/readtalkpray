@@ -7,7 +7,7 @@ import { IMPACT_EXAMPLE_CENTS, REACH_DISCLAIMER, estimatedClicks, formatCount, f
 import { SITE, publicMetadata } from "@/lib/groups/seo";
 
 const FUND_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/Fund/Funds.png";
-const AD_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/Fund/Biblestudy.png";
+const AD_IMAGE = "https://eeeprmtermreavivzswn.supabase.co/storage/v1/object/public/STORAGE/readtalkpray/Fund/ad.png";
 const TITLE = "Bible Group Marketing Fund | Read Talk Pray";
 const DESCRIPTION =
   "Support marketing that helps people discover local Read Talk Pray Bible Groups. Learn how your giving can help introduce communities to Scripture, prayer, and fellowship.";
@@ -136,16 +136,16 @@ export default function FundPage() {
                 We promote Bible Groups to people in local communities through platforms such as Facebook and Instagram, connecting them to group-specific signup pages.
               </p>
               <p className="mt-4 text-sm leading-relaxed text-[#52627a]">
-                The image is an example of that kind of advertisement. This page does not report that a particular campaign is running.
+                The image is an example of how that kind of advertisement can appear. This page does not report that a particular campaign is running, and the reactions in the mockup are not live results.
               </p>
             </div>
             <figure className="mx-auto w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-[#e6ebf2]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={AD_IMAGE}
-                alt="Example Bible study advertisement for a Nashville group, with photos, a Sunday meeting time, and a join button"
-                width={1199}
-                height={1312}
+                alt="Example phone mockup of a Facebook post promoting a Nashville Read Talk Pray Bible study"
+                width={1122}
+                height={1402}
                 className="h-auto w-full"
               />
             </figure>
